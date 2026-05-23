@@ -178,7 +178,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         set({
           validation: {
             success: false,
-            message: "No circle crossing is close enough. Click near one of the visible crossing marks.",
+            message: "No circle crossing is close enough. Click where the two circles cross.",
           },
         });
         return;

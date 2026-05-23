@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Circle, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
-import { allCircleIntersections } from "../geometry/intersections";
 import { circleRadius, findNearbyPoint, getPoint, isCircle, isPoint, isSegment } from "../geometry/operations";
 import { book1Prop1 } from "../propositions/book1prop1";
 import { useGeometryStore } from "../state/useGeometryStore";
@@ -276,17 +275,6 @@ export function GeometryCanvas() {
     [currentReplay?.highlight, proofContext],
   );
   const shouldHighlightTriangle = currentReplay?.highlight.includes("triangleABC") ?? false;
-  const intersections = useMemo(() => allCircleIntersections(objects), [objects]);
-  const availableIntersections = useMemo(
-    () =>
-      intersections.filter(
-        (intersection) =>
-          !objects
-            .filter(isPoint)
-            .some((point) => Math.hypot(point.x - intersection.x, point.y - intersection.y) <= 2),
-      ),
-    [intersections, objects],
-  );
   const replayAnimationKey = currentReplay?.id ?? "static";
 
   const eventToCanvasPoint = (event: React.PointerEvent<SVGSVGElement>): CanvasPoint | null => {
@@ -404,18 +392,6 @@ export function GeometryCanvas() {
         </defs>
 
         <rect x={VIEW_BOX.minX} y={VIEW_BOX.minY} width={VIEW_BOX.width} height={VIEW_BOX.height} fill="url(#paper-grain)" />
-
-        {phase === "construction" &&
-          selectedTool === "intersection" &&
-          availableIntersections.map((intersection) => (
-            <g
-              className="intersection-target"
-              key={`${intersection.circles[0].id}-${intersection.circles[1].id}-${intersection.x}-${intersection.y}`}
-            >
-              <line className="intersection-cross" x1={intersection.x - 9} y1={intersection.y - 9} x2={intersection.x + 9} y2={intersection.y + 9} />
-              <line className="intersection-cross" x1={intersection.x - 9} y1={intersection.y + 9} x2={intersection.x + 9} y2={intersection.y - 9} />
-            </g>
-          ))}
 
         {shouldHighlightTriangle && <TriangleHighlight context={proofContext} objects={objects} />}
 

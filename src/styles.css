@@ -616,18 +616,6 @@ blockquote {
   animation: pointPop 420ms ease-out both;
 }
 
-.intersection-target {
-  pointer-events: none;
-}
-
-.intersection-cross {
-  stroke: #d69c24;
-  stroke-width: 3;
-  opacity: 0.78;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
 .tool-preview {
   pointer-events: none;
 }
