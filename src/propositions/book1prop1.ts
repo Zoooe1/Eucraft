@@ -1,5 +1,6 @@
 import type { Proposition } from "../geometry/types";
 
+// Proposition text follows the user-supplied Richard Fitzpatrick translation PDF.
 export const book1Prop1: Proposition = {
   id: "I.1",
   book: "Book I",
@@ -7,7 +8,7 @@ export const book1Prop1: Proposition = {
   title: "Equilateral Triangle",
   subtitle: "Build the Elements",
   playerGoal: "Build a triangle on AB where all three sides are equal.",
-  originalStatement: "On a given finite straight line to construct an equilateral triangle.",
+  originalStatement: "To construct an equilateral triangle on a given finite straight-line.",
   instruction: "Use Euclid's tools to construct the figure, then reveal why it must be true.",
   initialObjects: [
     {
@@ -65,42 +66,42 @@ export const book1Prop1: Proposition = {
     {
       id: "given-line",
       highlight: ["segmentAB", "pointA", "pointB"],
-      text: "We begin with the given finite straight line AB.",
+      text: "Let AB be the given finite straight-line.",
     },
     {
       id: "circle-a",
       highlight: ["circleA", "segmentAB", "pointA", "pointB"],
-      text: "You drew a circle with center A through B.",
-    },
-    {
-      id: "radius-a",
-      highlight: ["circleA", "segmentAC", "segmentAB", "pointA", "pointB", "pointC"],
-      text: "Because C lies on this circle, AC is equal to AB.",
+      text: "Let a circle with center A and radius AB have been drawn. This uses Postulate 3.",
     },
     {
       id: "circle-b",
       highlight: ["circleB", "segmentAB", "pointA", "pointB"],
-      text: "You drew a second circle with center B through A.",
+      text: "Again, let a circle with center B and radius BA have been drawn. This also uses Postulate 3.",
+    },
+    {
+      id: "join-c",
+      highlight: ["circleA", "circleB", "segmentAC", "segmentBC", "pointA", "pointB", "pointC"],
+      text: "From the point C where the circles cut one another, join the straight-lines CA and CB to A and B. This uses Postulate 1.",
+    },
+    {
+      id: "radius-a",
+      highlight: ["circleA", "segmentAC", "segmentAB", "pointA", "pointB", "pointC"],
+      text: "Since A is the center of the circle through C and B, AC is equal to AB by Definition 1.15.",
     },
     {
       id: "radius-b",
       highlight: ["circleB", "segmentBC", "segmentAB", "pointA", "pointB", "pointC"],
-      text: "Because C lies on this circle, BC is equal to AB.",
+      text: "Since B is the center of the circle through C and A, BC is equal to BA by Definition 1.15.",
     },
     {
       id: "equality-transfer",
       highlight: ["segmentAB", "segmentAC", "segmentBC", "pointA", "pointB", "pointC"],
-      text: "AC and BC are both equal to AB, so all three sides are equal.",
-    },
-    {
-      id: "equilateral",
-      highlight: ["triangleABC", "segmentAB", "segmentAC", "segmentBC", "pointA", "pointB", "pointC"],
-      text: "Therefore, triangle ABC is equilateral.",
+      text: "CA and CB are each equal to AB, and things equal to the same thing are equal to one another by Common Notion 1.",
     },
     {
       id: "euclidean-reveal",
       highlight: ["triangleABC", "segmentAB", "segmentAC", "segmentBC"],
-      text: "Therefore, on the given finite straight line AB, an equilateral triangle has been constructed.",
+      text: "Thus CA, AB, and BC are equal to one another. Therefore triangle ABC is equilateral and has been constructed on AB.",
     },
   ],
 };

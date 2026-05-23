@@ -5,6 +5,7 @@ import {
   createCircle,
   createSegment,
   findNearbyPoint,
+  getPoint,
   INTERSECTION_TOLERANCE,
   nextPointLabel,
   segmentExistsBetween,
@@ -18,6 +19,7 @@ type GeometryStore = {
   backgroundColor: string;
   selectedTool: GeometryTool;
   selectedPointIds: string[];
+  animatedObjectId: string | null;
   objects: GeometryObject[];
   history: GeometryObject[][];
   validation: ValidationResult | null;
@@ -29,6 +31,7 @@ type GeometryStore = {
   setBackgroundColor: (color: string) => void;
   setTool: (tool: GeometryTool) => void;
   handleCanvasClick: (x: number, y: number) => void;
+  handleCanvasDrag: (startPointId: string, endX: number, endY: number) => void;
   checkConstruction: () => void;
   startLogicReplay: () => void;
   nextReplayStep: () => void;
@@ -48,19 +51,13 @@ function addObjectWithHistory(state: GeometryStore, object: GeometryObject) {
     validation: null,
     proofContext: null,
     currentReplayStep: 0,
+    animatedObjectId: object.id,
   };
 }
 
-function handlePointToolClick(state: GeometryStore, clickedPoint: Point, tool: GeometryTool) {
-  if (state.selectedPointIds.length === 0) {
-    return {
-      selectedPointIds: [clickedPoint.id],
-      validation: null,
-    };
-  }
-
-  const firstPointId = state.selectedPointIds[0];
-  if (firstPointId === clickedPoint.id) {
+function constructBetweenPoints(state: GeometryStore, firstPointId: string, secondPointId: string, tool: GeometryTool) {
+  const clickedPoint = getPoint(state.objects, secondPointId);
+  if (!clickedPoint || firstPointId === clickedPoint.id) {
     return {
       selectedPointIds: [],
       validation: null,
@@ -104,11 +101,23 @@ function handlePointToolClick(state: GeometryStore, clickedPoint: Point, tool: G
   };
 }
 
+function handlePointToolClick(state: GeometryStore, clickedPoint: Point, tool: GeometryTool) {
+  if (state.selectedPointIds.length === 0) {
+    return {
+      selectedPointIds: [clickedPoint.id],
+      validation: null,
+    };
+  }
+
+  return constructBetweenPoints(state, state.selectedPointIds[0], clickedPoint.id, tool);
+}
+
 export const useGeometryStore = create<GeometryStore>((set, get) => ({
   phase: "title",
   backgroundColor: "#efe3cf",
   selectedTool: "compass",
   selectedPointIds: [],
+  animatedObjectId: null,
   objects: cloneInitialObjects(),
   history: [],
   validation: null,
@@ -119,6 +128,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       phase: "laws",
       selectedPointIds: [],
       validation: null,
+      animatedObjectId: null,
     }),
   enterProposition: () =>
     set({
@@ -130,6 +140,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
+      animatedObjectId: null,
     }),
   startConstruction: () =>
     set({
@@ -139,6 +150,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
+      animatedObjectId: null,
     }),
   setBackgroundColor: (color) =>
     set({
@@ -162,7 +174,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         set({
           validation: {
             success: false,
-            message: "No circle crossing is close enough. Click one of the highlighted crossing targets.",
+            message: "No circle crossing is close enough. Click near one of the gold crossing marks.",
           },
         });
         return;
@@ -224,14 +236,40 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     set(handlePointToolClick(state, clickedPoint, state.selectedTool));
   },
+  handleCanvasDrag: (startPointId, endX, endY) => {
+    const state = get();
+    if (state.phase !== "construction" || (state.selectedTool !== "compass" && state.selectedTool !== "straightedge")) {
+      return;
+    }
+
+    const startPoint = getPoint(state.objects, startPointId);
+    const endPoint = findNearbyPoint(state.objects, endX, endY);
+
+    if (!startPoint || !endPoint) {
+      set({
+        selectedPointIds: [],
+        validation: {
+          success: false,
+          message:
+            state.selectedTool === "compass"
+              ? "Drag from a center point and release on another point to set the radius."
+              : "Drag from one existing point and release on another point to draw the straightedge.",
+        },
+      });
+      return;
+    }
+
+    set(constructBetweenPoints(state, startPoint.id, endPoint.id, state.selectedTool));
+  },
   checkConstruction: () => {
     const result = validateBook1Prop1(get().objects);
     set({
       validation: result,
       proofContext: result.context ?? null,
-      phase: result.success ? "success" : "construction",
+      phase: result.success ? "logicReplay" : "construction",
       currentReplayStep: 0,
       selectedPointIds: [],
+      animatedObjectId: null,
     });
   },
   startLogicReplay: () =>
@@ -239,6 +277,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       phase: state.proofContext ? "logicReplay" : state.phase,
       currentReplayStep: 0,
       selectedPointIds: [],
+      animatedObjectId: null,
     })),
   nextReplayStep: () =>
     set((state) => ({
@@ -253,6 +292,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       phase: "completed",
       currentReplayStep: book1Prop1.replaySteps.length - 1,
       selectedPointIds: [],
+      animatedObjectId: null,
     }),
   resetProposition: () =>
     set({
@@ -264,6 +304,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
+      animatedObjectId: null,
     }),
   undo: () =>
     set((state) => {
@@ -283,6 +324,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
             : state.phase,
         proofContext: null,
         currentReplayStep: 0,
+        animatedObjectId: null,
       };
     }),
 }));

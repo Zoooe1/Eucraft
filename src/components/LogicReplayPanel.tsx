@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { book1Prop1 } from "../propositions/book1prop1";
 import { useGeometryStore } from "../state/useGeometryStore";
 
@@ -8,6 +9,19 @@ export function LogicReplayPanel() {
   const nextReplayStep = useGeometryStore((state) => state.nextReplayStep);
   const previousReplayStep = useGeometryStore((state) => state.previousReplayStep);
   const finishReplay = useGeometryStore((state) => state.finishReplay);
+  const isLastStep = currentReplayStep === book1Prop1.replaySteps.length - 1;
+
+  useEffect(() => {
+    if (phase !== "logicReplay" || isLastStep) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      nextReplayStep();
+    }, 2200);
+
+    return () => window.clearTimeout(timeout);
+  }, [phase, currentReplayStep, isLastStep, nextReplayStep]);
 
   if (phase === "success") {
     return (
@@ -28,14 +42,13 @@ export function LogicReplayPanel() {
 
   const step = book1Prop1.replaySteps[currentReplayStep];
   const isFirstStep = currentReplayStep === 0;
-  const isLastStep = currentReplayStep === book1Prop1.replaySteps.length - 1;
 
   return (
     <section className="logic-panel">
       <div className="proof-meta">
         <span>Logic Replay</span>
         <span>
-          {currentReplayStep + 1} / {book1Prop1.replaySteps.length}
+          Auto-play · {currentReplayStep + 1} / {book1Prop1.replaySteps.length}
         </span>
       </div>
       <p className="proof-text">{step.text}</p>

@@ -1,11 +1,12 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Circle, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
 import { allCircleIntersections } from "../geometry/intersections";
-import { circleRadius, getPoint, isCircle, isPoint, isSegment } from "../geometry/operations";
+import { circleRadius, findNearbyPoint, getPoint, isCircle, isPoint, isSegment } from "../geometry/operations";
 import { book1Prop1 } from "../propositions/book1prop1";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 const VIEW_BOX = { width: 760, height: 620 };
+const DRAG_THRESHOLD = 5;
 
 const geometryColor: Record<string, string> = {
   red: "#bd342a",
@@ -18,6 +19,19 @@ const geometryColor: Record<string, string> = {
 function colorFor(object: GeometryObject) {
   return geometryColor[object.color ?? "ink"] ?? object.color ?? geometryColor.ink;
 }
+
+type CanvasPoint = {
+  x: number;
+  y: number;
+};
+
+type DragPreview = {
+  tool: "compass" | "straightedge";
+  start: CanvasPoint;
+  current: CanvasPoint;
+  startPoint: Point;
+  hasMoved: boolean;
+};
 
 function highlightIdsFromContext(highlights: ProofHighlight[], context: ReturnType<typeof useGeometryStore.getState>["proofContext"]) {
   if (!context) {
@@ -43,11 +57,15 @@ function SegmentElement({
   objects,
   highlighted,
   selected,
+  animated,
+  replaying,
 }: {
   segment: Segment;
   objects: GeometryObject[];
   highlighted: boolean;
   selected: boolean;
+  animated: boolean;
+  replaying: boolean;
 }) {
   const p1 = getPoint(objects, segment.p1);
   const p2 = getPoint(objects, segment.p2);
@@ -58,11 +76,19 @@ function SegmentElement({
   return (
     <>
       <line
-        className={highlighted ? "svg-segment highlighted" : "svg-segment"}
+        className={[
+          "svg-segment",
+          highlighted ? "highlighted" : "",
+          animated ? "draw-in" : "",
+          replaying ? "replay-draw" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         x1={p1.x}
         y1={p1.y}
         x2={p2.x}
         y2={p2.y}
+        pathLength={1}
         stroke={selected ? "#16120e" : colorFor(segment)}
         strokeWidth={highlighted ? 7 : segment.given ? 4 : 3}
         strokeLinecap="round"
@@ -80,10 +106,14 @@ function CircleElement({
   circle,
   objects,
   highlighted,
+  animated,
+  replaying,
 }: {
   circle: Circle;
   objects: GeometryObject[];
   highlighted: boolean;
+  animated: boolean;
+  replaying: boolean;
 }) {
   const center = getPoint(objects, circle.center);
   const radius = circleRadius(circle, objects);
@@ -93,10 +123,18 @@ function CircleElement({
 
   return (
     <circle
-      className={highlighted ? "svg-circle highlighted" : "svg-circle"}
+      className={[
+        "svg-circle",
+        highlighted ? "highlighted" : "",
+        animated ? "draw-in" : "",
+        replaying ? "replay-draw" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       cx={center.x}
       cy={center.y}
       r={radius}
+      pathLength={1}
       fill="none"
       stroke={colorFor(circle)}
       strokeWidth={highlighted ? 4 : 2}
@@ -108,13 +146,19 @@ function PointElement({
   point,
   highlighted,
   selected,
+  animated,
 }: {
   point: Point;
   highlighted: boolean;
   selected: boolean;
+  animated: boolean;
 }) {
   return (
-    <g className={highlighted ? "svg-point highlighted" : "svg-point"}>
+    <g
+      className={["svg-point", highlighted ? "highlighted" : "", animated ? "point-pop" : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <circle
         cx={point.x}
         cy={point.y}
@@ -128,6 +172,47 @@ function PointElement({
           {point.label}
         </text>
       )}
+    </g>
+  );
+}
+
+function DragPreviewElement({ preview, objects }: { preview: DragPreview; objects: GeometryObject[] }) {
+  const snappedPoint = findNearbyPoint(objects, preview.current.x, preview.current.y);
+  const end = snappedPoint ?? preview.current;
+
+  if (preview.tool === "compass") {
+    const radius = Math.hypot(preview.startPoint.x - end.x, preview.startPoint.y - end.y);
+    return (
+      <g className="tool-preview">
+        <circle
+          className="preview-circle"
+          cx={preview.startPoint.x}
+          cy={preview.startPoint.y}
+          r={radius}
+          pathLength={1}
+        />
+        <line
+          className="preview-radius"
+          x1={preview.startPoint.x}
+          y1={preview.startPoint.y}
+          x2={end.x}
+          y2={end.y}
+        />
+        <circle className="preview-anchor" cx={preview.startPoint.x} cy={preview.startPoint.y} r="6" />
+      </g>
+    );
+  }
+
+  return (
+    <g className="tool-preview">
+      <line
+        className="preview-segment"
+        x1={preview.startPoint.x}
+        y1={preview.startPoint.y}
+        x2={end.x}
+        y2={end.y}
+      />
+      <circle className="preview-anchor" cx={preview.startPoint.x} cy={preview.startPoint.y} r="6" />
     </g>
   );
 }
@@ -162,10 +247,14 @@ function TriangleHighlight({
 
 export function GeometryCanvas() {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
   const phase = useGeometryStore((state) => state.phase);
   const objects = useGeometryStore((state) => state.objects);
+  const selectedTool = useGeometryStore((state) => state.selectedTool);
   const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
   const handleCanvasClick = useGeometryStore((state) => state.handleCanvasClick);
+  const handleCanvasDrag = useGeometryStore((state) => state.handleCanvasDrag);
+  const animatedObjectId = useGeometryStore((state) => state.animatedObjectId);
   const proofContext = useGeometryStore((state) => state.proofContext);
   const currentReplayStep = useGeometryStore((state) => state.currentReplayStep);
 
@@ -178,17 +267,97 @@ export function GeometryCanvas() {
   );
   const shouldHighlightTriangle = currentReplay?.highlight.includes("triangleABC") ?? false;
   const intersections = useMemo(() => allCircleIntersections(objects), [objects]);
+  const availableIntersections = useMemo(
+    () =>
+      intersections.filter(
+        (intersection) =>
+          !objects
+            .filter(isPoint)
+            .some((point) => Math.hypot(point.x - intersection.x, point.y - intersection.y) <= 2),
+      ),
+    [intersections, objects],
+  );
+  const replayAnimationKey = currentReplay?.id ?? "static";
 
-  const onClick = (event: React.MouseEvent<SVGSVGElement>) => {
+  const eventToCanvasPoint = (event: React.PointerEvent<SVGSVGElement>): CanvasPoint | null => {
     const svg = svgRef.current;
     if (!svg) {
-      return;
+      return null;
     }
 
     const rect = svg.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * VIEW_BOX.width;
-    const y = ((event.clientY - rect.top) / rect.height) * VIEW_BOX.height;
-    handleCanvasClick(x, y);
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * VIEW_BOX.width,
+      y: ((event.clientY - rect.top) / rect.height) * VIEW_BOX.height,
+    };
+  };
+
+  const onPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
+    const point = eventToCanvasPoint(event);
+    if (!point || phase !== "construction") {
+      return;
+    }
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (selectedTool === "compass" || selectedTool === "straightedge") {
+      const startPoint = findNearbyPoint(objects, point.x, point.y);
+      if (startPoint) {
+        setDragPreview({
+          tool: selectedTool,
+          start: point,
+          current: point,
+          startPoint,
+          hasMoved: false,
+        });
+      }
+    }
+  };
+
+  const onPointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
+    const point = eventToCanvasPoint(event);
+    if (!point || !dragPreview) {
+      return;
+    }
+
+    setDragPreview({
+      ...dragPreview,
+      current: point,
+      hasMoved: dragPreview.hasMoved || Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD,
+    });
+  };
+
+  const onPointerUp = (event: React.PointerEvent<SVGSVGElement>) => {
+    const point = eventToCanvasPoint(event);
+    if (!point) {
+      setDragPreview(null);
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (dragPreview) {
+      const moved =
+        dragPreview.hasMoved ||
+        Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD;
+      const startPointId = dragPreview.startPoint.id;
+      setDragPreview(null);
+
+      if (moved) {
+        handleCanvasDrag(startPointId, point.x, point.y);
+        return;
+      }
+    }
+
+    handleCanvasClick(point.x, point.y);
+  };
+
+  const onPointerCancel = (event: React.PointerEvent<SVGSVGElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setDragPreview(null);
   };
 
   return (
@@ -205,7 +374,10 @@ export function GeometryCanvas() {
         viewBox={`0 0 ${VIEW_BOX.width} ${VIEW_BOX.height}`}
         role="img"
         aria-label="A geometric construction of Proposition I.1"
-        onClick={onClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
       >
         <defs>
           <filter id="soft-glow" x="-30%" y="-30%" width="160%" height="160%">
@@ -224,13 +396,14 @@ export function GeometryCanvas() {
         <rect width={VIEW_BOX.width} height={VIEW_BOX.height} fill="url(#paper-grain)" />
 
         {phase === "construction" &&
-          intersections.map((intersection) => (
+          selectedTool === "intersection" &&
+          availableIntersections.map((intersection) => (
             <g
               className="intersection-target"
               key={`${intersection.circles[0].id}-${intersection.circles[1].id}-${intersection.x}-${intersection.y}`}
             >
-              <circle className="intersection-halo" cx={intersection.x} cy={intersection.y} r="16" />
-              <circle className="intersection-ghost" cx={intersection.x} cy={intersection.y} r="6" />
+              <line className="intersection-cross" x1={intersection.x - 9} y1={intersection.y - 9} x2={intersection.x + 9} y2={intersection.y + 9} />
+              <line className="intersection-cross" x1={intersection.x - 9} y1={intersection.y + 9} x2={intersection.x + 9} y2={intersection.y - 9} />
             </g>
           ))}
 
@@ -239,30 +412,37 @@ export function GeometryCanvas() {
         {objects.filter(isCircle).map((circle) => (
           <CircleElement
             circle={circle}
+            animated={animatedObjectId === circle.id}
             highlighted={highlightedIds.has(circle.id)}
-            key={circle.id}
+            key={highlightedIds.has(circle.id) ? `${circle.id}-${replayAnimationKey}` : circle.id}
             objects={objects}
+            replaying={phase === "logicReplay" && highlightedIds.has(circle.id)}
           />
         ))}
 
         {objects.filter(isSegment).map((segment) => (
           <SegmentElement
+            animated={animatedObjectId === segment.id}
             highlighted={highlightedIds.has(segment.id)}
-            key={segment.id}
+            key={highlightedIds.has(segment.id) ? `${segment.id}-${replayAnimationKey}` : segment.id}
             objects={objects}
             segment={segment}
             selected={selectedIds.has(segment.p1) && selectedIds.has(segment.p2)}
+            replaying={phase === "logicReplay" && highlightedIds.has(segment.id)}
           />
         ))}
 
         {objects.filter(isPoint).map((point) => (
           <PointElement
+            animated={animatedObjectId === point.id}
             highlighted={highlightedIds.has(point.id)}
             key={point.id}
             point={point}
             selected={selectedIds.has(point.id)}
           />
         ))}
+
+        {dragPreview && <DragPreviewElement preview={dragPreview} objects={objects} />}
       </svg>
     </section>
   );

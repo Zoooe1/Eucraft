@@ -544,6 +544,7 @@ blockquote {
   height: 100%;
   min-height: 560px;
   cursor: crosshair;
+  touch-action: none;
 }
 
 .geometry-canvas.is-readonly {
@@ -561,6 +562,22 @@ blockquote {
     stroke-width 180ms ease,
     opacity 180ms ease,
     filter 180ms ease;
+}
+
+.svg-segment.draw-in,
+.svg-circle.draw-in {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: drawStroke 720ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.svg-segment.replay-draw,
+.svg-circle.replay-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation:
+    drawStroke 760ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards,
+    proofGlow 1500ms ease-in-out forwards;
 }
 
 .svg-segment.highlighted,
@@ -594,21 +611,54 @@ blockquote {
     stroke 160ms ease;
 }
 
+.svg-point.point-pop circle {
+  transform-origin: center;
+  animation: pointPop 420ms ease-out both;
+}
+
 .intersection-target {
   pointer-events: none;
 }
 
-.intersection-halo {
-  fill: none;
+.intersection-cross {
   stroke: #d69c24;
-  stroke-width: 2;
-  opacity: 0.5;
+  stroke-width: 3;
+  opacity: 0.78;
+  stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
-.intersection-ghost {
-  fill: #d69c24;
-  opacity: 0.75;
+.tool-preview {
+  pointer-events: none;
+}
+
+.preview-circle,
+.preview-segment,
+.preview-radius {
+  fill: none;
+  stroke: #8f5616;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.preview-circle,
+.preview-segment {
+  stroke-width: 3;
+  stroke-dasharray: 8 8;
+  opacity: 0.64;
+}
+
+.preview-radius {
+  stroke-width: 1.5;
+  stroke-dasharray: 4 6;
+  opacity: 0.42;
+}
+
+.preview-anchor {
+  fill: #fff4df;
+  stroke: #8f5616;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .triangle-wash {
@@ -649,6 +699,38 @@ blockquote {
   }
   to {
     opacity: 0.16;
+  }
+}
+
+@keyframes drawStroke {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes proofGlow {
+  0% {
+    filter: url("#soft-glow");
+  }
+  100% {
+    filter: url("#soft-glow");
+  }
+}
+
+@keyframes pointPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
