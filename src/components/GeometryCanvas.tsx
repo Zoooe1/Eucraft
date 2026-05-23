@@ -5,7 +5,7 @@ import { circleRadius, findNearbyPoint, getPoint, isCircle, isPoint, isSegment }
 import { book1Prop1 } from "../propositions/book1prop1";
 import { useGeometryStore } from "../state/useGeometryStore";
 
-const VIEW_BOX = { width: 760, height: 620 };
+const VIEW_BOX = { minX: -120, minY: 0, width: 1000, height: 660 };
 const DRAG_THRESHOLD = 5;
 
 const geometryColor: Record<string, string> = {
@@ -128,7 +128,7 @@ function CircleElement({
     return null;
   }
 
-  const drawLength = 2 * Math.PI * radius + 2;
+  const drawLength = 2 * Math.PI * radius * 1.04;
   const drawStyle: DrawStyle = { "--draw-length": `${drawLength}` };
 
   return (
@@ -297,8 +297,8 @@ export function GeometryCanvas() {
 
     const rect = svg.getBoundingClientRect();
     return {
-      x: ((event.clientX - rect.left) / rect.width) * VIEW_BOX.width,
-      y: ((event.clientY - rect.top) / rect.height) * VIEW_BOX.height,
+      x: VIEW_BOX.minX + ((event.clientX - rect.left) / rect.width) * VIEW_BOX.width,
+      y: VIEW_BOX.minY + ((event.clientY - rect.top) / rect.height) * VIEW_BOX.height,
     };
   };
 
@@ -381,7 +381,7 @@ export function GeometryCanvas() {
         ]
           .filter(Boolean)
           .join(" ")}
-        viewBox={`0 0 ${VIEW_BOX.width} ${VIEW_BOX.height}`}
+        viewBox={`${VIEW_BOX.minX} ${VIEW_BOX.minY} ${VIEW_BOX.width} ${VIEW_BOX.height}`}
         role="img"
         aria-label="A geometric construction of Proposition I.1"
         onPointerDown={onPointerDown}
@@ -403,7 +403,7 @@ export function GeometryCanvas() {
           </pattern>
         </defs>
 
-        <rect width={VIEW_BOX.width} height={VIEW_BOX.height} fill="url(#paper-grain)" />
+        <rect x={VIEW_BOX.minX} y={VIEW_BOX.minY} width={VIEW_BOX.width} height={VIEW_BOX.height} fill="url(#paper-grain)" />
 
         {phase === "construction" &&
           (selectedTool === "intersection" || selectedTool === "straightedge") &&
