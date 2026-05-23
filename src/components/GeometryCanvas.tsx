@@ -406,7 +406,7 @@ export function GeometryCanvas() {
         <rect x={VIEW_BOX.minX} y={VIEW_BOX.minY} width={VIEW_BOX.width} height={VIEW_BOX.height} fill="url(#paper-grain)" />
 
         {phase === "construction" &&
-          (selectedTool === "intersection" || selectedTool === "straightedge") &&
+          selectedTool === "intersection" &&
           availableIntersections.map((intersection) => (
             <g
               className="intersection-target"

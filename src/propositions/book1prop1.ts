@@ -71,37 +71,37 @@ export const book1Prop1: Proposition = {
     {
       id: "circle-a",
       highlight: ["circleA", "segmentAB", "pointA", "pointB"],
-      text: "Let a circle with center A and radius AB have been drawn. This uses Postulate 3.",
+      text: "Draw circle BCD with center A and radius AB. [Post. 3]",
     },
     {
       id: "circle-b",
       highlight: ["circleB", "segmentAB", "pointA", "pointB"],
-      text: "Again, let a circle with center B and radius BA have been drawn. This also uses Postulate 3.",
+      text: "Draw circle ACE with center B and radius BA. [Post. 3]",
     },
     {
       id: "join-c",
       highlight: ["circleA", "circleB", "segmentAC", "segmentBC", "pointA", "pointB", "pointC"],
-      text: "From the point C where the circles cut one another, join the straight-lines CA and CB to A and B. This uses Postulate 1.",
+      text: "Let C be where the circles cut. Join CA and CB. [Post. 1]",
     },
     {
       id: "radius-a",
       highlight: ["circleA", "segmentAC", "segmentAB", "pointA", "pointB", "pointC"],
-      text: "Since A is the center of the circle through C and B, AC is equal to AB by Definition 1.15.",
+      text: "A is center of circle CDB; therefore AC = AB. [Def. 1.15]",
     },
     {
       id: "radius-b",
       highlight: ["circleB", "segmentBC", "segmentAB", "pointA", "pointB", "pointC"],
-      text: "Since B is the center of the circle through C and A, BC is equal to BA by Definition 1.15.",
+      text: "B is center of circle CAE; therefore BC = BA. [Def. 1.15]",
     },
     {
       id: "equality-transfer",
       highlight: ["segmentAB", "segmentAC", "segmentBC", "pointA", "pointB", "pointC"],
-      text: "CA and CB are each equal to AB, and things equal to the same thing are equal to one another by Common Notion 1.",
+      text: "CA and CB are each equal to AB; equals to the same are equal. [C.N. 1]",
     },
     {
       id: "euclidean-reveal",
       highlight: ["triangleABC", "segmentAB", "segmentAC", "segmentBC"],
-      text: "Thus CA, AB, and BC are equal to one another. Therefore triangle ABC is equilateral and has been constructed on AB.",
+      text: "Thus CA = AB = BC. Triangle ABC is equilateral on AB.",
     },
   ],
 };
