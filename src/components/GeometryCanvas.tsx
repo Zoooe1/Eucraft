@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Circle, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
 import { allCircleIntersections } from "../geometry/intersections";
 import { circleRadius, findNearbyPoint, getPoint, isCircle, isPoint, isSegment } from "../geometry/operations";
@@ -14,6 +14,10 @@ const geometryColor: Record<string, string> = {
   gold: "#c9971a",
   black: "#2b251f",
   ink: "#2b251f",
+};
+
+type DrawStyle = CSSProperties & {
+  "--draw-length"?: string;
 };
 
 function colorFor(object: GeometryObject) {
@@ -73,6 +77,9 @@ function SegmentElement({
     return null;
   }
 
+  const drawLength = Math.hypot(p1.x - p2.x, p1.y - p2.y) + 2;
+  const drawStyle: DrawStyle = { "--draw-length": `${drawLength}` };
+
   return (
     <>
       <line
@@ -88,7 +95,7 @@ function SegmentElement({
         y1={p1.y}
         x2={p2.x}
         y2={p2.y}
-        pathLength={1}
+        style={drawStyle}
         stroke={selected ? "#16120e" : colorFor(segment)}
         strokeWidth={highlighted ? 7 : segment.given ? 4 : 3}
         strokeLinecap="round"
@@ -121,6 +128,9 @@ function CircleElement({
     return null;
   }
 
+  const drawLength = 2 * Math.PI * radius + 2;
+  const drawStyle: DrawStyle = { "--draw-length": `${drawLength}` };
+
   return (
     <circle
       className={[
@@ -134,7 +144,7 @@ function CircleElement({
       cx={center.x}
       cy={center.y}
       r={radius}
-      pathLength={1}
+      style={drawStyle}
       fill="none"
       stroke={colorFor(circle)}
       strokeWidth={highlighted ? 4 : 2}
