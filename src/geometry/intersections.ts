@@ -1,10 +1,10 @@
-import type { Circle, GeometryObject, Point } from "./types";
-import { allCircles, circleRadius, distance, getPoint } from "./operations";
+import type { Circle, GeometryObject, Point, Segment } from "./types";
+import { allCircles, allSegments, circleRadius, distance, getPoint } from "./operations";
 
 export type CircleIntersection = {
   x: number;
   y: number;
-  circles: [Circle, Circle];
+  objects: [Circle, Circle] | [Circle, Segment];
 };
 
 export function circleCircleIntersections(
@@ -39,22 +39,74 @@ export function circleCircleIntersections(
   const ry = ((c2.x - c1.x) * h) / d;
 
   if (h === 0) {
-    return [{ x: px, y: py, circles: [circle1, circle2] }];
+    return [{ x: px, y: py, objects: [circle1, circle2] }];
   }
 
   return [
-    { x: px + rx, y: py + ry, circles: [circle1, circle2] },
-    { x: px - rx, y: py - ry, circles: [circle1, circle2] },
+    { x: px + rx, y: py + ry, objects: [circle1, circle2] },
+    { x: px - rx, y: py - ry, objects: [circle1, circle2] },
+  ];
+}
+
+export function circleLineIntersections(
+  circle: Circle,
+  segment: Segment,
+  objects: GeometryObject[],
+): CircleIntersection[] {
+  const center = getPoint(objects, circle.center);
+  const p1 = getPoint(objects, segment.p1);
+  const p2 = getPoint(objects, segment.p2);
+  if (!center || !p1 || !p2) {
+    return [];
+  }
+
+  const radius = circleRadius(circle, objects);
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const lineLengthSquared = dx * dx + dy * dy;
+  if (lineLengthSquared === 0 || radius === 0) {
+    return [];
+  }
+
+  const fx = p1.x - center.x;
+  const fy = p1.y - center.y;
+  const a = lineLengthSquared;
+  const b = 2 * (fx * dx + fy * dy);
+  const c = fx * fx + fy * fy - radius * radius;
+  const discriminant = b * b - 4 * a * c;
+
+  if (discriminant < -0.001) {
+    return [];
+  }
+
+  if (Math.abs(discriminant) <= 0.001) {
+    const t = -b / (2 * a);
+    return [{ x: p1.x + t * dx, y: p1.y + t * dy, objects: [circle, segment] }];
+  }
+
+  const root = Math.sqrt(Math.max(discriminant, 0));
+  const t1 = (-b + root) / (2 * a);
+  const t2 = (-b - root) / (2 * a);
+  return [
+    { x: p1.x + t1 * dx, y: p1.y + t1 * dy, objects: [circle, segment] },
+    { x: p1.x + t2 * dx, y: p1.y + t2 * dy, objects: [circle, segment] },
   ];
 }
 
 export function allCircleIntersections(objects: GeometryObject[]): CircleIntersection[] {
   const circles = allCircles(objects);
+  const segments = allSegments(objects);
   const intersections: CircleIntersection[] = [];
 
   for (let i = 0; i < circles.length; i += 1) {
     for (let j = i + 1; j < circles.length; j += 1) {
       intersections.push(...circleCircleIntersections(circles[i], circles[j], objects));
+    }
+  }
+
+  for (const circle of circles) {
+    for (const segment of segments) {
+      intersections.push(...circleLineIntersections(circle, segment, objects));
     }
   }
 

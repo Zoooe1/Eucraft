@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Circle, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
 import { circleRadius, findNearbyPoint, getPoint, isCircle, isPoint, isSegment } from "../geometry/operations";
-import { book1Prop1 } from "../propositions/book1prop1";
+import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 const VIEW_BOX = { minX: -120, minY: 0, width: 1000, height: 660 };
@@ -33,6 +33,7 @@ type DragPreview = {
   start: CanvasPoint;
   current: CanvasPoint;
   startPoint: Point;
+  startPointId: string | null;
   hasMoved: boolean;
 };
 
@@ -43,14 +44,10 @@ function highlightIdsFromContext(highlights: ProofHighlight[], context: ReturnTy
 
   const ids = new Set<string>();
   for (const highlight of highlights) {
-    if (highlight === "pointA") ids.add(context.A);
-    if (highlight === "pointB") ids.add(context.B);
-    if (highlight === "pointC") ids.add(context.C);
-    if (highlight === "segmentAB") ids.add(context.segmentAB);
-    if (highlight === "segmentAC") ids.add(context.segmentAC);
-    if (highlight === "segmentBC") ids.add(context.segmentBC);
-    if (highlight === "circleA" && context.circleA) ids.add(context.circleA);
-    if (highlight === "circleB" && context.circleB) ids.add(context.circleB);
+    const id = context[highlight];
+    if (id) {
+      ids.add(id);
+    }
   }
   return ids;
 }
@@ -164,17 +161,17 @@ function PointElement({
 }) {
   return (
     <g
-      className={["svg-point", highlighted ? "highlighted" : "", animated ? "point-pop" : ""]
+      className={["svg-point", point.auxiliary ? "auxiliary" : "", highlighted ? "highlighted" : "", animated ? "point-pop" : ""]
         .filter(Boolean)
         .join(" ")}
     >
       <circle
         cx={point.x}
         cy={point.y}
-        r={selected ? 8 : highlighted ? 7 : 5}
-        fill={selected ? "#f6ead6" : colorFor(point)}
+        r={point.auxiliary ? 3 : selected ? 8 : highlighted ? 7 : 5}
+        fill={selected ? "#f6ead6" : point.auxiliary ? "#7d725f" : colorFor(point)}
         stroke={selected || highlighted ? "#2b251f" : "#f6ead6"}
-        strokeWidth={selected || highlighted ? 2 : 1}
+        strokeWidth={point.auxiliary ? 0 : selected || highlighted ? 2 : 1}
       />
       {point.label && (
         <text x={point.x + 12} y={point.y - 12}>
@@ -237,9 +234,9 @@ function TriangleHighlight({
     return null;
   }
 
-  const A = getPoint(objects, context.A);
-  const B = getPoint(objects, context.B);
-  const C = getPoint(objects, context.C);
+  const A = getPoint(objects, context.pointA ?? "");
+  const B = getPoint(objects, context.pointB ?? "");
+  const C = getPoint(objects, context.pointC ?? "");
   if (!A || !B || !C) {
     return null;
   }
@@ -258,6 +255,7 @@ export function GeometryCanvas() {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
   const phase = useGeometryStore((state) => state.phase);
+  const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
   const objects = useGeometryStore((state) => state.objects);
   const selectedTool = useGeometryStore((state) => state.selectedTool);
   const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
@@ -268,8 +266,9 @@ export function GeometryCanvas() {
   const currentReplayStep = useGeometryStore((state) => state.currentReplayStep);
 
   const selectedIds = useMemo(() => new Set(selectedPointIds), [selectedPointIds]);
+  const proposition = getProposition(currentPropositionId);
   const currentReplay =
-    phase === "logicReplay" || phase === "completed" ? book1Prop1.replaySteps[currentReplayStep] : null;
+    phase === "logicReplay" || phase === "completed" ? proposition.replaySteps[currentReplayStep] : null;
   const highlightedIds = useMemo(
     () => highlightIdsFromContext(currentReplay?.highlight ?? [], proofContext),
     [currentReplay?.highlight, proofContext],
@@ -299,15 +298,20 @@ export function GeometryCanvas() {
     event.currentTarget.setPointerCapture(event.pointerId);
     if (selectedTool === "compass" || selectedTool === "straightedge") {
       const startPoint = findNearbyPoint(objects, point.x, point.y);
-      if (startPoint) {
-        setDragPreview({
-          tool: selectedTool,
-          start: point,
-          current: point,
-          startPoint,
-          hasMoved: false,
-        });
-      }
+      setDragPreview({
+        tool: selectedTool,
+        start: point,
+        current: point,
+        startPoint: startPoint ?? {
+          id: "free-preview",
+          type: "point",
+          x: point.x,
+          y: point.y,
+          auxiliary: true,
+        },
+        startPointId: startPoint?.id ?? null,
+        hasMoved: false,
+      });
     }
   };
 
@@ -339,11 +343,11 @@ export function GeometryCanvas() {
       const moved =
         dragPreview.hasMoved ||
         Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD;
-      const startPointId = dragPreview.startPoint.id;
+      const startPointId = dragPreview.startPointId;
       setDragPreview(null);
 
       if (moved) {
-        handleCanvasDrag(startPointId, point.x, point.y);
+        handleCanvasDrag(startPointId, dragPreview.start.x, dragPreview.start.y, point.x, point.y);
         return;
       }
     }

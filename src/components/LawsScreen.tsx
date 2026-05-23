@@ -20,7 +20,7 @@ function LawsDiagram() {
 }
 
 export function LawsScreen() {
-  const enterProposition = useGeometryStore((state) => state.enterProposition);
+  const openProposition = useGeometryStore((state) => state.openProposition);
 
   return (
     <section className="screen-stage laws-screen">
@@ -47,7 +47,7 @@ export function LawsScreen() {
         ))}
       </div>
 
-      <button className="primary-button large-command" type="button" onClick={enterProposition}>
+      <button className="primary-button large-command" type="button" onClick={() => openProposition("I.1")}>
         Enter Proposition I.1
       </button>
     </section>

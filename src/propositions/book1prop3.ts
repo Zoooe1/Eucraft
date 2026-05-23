@@ -1,0 +1,110 @@
+import type { Proposition } from "../geometry/types";
+import { book1Prop1 } from "./book1prop1";
+
+// Proposition text follows the user-supplied Richard Fitzpatrick translation PDF.
+export const book1Prop3: Proposition = {
+  id: "I.3",
+  book: "Book I",
+  number: 3,
+  title: "Cut Off an Equal Straight-Line",
+  subtitle: "Build the Elements",
+  playerGoal: "Cut off from the greater straight-line AB a part equal to the lesser straight-line CD.",
+  originalStatement: "For two given unequal straight-lines, to cut off from the greater a straight-line equal to the lesser.",
+  instruction: "Use Proposition I.2 to place the lesser length at A, then cut that length from AB.",
+  initialObjects: [
+    {
+      id: "A",
+      type: "point",
+      x: 220,
+      y: 340,
+      label: "A",
+      fixed: true,
+      color: "red",
+    },
+    {
+      id: "B",
+      type: "point",
+      x: 700,
+      y: 340,
+      label: "B",
+      fixed: true,
+      color: "blue",
+    },
+    {
+      id: "C",
+      type: "point",
+      x: 260,
+      y: 160,
+      label: "C",
+      fixed: true,
+      color: "gold",
+    },
+    {
+      id: "D",
+      type: "point",
+      x: 410,
+      y: 160,
+      label: "D",
+      fixed: true,
+      color: "gold",
+    },
+    {
+      id: "AB",
+      type: "segment",
+      p1: "A",
+      p2: "B",
+      label: "AB",
+      color: "black",
+      given: true,
+    },
+    {
+      id: "CD",
+      type: "segment",
+      p1: "C",
+      p2: "D",
+      label: "CD",
+      color: "black",
+      given: true,
+    },
+  ],
+  allowedTools: ["select", "straightedge", "compass", "intersection"],
+  pointLabelSequence: ["P", "E", "F", "G", "H", "K", "L", "M", "N", "O", "Q", "R", "S", "T"],
+  lawSections: book1Prop1.lawSections,
+  replaySteps: [
+    {
+      id: "given",
+      highlight: ["segmentAB", "segmentCD", "pointA", "pointB", "pointC", "pointD"],
+      text: "Let AB and CD be the given unequal straight-lines, AB the greater.",
+    },
+    {
+      id: "place-copy",
+      highlight: ["segmentAP", "segmentCD", "pointA", "pointP"],
+      text: "Place AP at point A equal to the lesser straight-line CD. [Prop. I.2]",
+    },
+    {
+      id: "circle",
+      highlight: ["circleA", "segmentAP", "pointA", "pointP"],
+      text: "Draw circle with center A and radius AP. [Post. 3]",
+    },
+    {
+      id: "cut",
+      highlight: ["circleA", "segmentAB", "pointE"],
+      text: "Let E be where the circle cuts the greater straight-line AB.",
+    },
+    {
+      id: "radius",
+      highlight: ["circleA", "segmentAE", "segmentAP", "pointA", "pointE", "pointP"],
+      text: "Since A is center of the circle, AE = AP. [Def. 1.15]",
+    },
+    {
+      id: "common-notion",
+      highlight: ["segmentAE", "segmentAP", "segmentCD"],
+      text: "AP = CD, and AE = AP; therefore AE = CD. [C.N. 1]",
+    },
+    {
+      id: "conclusion",
+      highlight: ["segmentAE", "segmentAB", "segmentCD", "pointA", "pointE"],
+      text: "Thus AE, equal to the lesser CD, has been cut off from AB.",
+    },
+  ],
+};

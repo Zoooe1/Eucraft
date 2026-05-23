@@ -33,6 +33,10 @@ export function allPoints(objects: GeometryObject[]): Point[] {
   return objects.filter(isPoint);
 }
 
+export function allNamedPoints(objects: GeometryObject[]): Point[] {
+  return allPoints(objects).filter((point) => !point.auxiliary);
+}
+
 export function allSegments(objects: GeometryObject[]): Segment[] {
   return objects.filter(isSegment);
 }
@@ -96,17 +100,30 @@ export function circleExists(objects: GeometryObject[], center: string, through:
 
 export function createSegment(p1: string, p2: string, color?: string): Segment {
   const id = `segment-${p1}-${p2}-${crypto.randomUUID().slice(0, 6)}`;
-  return { id, type: "segment", p1, p2, label: `${p1}${p2}`, color };
+  const label = /^[A-Z]$/.test(p1) && /^[A-Z]$/.test(p2) ? `${p1}${p2}` : undefined;
+  return { id, type: "segment", p1, p2, label, color };
 }
 
 export function createCircle(center: string, through: string, color?: string): Circle {
   const id = `circle-${center}-${through}-${crypto.randomUUID().slice(0, 6)}`;
-  return { id, type: "circle", center, through, label: `${center}${through}`, color };
+  const label = /^[A-Z]$/.test(center) && /^[A-Z]$/.test(through) ? `${center}${through}` : undefined;
+  return { id, type: "circle", center, through, label, color };
 }
 
-export function nextPointLabel(objects: GeometryObject[]): string {
+export function createAuxiliaryPoint(x: number, y: number): Point {
+  return {
+    id: `point-${crypto.randomUUID().slice(0, 8)}`,
+    type: "point",
+    x,
+    y,
+    auxiliary: true,
+    color: "ink",
+  };
+}
+
+export function nextPointLabel(objects: GeometryObject[], sequence: Iterable<string> = "CDEFGHIJKLMNOPQRSTUVWXYZ"): string {
   const usedLabels = new Set(allPoints(objects).map((point) => point.label).filter(Boolean));
-  for (const label of "CDEFGHIJKLMNOPQRSTUVWXYZ") {
+  for (const label of sequence) {
     if (!usedLabels.has(label)) {
       return label;
     }

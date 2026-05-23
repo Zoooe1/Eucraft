@@ -10,6 +10,7 @@ export type Point = {
   label?: string;
   fixed?: boolean;
   color?: string;
+  auxiliary?: boolean;
 };
 
 export type Segment = {
@@ -35,16 +36,7 @@ export type GeometryObject = Point | Segment | Circle;
 
 export type GeometryObjects = GeometryObject[];
 
-export type ProofHighlight =
-  | "pointA"
-  | "pointB"
-  | "pointC"
-  | "segmentAB"
-  | "segmentAC"
-  | "segmentBC"
-  | "circleA"
-  | "circleB"
-  | "triangleABC";
+export type ProofHighlight = string;
 
 export type ReplayStep = {
   id: string;
@@ -71,18 +63,11 @@ export type Proposition = {
   allowedTools: GeometryTool[];
   lawSections: PropositionLawSection[];
   replaySteps: ReplayStep[];
+  pointLabelSequence?: string[];
+  nextPropositionId?: string;
 };
 
-export type ProofContext = {
-  A: string;
-  B: string;
-  C: string;
-  segmentAB: string;
-  segmentAC: string;
-  segmentBC: string;
-  circleA?: string;
-  circleB?: string;
-};
+export type ProofContext = Record<string, string | undefined>;
 
 export type ValidationResult = {
   success: boolean;

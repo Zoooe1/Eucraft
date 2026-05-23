@@ -10,12 +10,12 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   straightedge: {
     label: "Straightedge",
     mark: "╱",
-    hint: "Drag from one existing point to another to draw a segment.",
+    hint: "Drag between points, or into free space, to draw a straight-line segment.",
   },
   compass: {
     label: "Compass",
     mark: "○",
-    hint: "Drag from a center point to another point to set the radius.",
+    hint: "Drag from a center to any point or free position to set the radius.",
   },
   intersection: {
     label: "Intersection",
@@ -28,11 +28,11 @@ const toolOrder: GeometryTool[] = ["select", "straightedge", "compass", "interse
 
 function toolInstruction(tool: GeometryTool, selectedCount: number) {
   if (tool === "compass" && selectedCount === 1) {
-    return "Choose or drag to a point to set the radius.";
+    return "Choose a radius point, or drag freely to set the radius.";
   }
 
   if (tool === "straightedge" && selectedCount === 1) {
-    return "Choose or drag to another existing point.";
+    return "Choose another point, or drag freely to draw the segment.";
   }
 
   return toolLabels[tool].hint;

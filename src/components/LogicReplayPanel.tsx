@@ -1,15 +1,17 @@
 import { useEffect } from "react";
-import { book1Prop1 } from "../propositions/book1prop1";
+import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 export function LogicReplayPanel() {
   const phase = useGeometryStore((state) => state.phase);
+  const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
   const currentReplayStep = useGeometryStore((state) => state.currentReplayStep);
   const startLogicReplay = useGeometryStore((state) => state.startLogicReplay);
   const nextReplayStep = useGeometryStore((state) => state.nextReplayStep);
   const previousReplayStep = useGeometryStore((state) => state.previousReplayStep);
   const finishReplay = useGeometryStore((state) => state.finishReplay);
-  const isLastStep = currentReplayStep === book1Prop1.replaySteps.length - 1;
+  const proposition = getProposition(currentPropositionId);
+  const isLastStep = currentReplayStep === proposition.replaySteps.length - 1;
 
   useEffect(() => {
     if (phase !== "logicReplay" || isLastStep) {
@@ -40,7 +42,7 @@ export function LogicReplayPanel() {
     return null;
   }
 
-  const step = book1Prop1.replaySteps[currentReplayStep];
+  const step = proposition.replaySteps[currentReplayStep];
   const isFirstStep = currentReplayStep === 0;
 
   return (
@@ -48,12 +50,12 @@ export function LogicReplayPanel() {
       <div className="proof-meta">
         <span>Logic Replay</span>
         <span>
-          Auto-play · {currentReplayStep + 1} / {book1Prop1.replaySteps.length}
+          Auto-play · {currentReplayStep + 1} / {proposition.replaySteps.length}
         </span>
       </div>
       <p className="proof-text">{step.text}</p>
       <div className="proof-progress" aria-hidden="true">
-        {book1Prop1.replaySteps.map((replayStep, index) => (
+        {proposition.replaySteps.map((replayStep, index) => (
           <span className={index <= currentReplayStep ? "lit" : ""} key={replayStep.id} />
         ))}
       </div>

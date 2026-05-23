@@ -1,19 +1,42 @@
-import { book1Prop1 } from "../propositions/book1prop1";
+import { propositions } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 export function TitleScreen() {
   const startApp = useGeometryStore((state) => state.startApp);
+  const openProposition = useGeometryStore((state) => state.openProposition);
+  const unlockedPropositionIds = useGeometryStore((state) => state.unlockedPropositionIds);
+  const completedPropositionIds = useGeometryStore((state) => state.completedPropositionIds);
 
   return (
     <section className="screen-stage title-screen">
       <div className="title-copy">
         <p className="app-kicker">Interactive Euclid</p>
         <h1>Eucraft</h1>
-        <p className="subtitle">{book1Prop1.subtitle}.</p>
+        <p className="subtitle">Build the Elements.</p>
         <p className="screen-copy">Construct Euclid's propositions and watch them become proof.</p>
         <button className="primary-button large-command" type="button" onClick={startApp}>
           Begin
         </button>
+
+        <div className="proposition-shelf" aria-label="Unlocked propositions">
+          {propositions.map((proposition) => {
+            const unlocked = unlockedPropositionIds.includes(proposition.id);
+            const completed = completedPropositionIds.includes(proposition.id);
+            return (
+              <button
+                className={unlocked ? "proposition-card-button" : "proposition-card-button locked"}
+                disabled={!unlocked}
+                key={proposition.id}
+                onClick={() => openProposition(proposition.id)}
+                type="button"
+              >
+                <span>{proposition.id}</span>
+                <strong>{proposition.title}</strong>
+                <small>{completed ? "Completed" : unlocked ? "Unlocked" : "Locked"}</small>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <svg className="title-diagram" viewBox="0 0 560 500" role="img" aria-label="A Byrne-inspired geometric diagram">

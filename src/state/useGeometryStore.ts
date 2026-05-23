@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { AppPhase, GeometryObject, GeometryTool, Point, ProofContext, ValidationResult } from "../geometry/types";
 import {
   circleExists,
+  createAuxiliaryPoint,
   createCircle,
   createSegment,
   findNearbyPoint,
@@ -11,12 +12,15 @@ import {
   segmentExistsBetween,
 } from "../geometry/operations";
 import { findNearbyIntersection, pointNearCoordinates } from "../geometry/intersections";
-import { validateBook1Prop1 } from "../geometry/validation";
-import { book1Prop1 } from "../propositions/book1prop1";
+import { validateProposition } from "../geometry/validation";
+import { getProposition } from "../propositions";
 
 type GeometryStore = {
   phase: AppPhase;
   backgroundColor: string;
+  currentPropositionId: string;
+  unlockedPropositionIds: string[];
+  completedPropositionIds: string[];
   selectedTool: GeometryTool;
   selectedPointIds: string[];
   animatedObjectId: string | null;
@@ -27,11 +31,12 @@ type GeometryStore = {
   currentReplayStep: number;
   startApp: () => void;
   enterProposition: () => void;
+  openProposition: (id: string) => void;
   startConstruction: () => void;
   setBackgroundColor: (color: string) => void;
   setTool: (tool: GeometryTool) => void;
   handleCanvasClick: (x: number, y: number) => void;
-  handleCanvasDrag: (startPointId: string, endX: number, endY: number) => void;
+  handleCanvasDrag: (startPointId: string | null, startX: number, startY: number, endX: number, endY: number) => void;
   checkConstruction: () => void;
   startLogicReplay: () => void;
   nextReplayStep: () => void;
@@ -41,7 +46,40 @@ type GeometryStore = {
   undo: () => void;
 };
 
-const cloneInitialObjects = () => book1Prop1.initialObjects.map((object) => ({ ...object }));
+const PROGRESS_KEY = "eucraft-progress-v1";
+const FIRST_PROPOSITION_ID = "I.1";
+
+function readProgress() {
+  if (typeof window === "undefined") {
+    return { unlockedPropositionIds: [FIRST_PROPOSITION_ID], completedPropositionIds: [] };
+  }
+
+  try {
+    const progress = JSON.parse(window.localStorage.getItem(PROGRESS_KEY) ?? "{}") as {
+      unlockedPropositionIds?: string[];
+      completedPropositionIds?: string[];
+    };
+    return {
+      unlockedPropositionIds: Array.from(new Set([FIRST_PROPOSITION_ID, ...(progress.unlockedPropositionIds ?? [])])),
+      completedPropositionIds: progress.completedPropositionIds ?? [],
+    };
+  } catch {
+    return { unlockedPropositionIds: [FIRST_PROPOSITION_ID], completedPropositionIds: [] };
+  }
+}
+
+function writeProgress(unlockedPropositionIds: string[], completedPropositionIds: string[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(PROGRESS_KEY, JSON.stringify({ unlockedPropositionIds, completedPropositionIds }));
+}
+
+const initialProgress = readProgress();
+
+const cloneInitialObjects = (propositionId: string) =>
+  getProposition(propositionId).initialObjects.map((object) => ({ ...object }));
 
 function addObjectsWithHistory(state: GeometryStore, newObjects: GeometryObject[], animatedObjectId?: string) {
   return {
@@ -96,13 +134,28 @@ function constructBetweenPoints(state: GeometryStore, firstPointId: string, seco
     };
   }
 
-  const isFirstEuclidCircle = firstPointId === "A" && clickedPoint.id === "B";
-  const isSecondEuclidCircle = firstPointId === "B" && clickedPoint.id === "A";
+  const isFirstEuclidCircle = state.currentPropositionId === "I.1" && firstPointId === "A" && clickedPoint.id === "B";
+  const isSecondEuclidCircle = state.currentPropositionId === "I.1" && firstPointId === "B" && clickedPoint.id === "A";
   const circle = createCircle(firstPointId, clickedPoint.id, isFirstEuclidCircle ? "red" : isSecondEuclidCircle ? "blue" : "gold");
   return {
     ...addObjectWithHistory(state, circle),
     selectedPointIds: [],
   };
+}
+
+function resolveDragPoint(
+  objects: GeometryObject[],
+  pointId: string | null,
+  x: number,
+  y: number,
+): { point: Point; newPoint?: Point } {
+  const existing = pointId ? getPoint(objects, pointId) : findNearbyPoint(objects, x, y);
+  if (existing) {
+    return { point: existing };
+  }
+
+  const point = createAuxiliaryPoint(x, y);
+  return { point, newPoint: point };
 }
 
 function handlePointToolClick(state: GeometryStore, clickedPoint: Point, tool: GeometryTool) {
@@ -119,10 +172,13 @@ function handlePointToolClick(state: GeometryStore, clickedPoint: Point, tool: G
 export const useGeometryStore = create<GeometryStore>((set, get) => ({
   phase: "title",
   backgroundColor: "#efe3cf",
+  currentPropositionId: FIRST_PROPOSITION_ID,
+  unlockedPropositionIds: initialProgress.unlockedPropositionIds,
+  completedPropositionIds: initialProgress.completedPropositionIds,
   selectedTool: "compass",
   selectedPointIds: [],
   animatedObjectId: null,
-  objects: cloneInitialObjects(),
+  objects: cloneInitialObjects(FIRST_PROPOSITION_ID),
   history: [],
   validation: null,
   proofContext: null,
@@ -135,17 +191,36 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       animatedObjectId: null,
     }),
   enterProposition: () =>
-    set({
+    set((state) => ({
       phase: "intro",
       selectedTool: "compass",
       selectedPointIds: [],
-      objects: cloneInitialObjects(),
+      objects: cloneInitialObjects(state.currentPropositionId),
       history: [],
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
       animatedObjectId: null,
-    }),
+    })),
+  openProposition: (id) => {
+    const state = get();
+    if (!state.unlockedPropositionIds.includes(id)) {
+      return;
+    }
+
+    set({
+      phase: "intro",
+      currentPropositionId: id,
+      selectedTool: "compass",
+      selectedPointIds: [],
+      objects: cloneInitialObjects(id),
+      history: [],
+      validation: null,
+      proofContext: null,
+      currentReplayStep: 0,
+      animatedObjectId: null,
+    });
+  },
   startConstruction: () =>
     set({
       phase: "construction",
@@ -178,7 +253,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         set({
           validation: {
             success: false,
-            message: "No circle crossing is close enough. Click where the two circles cross.",
+            message: "No valid crossing is close enough. Click where a circle meets another circle or straight-line.",
           },
         });
         return;
@@ -192,6 +267,30 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       );
 
       if (existing) {
+        if (existing.auxiliary) {
+          const label = nextPointLabel(state.objects, getProposition(state.currentPropositionId).pointLabelSequence);
+          const point: Point = {
+            ...existing,
+            x: intersection.x,
+            y: intersection.y,
+            label,
+            color: "gold",
+            auxiliary: false,
+          };
+
+          set({
+            phase: "construction",
+            objects: state.objects.map((object) => (object.id === existing.id ? point : object)),
+            history: [...state.history, state.objects],
+            validation: null,
+            proofContext: null,
+            currentReplayStep: 0,
+            animatedObjectId: point.id,
+            selectedPointIds: [],
+          });
+          return;
+        }
+
         set({
           validation: {
             success: false,
@@ -201,7 +300,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      const label = nextPointLabel(state.objects);
+      const label = nextPointLabel(state.objects, getProposition(state.currentPropositionId).pointLabelSequence);
       const point: Point = {
         id: label,
         type: "point",
@@ -243,33 +342,72 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     set(handlePointToolClick(state, clickedPoint, state.selectedTool));
   },
-  handleCanvasDrag: (startPointId, endX, endY) => {
+  handleCanvasDrag: (startPointId, startX, startY, endX, endY) => {
     const state = get();
     if (state.phase !== "construction" || (state.selectedTool !== "compass" && state.selectedTool !== "straightedge")) {
       return;
     }
 
-    const startPoint = getPoint(state.objects, startPointId);
-    const endPoint = findNearbyPoint(state.objects, endX, endY);
+    const start = resolveDragPoint(state.objects, startPointId, startX, startY);
+    const objectsWithStart = start.newPoint ? [...state.objects, start.newPoint] : state.objects;
+    const end = resolveDragPoint(objectsWithStart, null, endX, endY);
+    const newPoints = [start.newPoint, end.newPoint].filter(Boolean) as Point[];
 
-    if (!startPoint || !endPoint) {
+    if (start.point.id === end.point.id || Math.hypot(start.point.x - end.point.x, start.point.y - end.point.y) < 2) {
       set({
         selectedPointIds: [],
         validation: {
           success: false,
-          message:
-            state.selectedTool === "compass"
-              ? "Drag from a center point and release on another point to set the radius."
-              : "Drag from one existing point and release on another point to draw the straightedge.",
+          message: "Drag far enough to give Euclid something to draw.",
         },
       });
       return;
     }
 
-    set(constructBetweenPoints(state, startPoint.id, endPoint.id, state.selectedTool));
+    const workingObjects = [...state.objects, ...newPoints];
+
+    if (state.selectedTool === "straightedge") {
+      if (segmentExistsBetween(workingObjects, start.point.id, end.point.id)) {
+        set({
+          selectedPointIds: [],
+          validation: {
+            success: false,
+            message: "That straight line is already drawn. Choose another pair of points.",
+          },
+        });
+        return;
+      }
+
+      const segment = createSegment(start.point.id, end.point.id, "ink");
+      set({
+        ...addObjectsWithHistory(state, [...newPoints, segment], segment.id),
+        selectedPointIds: [],
+      });
+      return;
+    }
+
+    if (circleExists(workingObjects, start.point.id, end.point.id)) {
+      set({
+        selectedPointIds: [],
+        validation: {
+          success: false,
+          message: "That circle is already on the page. Choose a new center or radius point.",
+        },
+      });
+      return;
+    }
+
+    const isFirstEuclidCircle = state.currentPropositionId === "I.1" && start.point.id === "A" && end.point.id === "B";
+    const isSecondEuclidCircle = state.currentPropositionId === "I.1" && start.point.id === "B" && end.point.id === "A";
+    const circle = createCircle(start.point.id, end.point.id, isFirstEuclidCircle ? "red" : isSecondEuclidCircle ? "blue" : "gold");
+    set({
+      ...addObjectsWithHistory(state, [...newPoints, circle], circle.id),
+      selectedPointIds: [],
+    });
   },
   checkConstruction: () => {
-    const result = validateBook1Prop1(get().objects);
+    const state = get();
+    const result = validateProposition(state.currentPropositionId, state.objects);
     set({
       validation: result,
       proofContext: result.context ?? null,
@@ -288,31 +426,45 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     })),
   nextReplayStep: () =>
     set((state) => ({
-      currentReplayStep: Math.min(state.currentReplayStep + 1, book1Prop1.replaySteps.length - 1),
+      currentReplayStep: Math.min(
+        state.currentReplayStep + 1,
+        getProposition(state.currentPropositionId).replaySteps.length - 1,
+      ),
     })),
   previousReplayStep: () =>
     set((state) => ({
       currentReplayStep: Math.max(state.currentReplayStep - 1, 0),
     })),
   finishReplay: () =>
-    set({
-      phase: "completed",
-      currentReplayStep: book1Prop1.replaySteps.length - 1,
-      selectedPointIds: [],
-      animatedObjectId: null,
+    set((state) => {
+      const proposition = getProposition(state.currentPropositionId);
+      const completedPropositionIds = Array.from(new Set([...state.completedPropositionIds, state.currentPropositionId]));
+      const unlockedPropositionIds = Array.from(
+        new Set([...state.unlockedPropositionIds, ...(proposition.nextPropositionId ? [proposition.nextPropositionId] : [])]),
+      );
+      writeProgress(unlockedPropositionIds, completedPropositionIds);
+
+      return {
+        phase: "completed",
+        currentReplayStep: proposition.replaySteps.length - 1,
+        selectedPointIds: [],
+        animatedObjectId: null,
+        unlockedPropositionIds,
+        completedPropositionIds,
+      };
     }),
   resetProposition: () =>
-    set({
+    set((state) => ({
       phase: "intro",
       selectedTool: "compass",
       selectedPointIds: [],
-      objects: cloneInitialObjects(),
+      objects: cloneInitialObjects(state.currentPropositionId),
       history: [],
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
       animatedObjectId: null,
-    }),
+    })),
   undo: () =>
     set((state) => {
       const previous = state.history[state.history.length - 1];

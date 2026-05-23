@@ -1,11 +1,17 @@
 import type { GeometryObject, ValidationResult } from "./types";
 import {
-  allPoints,
+  allNamedPoints,
   arePointsCollinear,
+  distance,
   getPoint,
   segmentExistsBetween,
 } from "./operations";
-import { circleUsingBase, resolveBook1Prop1Context } from "./objectResolution";
+import {
+  circleUsingBase,
+  resolveBook1Prop1Context,
+  resolveBook1Prop2Context,
+  resolveBook1Prop3Context,
+} from "./objectResolution";
 
 const A_ID = "A";
 const B_ID = "B";
@@ -22,7 +28,7 @@ export function validateBook1Prop1(objects: GeometryObject[]): ValidationResult 
     };
   }
 
-  const candidatePoints = allPoints(objects).filter((point) => point.id !== A_ID && point.id !== B_ID);
+  const candidatePoints = allNamedPoints(objects).filter((point) => point.id !== A_ID && point.id !== B_ID);
   const circleA = circleUsingBase(objects, A_ID, B_ID);
   const circleB = circleUsingBase(objects, B_ID, A_ID);
   const context = resolveBook1Prop1Context(objects);
@@ -87,4 +93,89 @@ export function validateBook1Prop1(objects: GeometryObject[]): ValidationResult 
     success: false,
     message: "The three sides are not equal yet. Check that your circles use AB as their radius.",
   };
+}
+
+export function validateBook1Prop2(objects: GeometryObject[]): ValidationResult {
+  const A = getPoint(objects, "A");
+  const B = getPoint(objects, "B");
+  const C = getPoint(objects, "C");
+  const segmentBC = segmentExistsBetween(objects, "B", "C");
+
+  if (!A || !B || !C || !segmentBC) {
+    return {
+      success: false,
+      message: "The given point A and given straight-line BC are missing. Reset this proposition.",
+    };
+  }
+
+  const context = resolveBook1Prop2Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. A straight-line equal to BC has been placed at A.",
+      context,
+    };
+  }
+
+  const hasSegmentFromA = objects.some((object) => object.type === "segment" && (object.p1 === "A" || object.p2 === "A"));
+  if (!hasSegmentFromA) {
+    return {
+      success: false,
+      message: "Begin at A. Place the straight-line from A whose length will match BC.",
+    };
+  }
+
+  return {
+    success: false,
+    message: "The line placed at A is not equal to BC yet. Use the Prop. I.2 circle construction, then check again.",
+  };
+}
+
+export function validateBook1Prop3(objects: GeometryObject[]): ValidationResult {
+  const A = getPoint(objects, "A");
+  const B = getPoint(objects, "B");
+  const C = getPoint(objects, "C");
+  const D = getPoint(objects, "D");
+  const segmentAB = segmentExistsBetween(objects, "A", "B");
+  const segmentCD = segmentExistsBetween(objects, "C", "D");
+
+  if (!A || !B || !C || !D || !segmentAB || !segmentCD) {
+    return {
+      success: false,
+      message: "The given unequal straight-lines AB and CD are missing. Reset this proposition.",
+    };
+  }
+
+  if (distance(A, B) <= distance(C, D)) {
+    return {
+      success: false,
+      message: "AB must be the greater straight-line. Reset this proposition to restore the given lines.",
+    };
+  }
+
+  const context = resolveBook1Prop3Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. A part equal to CD has been cut off from AB.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Mark a point on AB and draw from A to it so that the cut-off part equals CD.",
+  };
+}
+
+export function validateProposition(propositionId: string, objects: GeometryObject[]): ValidationResult {
+  if (propositionId === "I.2") {
+    return validateBook1Prop2(objects);
+  }
+
+  if (propositionId === "I.3") {
+    return validateBook1Prop3(objects);
+  }
+
+  return validateBook1Prop1(objects);
 }

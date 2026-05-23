@@ -40,6 +40,8 @@ export const book1Prop1: Proposition = {
     },
   ],
   allowedTools: ["select", "straightedge", "compass", "intersection"],
+  pointLabelSequence: ["C", "D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"],
+  nextPropositionId: "I.2",
   lawSections: [
     {
       title: "POSTULATES.",

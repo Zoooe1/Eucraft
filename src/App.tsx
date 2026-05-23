@@ -7,13 +7,15 @@ import { PropositionIntro } from "./components/PropositionIntro";
 import { TitleScreen } from "./components/TitleScreen";
 import { ToolPanel } from "./components/ToolPanel";
 import { ValidationMessage } from "./components/ValidationMessage";
-import { book1Prop1 } from "./propositions/book1prop1";
+import { getProposition } from "./propositions";
 import { useGeometryStore } from "./state/useGeometryStore";
 
 export default function App() {
   const phase = useGeometryStore((state) => state.phase);
   const backgroundColor = useGeometryStore((state) => state.backgroundColor);
   const validation = useGeometryStore((state) => state.validation);
+  const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
+  const proposition = getProposition(currentPropositionId);
 
   if (phase === "title") {
     return (
@@ -41,11 +43,11 @@ export default function App() {
             <header className="proposition-header">
               <p className="app-kicker">Eucraft</p>
               <p className="prop-label">
-                {book1Prop1.book}, Proposition {book1Prop1.number}
+                {proposition.book}, Proposition {proposition.number}
               </p>
-              <h1>{book1Prop1.title}</h1>
-              <p className="challenge-goal">{book1Prop1.playerGoal}</p>
-              <blockquote>{book1Prop1.originalStatement}</blockquote>
+              <h1>{proposition.title}</h1>
+              <p className="challenge-goal">{proposition.playerGoal}</p>
+              <blockquote>{proposition.originalStatement}</blockquote>
             </header>
 
             {phase === "construction" && <ToolPanel />}

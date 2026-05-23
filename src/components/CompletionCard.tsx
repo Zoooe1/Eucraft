@@ -1,18 +1,22 @@
-import { book1Prop1 } from "../propositions/book1prop1";
+import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 export function CompletionCard() {
   const objectCount = useGeometryStore((state) => state.objects.length);
+  const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
   const startLogicReplay = useGeometryStore((state) => state.startLogicReplay);
   const resetProposition = useGeometryStore((state) => state.resetProposition);
+  const openProposition = useGeometryStore((state) => state.openProposition);
+  const proposition = getProposition(currentPropositionId);
+  const nextProposition = proposition.nextPropositionId ? getProposition(proposition.nextPropositionId) : null;
 
   return (
     <section className="completion-card">
       <p className="panel-label">Proposition unlocked</p>
       <h2>
-        {book1Prop1.book}, Proposition {book1Prop1.number}
+        {proposition.book}, Proposition {proposition.number}
       </h2>
-      <h3>{book1Prop1.title}</h3>
+      <h3>{proposition.title}</h3>
 
       <svg className="completion-diagram" viewBox="0 0 220 150" aria-hidden="true">
         <circle cx="82" cy="94" r="58" />
@@ -33,9 +37,15 @@ export function CompletionCard() {
         <button className="quiet-button" type="button" onClick={startLogicReplay}>
           Replay Logic Again
         </button>
-        <button className="primary-button" type="button" onClick={resetProposition}>
-          Reset Proposition
-        </button>
+        {nextProposition ? (
+          <button className="primary-button" type="button" onClick={() => openProposition(nextProposition.id)}>
+            Next: {nextProposition.id}
+          </button>
+        ) : (
+          <button className="primary-button" type="button" onClick={resetProposition}>
+            Reset Proposition
+          </button>
+        )}
       </div>
     </section>
   );
