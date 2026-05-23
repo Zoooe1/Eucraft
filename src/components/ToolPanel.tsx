@@ -10,7 +10,7 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   straightedge: {
     label: "Straightedge",
     mark: "╱",
-    hint: "Drag between points, or into free space, to draw a straight-line segment.",
+    hint: "Drag between points, or drag through a point to produce a straight-line.",
   },
   compass: {
     label: "Compass",
@@ -20,7 +20,7 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   intersection: {
     label: "Intersection",
     mark: "×",
-    hint: "Click the circle crossing you want to turn into a point.",
+    hint: "Move near a crossing, then click when the gold snap dot appears.",
   },
 };
 
@@ -32,7 +32,7 @@ function toolInstruction(tool: GeometryTool, selectedCount: number) {
   }
 
   if (tool === "straightedge" && selectedCount === 1) {
-    return "Choose another point, or drag freely to draw the segment.";
+    return "Choose another point, or drag through a point to produce the line.";
   }
 
   return toolLabels[tool].hint;

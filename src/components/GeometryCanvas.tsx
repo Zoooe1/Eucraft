@@ -1,6 +1,16 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Circle, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
-import { circleRadius, findNearbyPoint, getPoint, isCircle, isPoint, isSegment } from "../geometry/operations";
+import { findNearbyIntersection } from "../geometry/intersections";
+import {
+  circleRadius,
+  findNearbyPoint,
+  getPoint,
+  INTERSECTION_TOLERANCE,
+  isCircle,
+  isPoint,
+  isSegment,
+  snapToPointRay,
+} from "../geometry/operations";
 import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
@@ -184,7 +194,11 @@ function PointElement({
 
 function DragPreviewElement({ preview, objects }: { preview: DragPreview; objects: GeometryObject[] }) {
   const snappedPoint = findNearbyPoint(objects, preview.current.x, preview.current.y);
-  const end = snappedPoint ?? preview.current;
+  const guidedEnd =
+    preview.tool === "straightedge" && !snappedPoint
+      ? snapToPointRay(objects, preview.startPoint, preview.current.x, preview.current.y)
+      : undefined;
+  const end = snappedPoint ?? guidedEnd ?? preview.current;
 
   if (preview.tool === "compass") {
     const radius = Math.hypot(preview.startPoint.x - end.x, preview.startPoint.y - end.y);
@@ -219,6 +233,16 @@ function DragPreviewElement({ preview, objects }: { preview: DragPreview; object
         y2={end.y}
       />
       <circle className="preview-anchor" cx={preview.startPoint.x} cy={preview.startPoint.y} r="6" />
+      {guidedEnd && <circle className="preview-guide" cx={guidedEnd.guide.x} cy={guidedEnd.guide.y} r="9" />}
+    </g>
+  );
+}
+
+function IntersectionPreviewElement({ point }: { point: CanvasPoint }) {
+  return (
+    <g className="intersection-snap-preview" aria-hidden="true">
+      <circle cx={point.x} cy={point.y} r="18" />
+      <circle cx={point.x} cy={point.y} r="6" />
     </g>
   );
 }
@@ -254,6 +278,7 @@ function TriangleHighlight({
 export function GeometryCanvas() {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
+  const [intersectionPreview, setIntersectionPreview] = useState<CanvasPoint | null>(null);
   const phase = useGeometryStore((state) => state.phase);
   const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
   const objects = useGeometryStore((state) => state.objects);
@@ -295,6 +320,7 @@ export function GeometryCanvas() {
       return;
     }
 
+    setIntersectionPreview(null);
     event.currentTarget.setPointerCapture(event.pointerId);
     if (selectedTool === "compass" || selectedTool === "straightedge") {
       const startPoint = findNearbyPoint(objects, point.x, point.y);
@@ -317,7 +343,17 @@ export function GeometryCanvas() {
 
   const onPointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
     const point = eventToCanvasPoint(event);
-    if (!point || !dragPreview) {
+    if (!point) {
+      return;
+    }
+
+    if (!dragPreview && selectedTool === "intersection" && phase === "construction") {
+      const intersection = findNearbyIntersection(objects, point.x, point.y, INTERSECTION_TOLERANCE);
+      setIntersectionPreview(intersection ? { x: intersection.x, y: intersection.y } : null);
+      return;
+    }
+
+    if (!dragPreview) {
       return;
     }
 
@@ -345,6 +381,7 @@ export function GeometryCanvas() {
         Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD;
       const startPointId = dragPreview.startPointId;
       setDragPreview(null);
+      setIntersectionPreview(null);
 
       if (moved) {
         handleCanvasDrag(startPointId, dragPreview.start.x, dragPreview.start.y, point.x, point.y);
@@ -352,6 +389,7 @@ export function GeometryCanvas() {
       }
     }
 
+    setIntersectionPreview(null);
     handleCanvasClick(point.x, point.y);
   };
 
@@ -360,6 +398,7 @@ export function GeometryCanvas() {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     setDragPreview(null);
+    setIntersectionPreview(null);
   };
 
   return (
@@ -375,7 +414,7 @@ export function GeometryCanvas() {
           .join(" ")}
         viewBox={`${VIEW_BOX.minX} ${VIEW_BOX.minY} ${VIEW_BOX.width} ${VIEW_BOX.height}`}
         role="img"
-        aria-label="A geometric construction of Proposition I.1"
+        aria-label={`A geometric construction of Proposition ${proposition.id}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -432,6 +471,7 @@ export function GeometryCanvas() {
           />
         ))}
 
+        {selectedTool === "intersection" && intersectionPreview && <IntersectionPreviewElement point={intersectionPreview} />}
         {dragPreview && <DragPreviewElement preview={dragPreview} objects={objects} />}
       </svg>
     </section>

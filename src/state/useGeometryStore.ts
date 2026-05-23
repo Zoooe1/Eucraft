@@ -10,6 +10,7 @@ import {
   INTERSECTION_TOLERANCE,
   nextPointLabel,
   segmentExistsBetween,
+  snapToPointRay,
 } from "../geometry/operations";
 import { findNearbyIntersection, pointNearCoordinates } from "../geometry/intersections";
 import { validateProposition } from "../geometry/validation";
@@ -350,7 +351,9 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     const start = resolveDragPoint(state.objects, startPointId, startX, startY);
     const objectsWithStart = start.newPoint ? [...state.objects, start.newPoint] : state.objects;
-    const end = resolveDragPoint(objectsWithStart, null, endX, endY);
+    const guidedEnd =
+      state.selectedTool === "straightedge" ? snapToPointRay(objectsWithStart, start.point, endX, endY) : undefined;
+    const end = resolveDragPoint(objectsWithStart, null, guidedEnd?.x ?? endX, guidedEnd?.y ?? endY);
     const newPoints = [start.newPoint, end.newPoint].filter(Boolean) as Point[];
 
     if (start.point.id === end.point.id || Math.hypot(start.point.x - end.point.x, start.point.y - end.point.y) < 2) {

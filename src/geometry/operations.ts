@@ -1,9 +1,10 @@
 import type { Circle, GeometryObject, Point, Segment } from "./types";
 
-export const POINT_TOLERANCE = 14;
-export const INTERSECTION_TOLERANCE = 40;
+export const POINT_TOLERANCE = 20;
+export const INTERSECTION_TOLERANCE = 76;
 export const EQUALITY_TOLERANCE = 5;
 export const COLLINEAR_TOLERANCE = 0.015;
+export const STRAIGHTEDGE_GUIDE_TOLERANCE = 22;
 
 export function isPoint(object: GeometryObject): object is Point {
   return object.type === "point";
@@ -86,6 +87,55 @@ export function findNearbyPoint(
     .map((point) => ({ point, d: Math.hypot(point.x - x, point.y - y) }))
     .filter(({ d }) => d <= tolerance)
     .sort((a, b) => a.d - b.d)[0]?.point;
+}
+
+export function snapToPointRay(
+  objects: GeometryObject[],
+  start: Point,
+  x: number,
+  y: number,
+  tolerance = STRAIGHTEDGE_GUIDE_TOLERANCE,
+): { x: number; y: number; guide: Point } | undefined {
+  const dragX = x - start.x;
+  const dragY = y - start.y;
+  const dragLength = Math.hypot(dragX, dragY);
+  if (dragLength < tolerance) {
+    return undefined;
+  }
+
+  const candidates: Array<{ x: number; y: number; guide: Point; distance: number }> = allPoints(objects)
+    .filter((point) => point.id !== start.id && !point.auxiliary)
+    .map((point) => {
+      const guideX = point.x - start.x;
+      const guideY = point.y - start.y;
+      const guideLength = Math.hypot(guideX, guideY);
+      if (guideLength < 1) {
+        return undefined;
+      }
+
+      const unitX = guideX / guideLength;
+      const unitY = guideY / guideLength;
+      const projection = dragX * unitX + dragY * unitY;
+      if (projection <= guideLength + tolerance * 0.4) {
+        return undefined;
+      }
+
+      const projectedX = start.x + projection * unitX;
+      const projectedY = start.y + projection * unitY;
+      const perpendicularDistance = Math.hypot(x - projectedX, y - projectedY);
+
+      return perpendicularDistance <= tolerance
+        ? {
+            guide: point,
+            x: projectedX,
+            y: projectedY,
+            distance: perpendicularDistance,
+          }
+        : undefined;
+    })
+    .filter((candidate): candidate is { x: number; y: number; guide: Point; distance: number } => Boolean(candidate));
+
+  return candidates.sort((a, b) => a.distance - b.distance)[0];
 }
 
 export function segmentExistsBetween(objects: GeometryObject[], p1: string, p2: string): Segment | undefined {

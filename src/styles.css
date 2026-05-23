@@ -692,6 +692,33 @@ blockquote {
   opacity: 0.64;
 }
 
+.preview-guide {
+  fill: none;
+  stroke: #2f7350;
+  stroke-width: 3;
+  opacity: 0.78;
+  vector-effect: non-scaling-stroke;
+}
+
+.intersection-snap-preview {
+  pointer-events: none;
+}
+
+.intersection-snap-preview circle:first-child {
+  fill: rgba(214, 156, 36, 0.16);
+  stroke: #d69c24;
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.intersection-snap-preview circle:last-child {
+  fill: #d69c24;
+  stroke: #fff8e9;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
 .preview-radius {
   stroke-width: 1.5;
   stroke-dasharray: 4 6;
