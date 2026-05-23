@@ -10,7 +10,7 @@ import {
   nextPointLabel,
   segmentExistsBetween,
 } from "../geometry/operations";
-import { findNearbyIntersection, pointNearCoordinates } from "../geometry/intersections";
+import { findNearbyIntersection, pointNearCoordinates, type CircleIntersection } from "../geometry/intersections";
 import { validateBook1Prop1 } from "../geometry/validation";
 import { book1Prop1 } from "../propositions/book1prop1";
 
@@ -43,15 +43,70 @@ type GeometryStore = {
 
 const cloneInitialObjects = () => book1Prop1.initialObjects.map((object) => ({ ...object }));
 
-function addObjectWithHistory(state: GeometryStore, object: GeometryObject) {
+function addObjectsWithHistory(state: GeometryStore, newObjects: GeometryObject[], animatedObjectId?: string) {
   return {
     phase: "construction" as AppPhase,
-    objects: [...state.objects, object],
+    objects: [...state.objects, ...newObjects],
     history: [...state.history, state.objects],
     validation: null,
     proofContext: null,
     currentReplayStep: 0,
-    animatedObjectId: object.id,
+    animatedObjectId: animatedObjectId ?? newObjects[newObjects.length - 1]?.id ?? null,
+  };
+}
+
+function addObjectWithHistory(state: GeometryStore, object: GeometryObject) {
+  return addObjectsWithHistory(state, [object]);
+}
+
+function pointForIntersection(state: GeometryStore, intersection: CircleIntersection) {
+  const existing = pointNearCoordinates(
+    state.objects.filter((object): object is Point => object.type === "point"),
+    intersection.x,
+    intersection.y,
+    2,
+  );
+
+  if (existing) {
+    return { point: existing, newPoint: null };
+  }
+
+  const label = nextPointLabel(state.objects);
+  const point: Point = {
+    id: label,
+    type: "point",
+    x: intersection.x,
+    y: intersection.y,
+    label,
+    color: "gold",
+  };
+
+  return { point, newPoint: point };
+}
+
+function constructStraightedgeEndpoint(state: GeometryStore, firstPointId: string, secondPoint: Point, newPoint: Point | null) {
+  if (firstPointId === secondPoint.id) {
+    return {
+      selectedPointIds: [],
+      validation: null,
+    };
+  }
+
+  const objectsWithPoint = newPoint ? [...state.objects, newPoint] : state.objects;
+  if (segmentExistsBetween(objectsWithPoint, firstPointId, secondPoint.id)) {
+    return {
+      selectedPointIds: [],
+      validation: {
+        success: false,
+        message: "That straight line is already drawn. Choose another pair of points.",
+      },
+    };
+  }
+
+  const segment = createSegment(firstPointId, secondPoint.id, "ink");
+  return {
+    ...addObjectsWithHistory(state, newPoint ? [newPoint, segment] : [segment], segment.id),
+    selectedPointIds: [],
   };
 }
 
@@ -65,21 +120,7 @@ function constructBetweenPoints(state: GeometryStore, firstPointId: string, seco
   }
 
   if (tool === "straightedge") {
-    if (segmentExistsBetween(state.objects, firstPointId, clickedPoint.id)) {
-      return {
-        selectedPointIds: [],
-        validation: {
-          success: false,
-          message: "That straight line is already drawn. Choose another pair of points.",
-        },
-      };
-    }
-
-    const segment = createSegment(firstPointId, clickedPoint.id, "ink");
-    return {
-      ...addObjectWithHistory(state, segment),
-      selectedPointIds: [],
-    };
+    return constructStraightedgeEndpoint(state, firstPointId, clickedPoint, null);
   }
 
   if (circleExists(state.objects, firstPointId, clickedPoint.id)) {
@@ -225,10 +266,38 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     const clickedPoint = findNearbyPoint(state.objects, x, y);
     if (!clickedPoint) {
+      if (state.selectedTool === "straightedge") {
+        const intersection = findNearbyIntersection(state.objects, x, y, INTERSECTION_TOLERANCE);
+        if (intersection) {
+          const { point, newPoint } = pointForIntersection(state, intersection);
+
+          if (state.selectedPointIds.length === 0) {
+            set(
+              newPoint
+                ? {
+                    ...addObjectWithHistory(state, newPoint),
+                    selectedPointIds: [newPoint.id],
+                  }
+                : {
+                    selectedPointIds: [point.id],
+                    validation: null,
+                  },
+            );
+            return;
+          }
+
+          set(constructStraightedgeEndpoint(state, state.selectedPointIds[0], point, newPoint));
+          return;
+        }
+      }
+
       set({
         validation: {
           success: false,
-          message: "Choose an existing point. Euclid's tools begin from points already on the page.",
+          message:
+            state.selectedTool === "straightedge"
+              ? "Choose an existing point, or use one of the gold crossing marks as the straightedge endpoint."
+              : "Choose an existing point. Euclid's tools begin from points already on the page.",
         },
       });
       return;
@@ -246,6 +315,15 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     const endPoint = findNearbyPoint(state.objects, endX, endY);
 
     if (!startPoint || !endPoint) {
+      if (startPoint && state.selectedTool === "straightedge") {
+        const intersection = findNearbyIntersection(state.objects, endX, endY, INTERSECTION_TOLERANCE);
+        if (intersection) {
+          const { point, newPoint } = pointForIntersection(state, intersection);
+          set(constructStraightedgeEndpoint(state, startPoint.id, point, newPoint));
+          return;
+        }
+      }
+
       set({
         selectedPointIds: [],
         validation: {
