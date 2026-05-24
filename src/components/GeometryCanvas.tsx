@@ -365,9 +365,15 @@ export function GeometryCanvas() {
     }
 
     const rect = svg.getBoundingClientRect();
+    const scale = Math.min(rect.width / VIEW_BOX.width, rect.height / VIEW_BOX.height);
+    const renderedWidth = VIEW_BOX.width * scale;
+    const renderedHeight = VIEW_BOX.height * scale;
+    const offsetX = (rect.width - renderedWidth) / 2;
+    const offsetY = (rect.height - renderedHeight) / 2;
+
     return {
-      x: VIEW_BOX.minX + ((event.clientX - rect.left) / rect.width) * VIEW_BOX.width,
-      y: VIEW_BOX.minY + ((event.clientY - rect.top) / rect.height) * VIEW_BOX.height,
+      x: VIEW_BOX.minX + (event.clientX - rect.left - offsetX) / scale,
+      y: VIEW_BOX.minY + (event.clientY - rect.top - offsetY) / scale,
     };
   };
 
