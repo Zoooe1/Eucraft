@@ -32,6 +32,21 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
     mark: "×",
     hint: "Move near a crossing, then click when the gold snap dot appears.",
   },
+  "theorem-equilateral": {
+    label: "Equilateral",
+    mark: "△",
+    hint: "Choose a segment to build an equilateral triangle on it.",
+  },
+  "theorem-bisect-angle": {
+    label: "Bisect Angle",
+    mark: "∠",
+    hint: "Choose a vertex and two side points.",
+  },
+  "theorem-bisect-segment": {
+    label: "Bisect Segment",
+    mark: "—",
+    hint: "Choose a segment to mark its midpoint.",
+  },
 };
 
 const toolOrder: GeometryTool[] = ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"];

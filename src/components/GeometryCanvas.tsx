@@ -350,7 +350,9 @@ export function GeometryCanvas() {
   const selectedIds = useMemo(() => new Set(selectedPointIds), [selectedPointIds]);
   const proposition = getProposition(currentPropositionId);
   const currentReplay =
-    phase === "logicReplay" || phase === "completed" ? proposition.replaySteps[currentReplayStep] : null;
+    phase === "logicReplay" || phase === "completionAnimation" || phase === "completed"
+      ? proposition.replaySteps[currentReplayStep]
+      : null;
   const highlightedIds = useMemo(
     () => highlightIdsFromContext(currentReplay?.highlight ?? [], proofContext),
     [currentReplay?.highlight, proofContext],

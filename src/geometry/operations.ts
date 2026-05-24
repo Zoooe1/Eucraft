@@ -4,6 +4,7 @@ export const POINT_TOLERANCE = 20;
 export const INTERSECTION_TOLERANCE = 76;
 export const EQUALITY_TOLERANCE = 5;
 export const COLLINEAR_TOLERANCE = 0.015;
+export const ANGLE_TOLERANCE = 0.04;
 export const STRAIGHTEDGE_GUIDE_TOLERANCE = 22;
 export const OBJECT_SNAP_TOLERANCE = 14;
 
@@ -95,6 +96,55 @@ export function arePointsCollinear(
   const scale = Math.max(ab * Math.max(ac, bc), 1);
   const doubledArea = Math.abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
   return doubledArea / scale <= tolerance;
+}
+
+export function angleAt(vertex: Point, side1: Point, side2: Point): number {
+  const v1x = side1.x - vertex.x;
+  const v1y = side1.y - vertex.y;
+  const v2x = side2.x - vertex.x;
+  const v2y = side2.y - vertex.y;
+  const length1 = Math.hypot(v1x, v1y);
+  const length2 = Math.hypot(v2x, v2y);
+  if (length1 === 0 || length2 === 0) {
+    return 0;
+  }
+
+  const cosine = Math.max(-1, Math.min(1, (v1x * v2x + v1y * v2y) / (length1 * length2)));
+  return Math.acos(cosine);
+}
+
+export function areAnglesEqual(angle1: number, angle2: number, tolerance = ANGLE_TOLERANCE): boolean {
+  return Math.abs(angle1 - angle2) <= tolerance;
+}
+
+export function isPointBetween(a: Point, point: Point, b: Point, tolerance = COLLINEAR_TOLERANCE): boolean {
+  if (!arePointsCollinear(a, b, point, tolerance)) {
+    return false;
+  }
+
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const apx = point.x - a.x;
+  const apy = point.y - a.y;
+  const lengthSquared = abx * abx + aby * aby;
+  if (lengthSquared === 0) {
+    return false;
+  }
+
+  const t = (apx * abx + apy * aby) / lengthSquared;
+  return t >= -0.01 && t <= 1.01;
+}
+
+export function isPointOnRay(from: Point, through: Point, point: Point, tolerance = COLLINEAR_TOLERANCE): boolean {
+  if (!arePointsCollinear(from, through, point, tolerance)) {
+    return false;
+  }
+
+  const rayX = through.x - from.x;
+  const rayY = through.y - from.y;
+  const pointX = point.x - from.x;
+  const pointY = point.y - from.y;
+  return rayX * pointX + rayY * pointY >= -2;
 }
 
 export function findNearbyPoint(

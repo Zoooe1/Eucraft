@@ -9,8 +9,15 @@ import {
 import {
   circleUsingBase,
   resolveBook1Prop1Context,
+  resolveBook1Prop10Context,
   resolveBook1Prop2Context,
   resolveBook1Prop3Context,
+  resolveBook1Prop4Context,
+  resolveBook1Prop5Context,
+  resolveBook1Prop6Context,
+  resolveBook1Prop7Context,
+  resolveBook1Prop8Context,
+  resolveBook1Prop9Context,
 } from "./objectResolution";
 
 const A_ID = "A";
@@ -168,14 +175,139 @@ export function validateBook1Prop3(objects: GeometryObject[]): ValidationResult 
   };
 }
 
+export function validateBook1Prop4(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop4Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The SAS diagram is ready for Logic Replay.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Complete both triangle bases, BC and EF, so the two SAS triangles can be compared.",
+  };
+}
+
+export function validateBook1Prop5(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop5Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The equal sides have been produced for the isosceles proof.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Extend the equal sides AB and AC beyond B and C, then check the theorem diagram.",
+  };
+}
+
+export function validateBook1Prop6(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop6Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The equal-angle triangle is ready for the converse proof.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Join A to B, A to C, and B to C to complete the triangle.",
+  };
+}
+
+export function validateBook1Prop7(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop7Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The impossible second apex is ready to be tested.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Join the two supposed meeting points C and D. The replay will show why they cannot both exist.",
+  };
+}
+
+export function validateBook1Prop8(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop8Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The SSS diagram is ready for Logic Replay.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Complete the two triangle bases BC and EF so all three matching sides are present.",
+  };
+}
+
+export function validateBook1Prop9(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop9Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The angle has been bisected.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Choose equal points D and E on the angle sides, build equilateral DEF, then join A to F.",
+  };
+}
+
+export function validateBook1Prop10(objects: GeometryObject[]): ValidationResult {
+  const context = resolveBook1Prop10Context(objects);
+  if (context) {
+    return {
+      success: true,
+      message: "Construction complete. The finite straight-line has been bisected.",
+      context,
+    };
+  }
+
+  return {
+    success: false,
+    message: "Build an equilateral triangle on AB, bisect its top angle, and mark where that line meets AB.",
+  };
+}
+
 export function validateProposition(propositionId: string, objects: GeometryObject[]): ValidationResult {
-  if (propositionId === "I.2") {
-    return validateBook1Prop2(objects);
+  switch (propositionId) {
+    case "I.2":
+      return validateBook1Prop2(objects);
+    case "I.3":
+      return validateBook1Prop3(objects);
+    case "I.4":
+      return validateBook1Prop4(objects);
+    case "I.5":
+      return validateBook1Prop5(objects);
+    case "I.6":
+      return validateBook1Prop6(objects);
+    case "I.7":
+      return validateBook1Prop7(objects);
+    case "I.8":
+      return validateBook1Prop8(objects);
+    case "I.9":
+      return validateBook1Prop9(objects);
+    case "I.10":
+      return validateBook1Prop10(objects);
+    default:
+      return validateBook1Prop1(objects);
   }
-
-  if (propositionId === "I.3") {
-    return validateBook1Prop3(objects);
-  }
-
-  return validateBook1Prop1(objects);
 }

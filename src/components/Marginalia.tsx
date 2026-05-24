@@ -15,6 +15,34 @@ function constructionNote(objects: GeometryObject[], propositionId: string) {
     return "Cut a point on AB so that the part from A equals the lesser given line CD.";
   }
 
+  if (propositionId === "I.4") {
+    return "This is a theorem page. Complete the bases BC and EF, then replay the SAS argument.";
+  }
+
+  if (propositionId === "I.5") {
+    return "Produce AB beyond B and AC beyond C. The replay will use the auxiliary cuts from Euclid's proof.";
+  }
+
+  if (propositionId === "I.6") {
+    return "Join the three given points into a triangle. The replay proves the converse of the isosceles theorem.";
+  }
+
+  if (propositionId === "I.7") {
+    return "Join C and D. This page is a proof by impossibility: the second same-side point cannot survive.";
+  }
+
+  if (propositionId === "I.8") {
+    return "Complete the bases BC and EF so all three matching sides are present for SSS.";
+  }
+
+  if (propositionId === "I.9") {
+    return "Make AD and AE equal on the two sides, build equilateral DEF, then join A to F.";
+  }
+
+  if (propositionId === "I.10") {
+    return "Build the equilateral triangle on AB, then use the earned angle-bisector action or the manual I.9 construction.";
+  }
+
   const circleA = circleUsingBase(objects, "A", "B");
   const circleB = circleUsingBase(objects, "B", "A");
   const candidatePoints = allPoints(objects).filter((point) => point.id !== "A" && point.id !== "B");

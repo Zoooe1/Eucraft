@@ -32,6 +32,13 @@ const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHin
   },
 };
 
+const theoremActionTools: Record<string, GeometryTool> = {
+  constructEquilateralTriangleOnSegment: "theorem-equilateral",
+  createCircleWithTransferredRadius: "compass-transfer",
+  bisectAngle: "theorem-bisect-angle",
+  bisectSegment: "theorem-bisect-segment",
+};
+
 function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTransferSource: boolean) {
   if (tool === "point") {
     return "Click anywhere to place a point; nearby points and intersections snap first.";
@@ -65,6 +72,26 @@ function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTr
     return "Choose a source segment, or choose two points for the compass width.";
   }
 
+  if (tool === "theorem-equilateral") {
+    return "Choose a segment. The earned I.1 action will build an equilateral triangle on it.";
+  }
+
+  if (tool === "theorem-bisect-angle") {
+    if (selectedCount === 0) {
+      return "Choose the angle vertex.";
+    }
+
+    if (selectedCount === 1) {
+      return "Choose a point on one side of the angle.";
+    }
+
+    return "Choose a point on the other side to draw the bisector.";
+  }
+
+  if (tool === "theorem-bisect-segment") {
+    return "Choose a segment. The earned I.10 action will mark its midpoint.";
+  }
+
   return "Euclid begins from given points, constructed points, and intersections.";
 }
 
@@ -77,12 +104,14 @@ function TheoremActionButton({
   selectedTool: GeometryTool;
   setTool: (tool: GeometryTool) => void;
 }) {
-  if (unlock.functionName === "createCircleWithTransferredRadius") {
+  const tool = theoremActionTools[unlock.functionName];
+
+  if (tool) {
     return (
       <button
-        className={selectedTool === "compass-transfer" ? "theorem-action-button active" : "theorem-action-button"}
+        className={selectedTool === tool ? "theorem-action-button active" : "theorem-action-button actionable"}
         type="button"
-        onClick={() => setTool("compass-transfer")}
+        onClick={() => setTool(tool)}
         title={unlock.description}
       >
         <span>{unlock.source}</span>

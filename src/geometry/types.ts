@@ -1,6 +1,23 @@
-export type GeometryTool = "point" | "straightedge" | "extend" | "compass" | "compass-transfer" | "intersection";
+export type GeometryTool =
+  | "point"
+  | "straightedge"
+  | "extend"
+  | "compass"
+  | "compass-transfer"
+  | "intersection"
+  | "theorem-equilateral"
+  | "theorem-bisect-angle"
+  | "theorem-bisect-segment";
 
-export type AppPhase = "title" | "laws" | "intro" | "construction" | "success" | "logicReplay" | "completed";
+export type AppPhase =
+  | "title"
+  | "laws"
+  | "intro"
+  | "construction"
+  | "success"
+  | "logicReplay"
+  | "completionAnimation"
+  | "completed";
 
 export type Point = {
   id: string;

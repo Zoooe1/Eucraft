@@ -4,12 +4,16 @@ import {
   allNamedPoints,
   allPoints,
   allSegments,
+  angleAt,
   areDistancesEqual,
+  areAnglesEqual,
   arePointsCollinear,
   circleRadius,
   circleExists,
   distance,
+  extendedLineExists,
   getPoint,
+  isPointBetween,
   segmentExistsBetween,
 } from "./operations";
 
@@ -115,6 +119,28 @@ function pointOnSegmentLineBetween(objects: GeometryObject[], pointId: string, l
   const withinX = point.x >= Math.min(start.x, end.x) - 2 && point.x <= Math.max(start.x, end.x) + 2;
   const withinY = point.y >= Math.min(start.y, end.y) - 2 && point.y <= Math.max(start.y, end.y) + 2;
   return !arePointsCollinear(start, end, point, 0.01) ? false : withinX && withinY;
+}
+
+function requiredPointMap(objects: GeometryObject[], ids: string[]) {
+  const entries = ids.map((id) => [id, getPoint(objects, id)] as const);
+  if (entries.some(([, point]) => !point)) {
+    return undefined;
+  }
+
+  return Object.fromEntries(entries) as Record<string, NonNullable<ReturnType<typeof getPoint>>>;
+}
+
+function segmentContext(objects: GeometryObject[], pairs: Array<[string, string, string]>) {
+  const context: ProofContext = {};
+  for (const [key, p1, p2] of pairs) {
+    const segment = segmentExistsBetween(objects, p1, p2);
+    if (!segment) {
+      return undefined;
+    }
+    context[key] = segment.id;
+  }
+
+  return context;
 }
 
 export function resolveBook1Prop2Context(objects: GeometryObject[]): ProofContext | undefined {
@@ -231,6 +257,264 @@ export function resolveBook1Prop3Context(objects: GeometryObject[]): ProofContex
       segmentAP: segmentAP?.id ?? segmentAE?.id,
       circleA: circleA?.id,
     };
+  }
+
+  return undefined;
+}
+
+export function resolveBook1Prop4Context(objects: GeometryObject[]): ProofContext | undefined {
+  const points = requiredPointMap(objects, ["A", "B", "C", "D", "E", "F"]);
+  const segments = segmentContext(objects, [
+    ["segmentAB", "A", "B"],
+    ["segmentAC", "A", "C"],
+    ["segmentBC", "B", "C"],
+    ["segmentDE", "D", "E"],
+    ["segmentDF", "D", "F"],
+    ["segmentEF", "E", "F"],
+  ]);
+  if (!points || !segments) {
+    return undefined;
+  }
+
+  if (
+    !areDistancesEqual(distance(points.A, points.B), distance(points.D, points.E)) ||
+    !areDistancesEqual(distance(points.A, points.C), distance(points.D, points.F)) ||
+    !areAnglesEqual(angleAt(points.A, points.B, points.C), angleAt(points.D, points.E, points.F))
+  ) {
+    return undefined;
+  }
+
+  return {
+    pointA: "A",
+    pointB: "B",
+    pointC: "C",
+    pointD: "D",
+    pointE: "E",
+    pointF: "F",
+    ...segments,
+  };
+}
+
+export function resolveBook1Prop5Context(objects: GeometryObject[]): ProofContext | undefined {
+  const points = requiredPointMap(objects, ["A", "B", "C"]);
+  const segments = segmentContext(objects, [
+    ["segmentAB", "A", "B"],
+    ["segmentAC", "A", "C"],
+    ["segmentBC", "B", "C"],
+  ]);
+  const extensionAB = extendedLineExists(objects, "A", "B");
+  const extensionAC = extendedLineExists(objects, "A", "C");
+  if (!points || !segments || !extensionAB || !extensionAC) {
+    return undefined;
+  }
+
+  if (!areDistancesEqual(distance(points.A, points.B), distance(points.A, points.C))) {
+    return undefined;
+  }
+
+  return {
+    pointA: "A",
+    pointB: "B",
+    pointC: "C",
+    extensionAB: extensionAB.id,
+    extensionAC: extensionAC.id,
+    ...segments,
+  };
+}
+
+export function resolveBook1Prop6Context(objects: GeometryObject[]): ProofContext | undefined {
+  const points = requiredPointMap(objects, ["A", "B", "C"]);
+  const segments = segmentContext(objects, [
+    ["segmentAB", "A", "B"],
+    ["segmentAC", "A", "C"],
+    ["segmentBC", "B", "C"],
+  ]);
+  if (!points || !segments) {
+    return undefined;
+  }
+
+  if (!areDistancesEqual(distance(points.A, points.B), distance(points.A, points.C))) {
+    return undefined;
+  }
+
+  return {
+    pointA: "A",
+    pointB: "B",
+    pointC: "C",
+    ...segments,
+  };
+}
+
+export function resolveBook1Prop7Context(objects: GeometryObject[]): ProofContext | undefined {
+  const points = requiredPointMap(objects, ["A", "B", "C", "D"]);
+  const segments = segmentContext(objects, [
+    ["segmentAC", "A", "C"],
+    ["segmentBC", "B", "C"],
+    ["segmentAD", "A", "D"],
+    ["segmentBD", "B", "D"],
+    ["segmentCD", "C", "D"],
+  ]);
+  if (!points || !segments) {
+    return undefined;
+  }
+
+  return {
+    pointA: "A",
+    pointB: "B",
+    pointC: "C",
+    pointD: "D",
+    ...segments,
+  };
+}
+
+export function resolveBook1Prop8Context(objects: GeometryObject[]): ProofContext | undefined {
+  const points = requiredPointMap(objects, ["A", "B", "C", "D", "E", "F"]);
+  const segments = segmentContext(objects, [
+    ["segmentAB", "A", "B"],
+    ["segmentAC", "A", "C"],
+    ["segmentBC", "B", "C"],
+    ["segmentDE", "D", "E"],
+    ["segmentDF", "D", "F"],
+    ["segmentEF", "E", "F"],
+  ]);
+  if (!points || !segments) {
+    return undefined;
+  }
+
+  if (
+    !areDistancesEqual(distance(points.A, points.B), distance(points.D, points.E)) ||
+    !areDistancesEqual(distance(points.A, points.C), distance(points.D, points.F)) ||
+    !areDistancesEqual(distance(points.B, points.C), distance(points.E, points.F))
+  ) {
+    return undefined;
+  }
+
+  return {
+    pointA: "A",
+    pointB: "B",
+    pointC: "C",
+    pointD: "D",
+    pointE: "E",
+    pointF: "F",
+    ...segments,
+  };
+}
+
+export function resolveBook1Prop9Context(objects: GeometryObject[]): ProofContext | undefined {
+  const A = getPoint(objects, "A");
+  const B = getPoint(objects, "B");
+  const C = getPoint(objects, "C");
+  const segmentAB = segmentExistsBetween(objects, "A", "B");
+  const segmentAC = segmentExistsBetween(objects, "A", "C");
+  if (!A || !B || !C || !segmentAB || !segmentAC) {
+    return undefined;
+  }
+
+  const candidates = allNamedPoints(objects).filter((point) => !["A", "B", "C"].includes(point.id));
+  const sideABPoints = candidates.filter((point) => isPointBetween(A, point, B));
+  const sideACPoints = candidates.filter((point) => isPointBetween(A, point, C));
+
+  for (const D of sideABPoints) {
+    for (const E of sideACPoints) {
+      if (D.id === E.id || !areDistancesEqual(distance(A, D), distance(A, E))) {
+        continue;
+      }
+
+      const segmentDE = segmentExistsBetween(objects, D.id, E.id);
+      if (!segmentDE) {
+        continue;
+      }
+
+      const deLength = distance(D, E);
+      for (const F of candidates) {
+        if ([D.id, E.id].includes(F.id)) {
+          continue;
+        }
+
+        const segmentDF = segmentExistsBetween(objects, D.id, F.id);
+        const segmentEF = segmentExistsBetween(objects, E.id, F.id);
+        const segmentAF = segmentExistsBetween(objects, "A", F.id);
+        if (!segmentDF || !segmentEF || !segmentAF) {
+          continue;
+        }
+
+        if (
+          !areDistancesEqual(distance(D, F), deLength) ||
+          !areDistancesEqual(distance(E, F), deLength) ||
+          !areAnglesEqual(angleAt(A, B, F), angleAt(A, F, C), 0.055)
+        ) {
+          continue;
+        }
+
+        return {
+          pointA: "A",
+          pointB: "B",
+          pointC: "C",
+          pointD: D.id,
+          pointE: E.id,
+          pointF: F.id,
+          segmentAB: segmentAB.id,
+          segmentAC: segmentAC.id,
+          segmentAD: segmentExistsBetween(objects, "A", D.id)?.id ?? segmentAB.id,
+          segmentAE: segmentExistsBetween(objects, "A", E.id)?.id ?? segmentAC.id,
+          segmentDE: segmentDE.id,
+          segmentDF: segmentDF.id,
+          segmentEF: segmentEF.id,
+          segmentAF: segmentAF.id,
+        };
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export function resolveBook1Prop10Context(objects: GeometryObject[]): ProofContext | undefined {
+  const A = getPoint(objects, "A");
+  const B = getPoint(objects, "B");
+  const segmentAB = segmentExistsBetween(objects, "A", "B");
+  if (!A || !B || !segmentAB) {
+    return undefined;
+  }
+
+  const abLength = distance(A, B);
+  const candidates = allNamedPoints(objects).filter((point) => !["A", "B"].includes(point.id));
+  for (const C of candidates) {
+    const segmentAC = segmentExistsBetween(objects, "A", C.id);
+    const segmentBC = segmentExistsBetween(objects, "B", C.id);
+    if (
+      !segmentAC ||
+      !segmentBC ||
+      arePointsCollinear(A, B, C) ||
+      !areDistancesEqual(distance(A, C), abLength) ||
+      !areDistancesEqual(distance(B, C), abLength)
+    ) {
+      continue;
+    }
+
+    for (const D of candidates) {
+      if (D.id === C.id || !isPointBetween(A, D, B)) {
+        continue;
+      }
+
+      const segmentCD = segmentExistsBetween(objects, C.id, D.id);
+      if (!segmentCD || !areDistancesEqual(distance(A, D), distance(D, B))) {
+        continue;
+      }
+
+      return {
+        pointA: "A",
+        pointB: "B",
+        pointC: C.id,
+        pointD: D.id,
+        segmentAB: segmentAB.id,
+        segmentAC: segmentAC.id,
+        segmentBC: segmentBC.id,
+        segmentCD: segmentCD.id,
+        segmentAD: segmentExistsBetween(objects, "A", D.id)?.id,
+        segmentBD: segmentExistsBetween(objects, "B", D.id)?.id,
+      };
+    }
   }
 
   return undefined;

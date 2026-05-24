@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { AppPhase, GeometryObject, GeometryTool, Point, ProofContext, ValidationResult } from "../geometry/types";
+import type { AppPhase, GeometryObject, GeometryTool, Point, ProofContext, Segment, ValidationResult } from "../geometry/types";
 import {
   circleExists,
   createCircle,
@@ -7,6 +7,7 @@ import {
   createExtendedLine,
   createPoint,
   createSegment,
+  distance,
   extendedLineExists,
   findNearbyObjectSnap,
   findNearbyPoint,
@@ -39,6 +40,7 @@ type GeometryStore = {
   proofContext: ProofContext | null;
   currentReplayStep: number;
   startApp: () => void;
+  returnToTitle: () => void;
   enterProposition: () => void;
   openProposition: (id: string) => void;
   startConstruction: () => void;
@@ -136,6 +138,148 @@ function resolvePointAt(
   const label = pointLabel(state, objects);
   const point = createPoint(label, x, y, "free");
   return { point, newPoint: point };
+}
+
+function buildEquilateralTriangleOnSegment(state: GeometryStore, segment: Segment) {
+  const p1 = getPoint(state.objects, segment.p1);
+  const p2 = getPoint(state.objects, segment.p2);
+  if (!p1 || !p2) {
+    return undefined;
+  }
+
+  const heightScale = Math.sqrt(3) / 2;
+  const midX = (p1.x + p2.x) / 2;
+  const midY = (p1.y + p2.y) / 2;
+  const apexX = midX + (p2.y - p1.y) * heightScale;
+  const apexY = midY - (p2.x - p1.x) * heightScale;
+  const label = pointLabel(state, state.objects);
+  const apex = createPoint(label, apexX, apexY, "theorem-action", {
+    color: "gold",
+    parentObjectIds: [segment.id],
+    source: "I.1",
+  });
+
+  const newObjects: GeometryObject[] = [];
+  if (!circleExists(state.objects, p1.id, p2.id)) {
+    newObjects.push(createCircle(p1.id, p2.id, "red"));
+  }
+  if (!circleExists(state.objects, p2.id, p1.id)) {
+    newObjects.push(createCircle(p2.id, p1.id, "blue"));
+  }
+
+  newObjects.push(apex);
+  if (!segmentExistsBetween(state.objects, p1.id, apex.id)) {
+    newObjects.push(createSegment(p1.id, apex.id, "red", "I.1"));
+  }
+  if (!segmentExistsBetween(state.objects, p2.id, apex.id)) {
+    newObjects.push(createSegment(p2.id, apex.id, "blue", "I.1"));
+  }
+
+  return { objects: newObjects, animatedObjectId: apex.id };
+}
+
+function lineIntersectionFromDirection(
+  start: Point,
+  direction: { x: number; y: number },
+  lineA: Point,
+  lineB: Point,
+) {
+  const lineX = lineB.x - lineA.x;
+  const lineY = lineB.y - lineA.y;
+  const determinant = direction.x * -lineY - direction.y * -lineX;
+  if (Math.abs(determinant) < 0.0001) {
+    return undefined;
+  }
+
+  const ax = lineA.x - start.x;
+  const ay = lineA.y - start.y;
+  const t = (ax * -lineY - ay * -lineX) / determinant;
+  const u = (direction.x * ay - direction.y * ax) / determinant;
+  if (t < 0 || u < -0.02 || u > 1.02) {
+    return undefined;
+  }
+
+  return {
+    x: start.x + direction.x * t,
+    y: start.y + direction.y * t,
+  };
+}
+
+function bisectAngleFromPoints(state: GeometryStore, vertexId: string, side1Id: string, side2Id: string) {
+  const vertex = getPoint(state.objects, vertexId);
+  const side1 = getPoint(state.objects, side1Id);
+  const side2 = getPoint(state.objects, side2Id);
+  if (!vertex || !side1 || !side2) {
+    return undefined;
+  }
+
+  const v1Length = distance(vertex, side1);
+  const v2Length = distance(vertex, side2);
+  if (v1Length === 0 || v2Length === 0) {
+    return undefined;
+  }
+
+  const unit1 = { x: (side1.x - vertex.x) / v1Length, y: (side1.y - vertex.y) / v1Length };
+  const unit2 = { x: (side2.x - vertex.x) / v2Length, y: (side2.y - vertex.y) / v2Length };
+  let direction = { x: unit1.x + unit2.x, y: unit1.y + unit2.y };
+  const directionLength = Math.hypot(direction.x, direction.y);
+  if (directionLength < 0.001) {
+    return undefined;
+  }
+
+  direction = { x: direction.x / directionLength, y: direction.y / directionLength };
+  const intersection = lineIntersectionFromDirection(vertex, direction, side1, side2);
+  const endpoint = intersection ?? {
+    x: vertex.x + direction.x * Math.min(v1Length, v2Length, 220),
+    y: vertex.y + direction.y * Math.min(v1Length, v2Length, 220),
+  };
+  const existing = pointNearCoordinates(
+    state.objects.filter((object): object is Point => object.type === "point"),
+    endpoint.x,
+    endpoint.y,
+    3,
+  );
+  const point =
+    existing ??
+    createPoint(pointLabel(state, state.objects), endpoint.x, endpoint.y, "theorem-action", {
+      color: "gold",
+      parentObjectIds: [vertexId, side1Id, side2Id],
+      source: "I.9",
+    });
+  const segment = segmentExistsBetween(state.objects, vertex.id, point.id)
+    ? undefined
+    : createSegment(vertex.id, point.id, "gold", "I.9");
+  const newObjects: GeometryObject[] = [...(existing ? [] : [point]), ...(segment ? [segment] : [])];
+  return { objects: newObjects, animatedObjectId: segment?.id ?? point.id };
+}
+
+function bisectSegmentWithMidpoint(state: GeometryStore, segment: Segment) {
+  const p1 = getPoint(state.objects, segment.p1);
+  const p2 = getPoint(state.objects, segment.p2);
+  if (!p1 || !p2) {
+    return undefined;
+  }
+
+  const x = (p1.x + p2.x) / 2;
+  const y = (p1.y + p2.y) / 2;
+  const existing = pointNearCoordinates(
+    state.objects.filter((object): object is Point => object.type === "point"),
+    x,
+    y,
+    3,
+  );
+  const midpoint =
+    existing ??
+    createPoint(pointLabel(state, state.objects), x, y, "theorem-action", {
+      color: "gold",
+      parentObjectIds: [segment.id],
+      source: "I.10",
+    });
+
+  return {
+    objects: existing ? [] : [midpoint],
+    animatedObjectId: midpoint.id,
+  };
 }
 
 function constructBetweenPoints(
@@ -267,6 +411,19 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       compassTransferSource: null,
       validation: null,
       animatedObjectId: null,
+    }),
+  returnToTitle: () =>
+    set(() => {
+      const progress = readProgress();
+      return {
+        phase: "title",
+        selectedPointIds: [],
+        compassTransferSource: null,
+        validation: null,
+        animatedObjectId: null,
+        unlockedPropositionIds: progress.unlockedPropositionIds,
+        completedPropositionIds: progress.completedPropositionIds,
+      };
     }),
   enterProposition: () =>
     set((state) => ({
@@ -410,6 +567,106 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         compassTransferSource: null,
         validation: null,
       });
+      return;
+    }
+
+    if (state.selectedTool === "theorem-equilateral") {
+      const segment = findNearbySegment(state.objects, x, y, 24);
+      if (!segment) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose an existing segment. Proposition I.1 builds an equilateral triangle on that segment.",
+          },
+        });
+        return;
+      }
+
+      const result = buildEquilateralTriangleOnSegment(state, segment);
+      if (!result || result.objects.length === 0) {
+        set({
+          validation: {
+            success: false,
+            message: "That equilateral action could not be placed here.",
+          },
+        });
+        return;
+      }
+
+      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      return;
+    }
+
+    if (state.selectedTool === "theorem-bisect-segment") {
+      const segment = findNearbySegment(state.objects, x, y, 24);
+      if (!segment) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose an existing segment to bisect.",
+          },
+        });
+        return;
+      }
+
+      const result = bisectSegmentWithMidpoint(state, segment);
+      if (!result || result.objects.length === 0) {
+        set({
+          validation: {
+            success: false,
+            message: "That segment already has a marked midpoint nearby.",
+          },
+        });
+        return;
+      }
+
+      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      return;
+    }
+
+    if (state.selectedTool === "theorem-bisect-angle") {
+      const resolved = resolvePointAt(state, x, y);
+      if (state.selectedPointIds.length < 2) {
+        if (resolved.newPoint) {
+          set(addObjectsAndSelect(state, [resolved.newPoint], [...state.selectedPointIds, resolved.point.id], resolved.point.id));
+          return;
+        }
+
+        set({
+          selectedPointIds: [...state.selectedPointIds, resolved.point.id],
+          compassTransferSource: null,
+          validation: null,
+        });
+        return;
+      }
+
+      const baseObjects = resolved.newPoint ? [...state.objects, resolved.newPoint] : state.objects;
+      const actionState = { ...state, objects: baseObjects };
+      const result = bisectAngleFromPoints(
+        actionState,
+        state.selectedPointIds[0],
+        state.selectedPointIds[1],
+        resolved.point.id,
+      );
+      if (!result || result.objects.length === 0) {
+        set({
+          selectedPointIds: [],
+          validation: {
+            success: false,
+            message: "Choose a vertex, a point on one side, and a point on the other side of the angle.",
+          },
+        });
+        return;
+      }
+
+      set(
+        addObjectsAndSelect(
+          state,
+          [...(resolved.newPoint ? [resolved.newPoint] : []), ...result.objects],
+          [],
+          result.animatedObjectId,
+        ),
+      );
       return;
     }
 
@@ -682,7 +939,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       const unlockedPropositionIds = updatedUnlockStore.getUnlockedPropositionIds();
 
       return {
-        phase: "completed",
+        phase: "completionAnimation",
         currentReplayStep: proposition.replaySteps.length - 1,
         selectedPointIds: [],
         animatedObjectId: null,
@@ -717,7 +974,10 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         compassTransferSource: null,
         validation: null,
         phase:
-          state.phase === "logicReplay" || state.phase === "completed" || state.phase === "success"
+          state.phase === "logicReplay" ||
+          state.phase === "completionAnimation" ||
+          state.phase === "completed" ||
+          state.phase === "success"
             ? "construction"
             : state.phase,
         proofContext: null,

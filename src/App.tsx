@@ -1,4 +1,5 @@
 import { CompletionCard } from "./components/CompletionCard";
+import { CompletionAnimation } from "./components/CompletionAnimation";
 import { GeometryCanvas } from "./components/GeometryCanvas";
 import { LawsScreen } from "./components/LawsScreen";
 import { LogicReplay } from "./components/LogicReplay";
@@ -15,7 +16,18 @@ export default function App() {
   const backgroundColor = useGeometryStore((state) => state.backgroundColor);
   const validation = useGeometryStore((state) => state.validation);
   const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
+  const openProposition = useGeometryStore((state) => state.openProposition);
+  const returnToTitle = useGeometryStore((state) => state.returnToTitle);
+  const startLogicReplay = useGeometryStore((state) => state.startLogicReplay);
   const proposition = getProposition(currentPropositionId);
+  const advanceFromCompletion = () => {
+    if (proposition.nextPropositionId) {
+      openProposition(proposition.nextPropositionId);
+      return;
+    }
+
+    returnToTitle();
+  };
 
   if (phase === "title") {
     return (
@@ -54,6 +66,15 @@ export default function App() {
             {phase === "construction" && <Marginalia />}
             <ValidationMessage validation={validation} />
             {(phase === "success" || phase === "logicReplay") && <LogicReplay />}
+            {phase === "completionAnimation" && (
+              <CompletionAnimation
+                propositionId={proposition.id}
+                propositionTitle={proposition.title}
+                nextPropositionId={proposition.nextPropositionId}
+                onAdvance={advanceFromCompletion}
+                onReplayLogic={startLogicReplay}
+              />
+            )}
             {phase === "completed" && <CompletionCard />}
           </>
         )}

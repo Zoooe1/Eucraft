@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { LOGIC_REPLAY_STEP_DURATION_MS } from "../logicReplayConfig";
 import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
@@ -12,18 +13,30 @@ export function LogicReplayPanel() {
   const finishReplay = useGeometryStore((state) => state.finishReplay);
   const proposition = getProposition(currentPropositionId);
   const isLastStep = currentReplayStep === proposition.replaySteps.length - 1;
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
-    if (phase !== "logicReplay" || isLastStep) {
+    if (phase === "logicReplay") {
+      setIsPlaying(true);
+    }
+  }, [phase, currentPropositionId]);
+
+  useEffect(() => {
+    if (phase !== "logicReplay" || !isPlaying) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
+      if (isLastStep) {
+        finishReplay();
+        return;
+      }
+
       nextReplayStep();
-    }, 2200);
+    }, LOGIC_REPLAY_STEP_DURATION_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [phase, currentReplayStep, isLastStep, nextReplayStep]);
+  }, [phase, currentReplayStep, isPlaying, isLastStep, nextReplayStep, finishReplay]);
 
   if (phase === "success") {
     return (
@@ -44,13 +57,28 @@ export function LogicReplayPanel() {
 
   const step = proposition.replaySteps[currentReplayStep];
   const isFirstStep = currentReplayStep === 0;
+  const replayFromStart = () => {
+    startLogicReplay();
+    setIsPlaying(true);
+  };
+  const goPrevious = () => {
+    previousReplayStep();
+  };
+  const goNext = () => {
+    if (isLastStep) {
+      finishReplay();
+      return;
+    }
+
+    nextReplayStep();
+  };
 
   return (
     <section className="logic-panel">
       <div className="proof-meta">
         <span>Logic Replay</span>
         <span>
-          Auto-play · {currentReplayStep + 1} / {proposition.replaySteps.length}
+          {isPlaying ? "Auto-play" : "Paused"} · {currentReplayStep + 1} / {proposition.replaySteps.length}
         </span>
       </div>
       <p className="proof-text">{step.text}</p>
@@ -59,16 +87,24 @@ export function LogicReplayPanel() {
           <span className={index <= currentReplayStep ? "lit" : ""} key={replayStep.id} />
         ))}
       </div>
-      <div className="action-row">
-        <button className="quiet-button" type="button" onClick={previousReplayStep} disabled={isFirstStep}>
-          Back
+      <div className="logic-controls">
+        <button className="quiet-button" type="button" onClick={() => setIsPlaying(true)} disabled={isPlaying}>
+          Play
         </button>
-        <button
-          className="primary-button"
-          type="button"
-          onClick={isLastStep ? finishReplay : nextReplayStep}
-        >
-          {isLastStep ? "Complete Proposition" : "Next"}
+        <button className="quiet-button" type="button" onClick={() => setIsPlaying(false)} disabled={!isPlaying}>
+          Pause
+        </button>
+        <button className="quiet-button" type="button" onClick={goPrevious} disabled={isFirstStep}>
+          Previous Step
+        </button>
+        <button className="quiet-button" type="button" onClick={goNext}>
+          Next Step
+        </button>
+        <button className="quiet-button" type="button" onClick={replayFromStart}>
+          Replay
+        </button>
+        <button className="primary-button" type="button" onClick={finishReplay}>
+          Skip Replay / Finish
         </button>
       </div>
     </section>
