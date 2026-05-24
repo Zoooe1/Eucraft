@@ -2,10 +2,10 @@ import type { GeometryTool } from "../geometry/types";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: string }> = {
-  select: {
-    label: "Select",
+  point: {
+    label: "Point",
     mark: "•",
-    hint: "Select or inspect points.",
+    hint: "Click to create a point, or select an existing nearby point.",
   },
   straightedge: {
     label: "Straightedge",
@@ -20,7 +20,12 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   compass: {
     label: "Compass",
     mark: "○",
-    hint: "Drag from a center point to an existing radius point.",
+    hint: "Draw a circle from a center to a radius point.",
+  },
+  "compass-transfer": {
+    label: "Set Width",
+    mark: "◌",
+    hint: "Choose a source segment or two points, then choose a center.",
   },
   intersection: {
     label: "Intersection",
@@ -29,11 +34,15 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   },
 };
 
-const toolOrder: GeometryTool[] = ["select", "straightedge", "extend", "compass", "intersection"];
+const toolOrder: GeometryTool[] = ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"];
 
 function toolInstruction(tool: GeometryTool, selectedCount: number) {
   if (tool === "compass" && selectedCount === 1) {
-    return "Choose an existing radius point.";
+    return "Choose a radius point.";
+  }
+
+  if (tool === "compass-transfer") {
+    return selectedCount === 1 ? "Choose the second point of the source length." : toolLabels[tool].hint;
   }
 
   if (tool === "straightedge" && selectedCount === 1) {

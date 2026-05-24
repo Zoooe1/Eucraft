@@ -22,6 +22,10 @@ export function transferSegmentToPoint() {
   return theoremActionPlaceholder();
 }
 
+export function createCircleWithTransferredRadius() {
+  return theoremActionPlaceholder();
+}
+
 export function cutOffEqualSegment() {
   return theoremActionPlaceholder();
 }
@@ -60,6 +64,19 @@ export const theoremActions: Record<string, TheoremActionDefinition> = {
       "Length transfer is now an earned theorem-action, not a primitive copy tool.",
     ],
     execute: transferSegmentToPoint,
+  },
+  createCircleWithTransferredRadius: {
+    requiredUnlock: "unlock-I.2-set-compass-width",
+    inputs: ["sourceSegment", "centerPoint"],
+    outputs: ["circle"],
+    dependencies: ["I.2", "Post.3"],
+    validationFunction: "circleRadiusEqualsSourceSegment",
+    logicReplay: [
+      "Use I.2 as the justification for carrying a known segment as compass width.",
+      "Place the compass point at the new center without reading a number.",
+      "The resulting circle has radius equal to the source segment.",
+    ],
+    execute: createCircleWithTransferredRadius,
   },
   cutOffEqualSegment: {
     requiredUnlock: "unlock-I.3-cut-off",

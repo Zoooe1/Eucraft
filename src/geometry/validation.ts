@@ -164,7 +164,7 @@ export function validateBook1Prop3(objects: GeometryObject[]): ValidationResult 
 
   return {
     success: false,
-    message: "Mark a point on AB and draw from A to it so that the cut-off part equals CD.",
+    message: "Set the compass width to CD, draw from center A, then mark where the circle cuts AB.",
   };
 }
 

@@ -18,6 +18,7 @@ export const book1Prop1: Proposition = {
       y: 320,
       label: "A",
       fixed: true,
+      createdBy: "given",
       color: "red",
     },
     {
@@ -27,6 +28,7 @@ export const book1Prop1: Proposition = {
       y: 320,
       label: "B",
       fixed: true,
+      createdBy: "given",
       color: "blue",
     },
     {
@@ -40,7 +42,7 @@ export const book1Prop1: Proposition = {
       source: "given",
     },
   ],
-  allowedTools: ["select", "straightedge", "extend", "compass", "intersection"],
+  allowedTools: ["point", "straightedge", "extend", "compass", "intersection"],
   pointLabelSequence: ["C", "D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"],
   nextPropositionId: "I.2",
   lawSections: [

@@ -10,7 +10,7 @@ export const book1Prop3: Proposition = {
   subtitle: "Build the Elements",
   playerGoal: "Cut off from the greater straight-line AB a part equal to the lesser straight-line CD.",
   originalStatement: "For two given unequal straight-lines, to cut off from the greater a straight-line equal to the lesser.",
-  instruction: "Use Proposition I.2 to place the lesser length at A, then cut that length from AB.",
+  instruction: "Set the compass width to CD, draw from center A, then cut that length from AB.",
   initialObjects: [
     {
       id: "A",
@@ -19,6 +19,7 @@ export const book1Prop3: Proposition = {
       y: 340,
       label: "A",
       fixed: true,
+      createdBy: "given",
       color: "red",
     },
     {
@@ -28,6 +29,7 @@ export const book1Prop3: Proposition = {
       y: 340,
       label: "B",
       fixed: true,
+      createdBy: "given",
       color: "blue",
     },
     {
@@ -37,6 +39,7 @@ export const book1Prop3: Proposition = {
       y: 160,
       label: "C",
       fixed: true,
+      createdBy: "given",
       color: "gold",
     },
     {
@@ -46,6 +49,7 @@ export const book1Prop3: Proposition = {
       y: 160,
       label: "D",
       fixed: true,
+      createdBy: "given",
       color: "gold",
     },
     {
@@ -69,7 +73,7 @@ export const book1Prop3: Proposition = {
       source: "given",
     },
   ],
-  allowedTools: ["select", "straightedge", "extend", "compass", "intersection"],
+  allowedTools: ["point", "straightedge", "extend", "compass", "intersection"],
   pointLabelSequence: ["P", "E", "F", "G", "H", "K", "L", "M", "N", "O", "Q", "R", "S", "T"],
   lawSections: book1Prop1.lawSections,
   replaySteps: [
@@ -80,13 +84,13 @@ export const book1Prop3: Proposition = {
     },
     {
       id: "place-copy",
-      highlight: ["segmentAP", "segmentCD", "pointA", "pointP"],
-      text: "Place AP at point A equal to the lesser straight-line CD. [Prop. I.2]",
+      highlight: ["segmentCD", "pointA"],
+      text: "Set the compass width to CD; this transfer is justified by Proposition I.2.",
     },
     {
       id: "circle",
-      highlight: ["circleA", "segmentAP", "pointA", "pointP"],
-      text: "Draw circle with center A and radius AP. [Post. 3]",
+      highlight: ["circleA", "segmentCD", "pointA"],
+      text: "Draw a circle with center A using that same width. [Post. 3]",
     },
     {
       id: "cut",
@@ -95,13 +99,13 @@ export const book1Prop3: Proposition = {
     },
     {
       id: "radius",
-      highlight: ["circleA", "segmentAE", "segmentAP", "pointA", "pointE", "pointP"],
-      text: "Since A is center of the circle, AE = AP. [Def. 1.15]",
+      highlight: ["circleA", "segmentAE", "segmentCD", "pointA", "pointE"],
+      text: "Every point on this circle is distance CD from A; hence AE = CD. [Def. 1.15, I.2]",
     },
     {
       id: "common-notion",
-      highlight: ["segmentAE", "segmentAP", "segmentCD"],
-      text: "AP = CD, and AE = AP; therefore AE = CD. [C.N. 1]",
+      highlight: ["segmentAE", "segmentCD"],
+      text: "Thus the segment cut from AB equals the lesser given straight-line CD.",
     },
     {
       id: "conclusion",

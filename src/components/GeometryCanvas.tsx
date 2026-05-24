@@ -385,7 +385,27 @@ export function GeometryCanvas() {
 
     setIntersectionPreview(null);
     event.currentTarget.setPointerCapture(event.pointerId);
-    if (selectedTool === "compass" || selectedTool === "straightedge" || selectedTool === "extend") {
+    if (selectedTool === "compass" || selectedTool === "straightedge") {
+      const startPoint =
+        findNearbyPoint(objects, point.x, point.y) ??
+        ({
+          id: "__preview-start",
+          type: "point",
+          x: point.x,
+          y: point.y,
+        } as Point);
+
+      setDragPreview({
+        tool: selectedTool,
+        start: point,
+        current: point,
+        startPoint,
+        startPointId: startPoint.id === "__preview-start" ? null : startPoint.id,
+        hasMoved: false,
+      });
+    }
+
+    if (selectedTool === "extend") {
       const startPoint = findNearbyPoint(objects, point.x, point.y);
       if (!startPoint) {
         return;

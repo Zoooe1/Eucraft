@@ -3,15 +3,20 @@ import type { AppPhase, GeometryObject, GeometryTool, Point, ProofContext, Valid
 import {
   circleExists,
   createCircle,
+  createCircleFromLength,
   createExtendedLine,
+  createPoint,
   createSegment,
   extendedLineExists,
+  findNearbyObjectSnap,
   findNearbyPoint,
+  findNearbySegment,
   getPoint,
   INTERSECTION_TOLERANCE,
   nextPointLabel,
   segmentExistsBetween,
   snapToPointRay,
+  transferredCircleExists,
 } from "../geometry/operations";
 import { findNearbyIntersection, pointNearCoordinates } from "../geometry/intersections";
 import { validateProposition } from "../geometry/validation";
@@ -26,6 +31,7 @@ type GeometryStore = {
   completedPropositionIds: string[];
   selectedTool: GeometryTool;
   selectedPointIds: string[];
+  compassTransferSource: { p1: string; p2: string; segmentId?: string } | null;
   animatedObjectId: string | null;
   objects: GeometryObject[];
   history: GeometryObject[][];
@@ -80,18 +86,78 @@ function addObjectWithHistory(state: GeometryStore, object: GeometryObject) {
   return addObjectsWithHistory(state, [object]);
 }
 
-function constructBetweenPoints(state: GeometryStore, firstPointId: string, secondPointId: string, tool: GeometryTool) {
-  const clickedPoint = getPoint(state.objects, secondPointId);
+function addObjectsAndSelect(
+  state: GeometryStore,
+  newObjects: GeometryObject[],
+  selectedPointIds: string[] = [],
+  animatedObjectId?: string,
+) {
+  return {
+    ...addObjectsWithHistory(state, newObjects, animatedObjectId),
+    selectedPointIds,
+    compassTransferSource: null,
+  };
+}
+
+function pointLabel(state: GeometryStore, objects: GeometryObject[]) {
+  return nextPointLabel(objects, getProposition(state.currentPropositionId).pointLabelSequence);
+}
+
+function resolvePointAt(
+  state: GeometryStore,
+  x: number,
+  y: number,
+  objects: GeometryObject[] = state.objects,
+): { point: Point; newPoint?: Point } {
+  const existing = findNearbyPoint(objects, x, y);
+  if (existing) {
+    return { point: existing };
+  }
+
+  const intersection = findNearbyIntersection(objects, x, y, 30);
+  if (intersection) {
+    const label = pointLabel(state, objects);
+    const point = createPoint(label, intersection.x, intersection.y, "intersection", {
+      color: "gold",
+      parentObjectIds: intersection.objects.map((object) => object.id),
+    });
+    return { point, newPoint: point };
+  }
+
+  const objectSnap = findNearbyObjectSnap(objects, x, y);
+  if (objectSnap) {
+    const label = pointLabel(state, objects);
+    const point = createPoint(label, objectSnap.x, objectSnap.y, "snap", {
+      parentObjectIds: objectSnap.parentObjectIds,
+    });
+    return { point, newPoint: point };
+  }
+
+  const label = pointLabel(state, objects);
+  const point = createPoint(label, x, y, "free");
+  return { point, newPoint: point };
+}
+
+function constructBetweenPoints(
+  state: GeometryStore,
+  firstPointId: string,
+  secondPointId: string,
+  tool: GeometryTool,
+  objects: GeometryObject[] = state.objects,
+) {
+  const clickedPoint = getPoint(objects, secondPointId);
   if (!clickedPoint || firstPointId === clickedPoint.id) {
     return {
+      newObjects: [],
       selectedPointIds: [],
       validation: null,
     };
   }
 
   if (tool === "straightedge") {
-    if (segmentExistsBetween(state.objects, firstPointId, clickedPoint.id)) {
+    if (segmentExistsBetween(objects, firstPointId, clickedPoint.id)) {
       return {
+        newObjects: [],
         selectedPointIds: [],
         validation: {
           success: false,
@@ -102,15 +168,16 @@ function constructBetweenPoints(state: GeometryStore, firstPointId: string, seco
 
     const segment = createSegment(firstPointId, clickedPoint.id, "ink");
     return {
-      ...addObjectWithHistory(state, segment),
+      newObjects: [segment],
       selectedPointIds: [],
     };
   }
 
   if (tool === "extend") {
-    const baseSegment = segmentExistsBetween(state.objects, firstPointId, clickedPoint.id);
+    const baseSegment = segmentExistsBetween(objects, firstPointId, clickedPoint.id);
     if (!baseSegment) {
       return {
+        newObjects: [],
         selectedPointIds: [],
         validation: {
           success: false,
@@ -119,8 +186,9 @@ function constructBetweenPoints(state: GeometryStore, firstPointId: string, seco
       };
     }
 
-    if (extendedLineExists(state.objects, firstPointId, clickedPoint.id)) {
+    if (extendedLineExists(objects, firstPointId, clickedPoint.id)) {
       return {
+        newObjects: [],
         selectedPointIds: [],
         validation: {
           success: false,
@@ -131,13 +199,14 @@ function constructBetweenPoints(state: GeometryStore, firstPointId: string, seco
 
     const line = createExtendedLine(firstPointId, clickedPoint.id, baseSegment.id, "ink");
     return {
-      ...addObjectWithHistory(state, line),
+      newObjects: [line],
       selectedPointIds: [],
     };
   }
 
-  if (circleExists(state.objects, firstPointId, clickedPoint.id)) {
+  if (circleExists(objects, firstPointId, clickedPoint.id)) {
     return {
+      newObjects: [],
       selectedPointIds: [],
       validation: {
         success: false,
@@ -150,7 +219,7 @@ function constructBetweenPoints(state: GeometryStore, firstPointId: string, seco
   const isSecondEuclidCircle = state.currentPropositionId === "I.1" && firstPointId === "B" && clickedPoint.id === "A";
   const circle = createCircle(firstPointId, clickedPoint.id, isFirstEuclidCircle ? "red" : isSecondEuclidCircle ? "blue" : "gold");
   return {
-    ...addObjectWithHistory(state, circle),
+    newObjects: [circle],
     selectedPointIds: [],
   };
 }
@@ -159,11 +228,21 @@ function handlePointToolClick(state: GeometryStore, clickedPoint: Point, tool: G
   if (state.selectedPointIds.length === 0) {
     return {
       selectedPointIds: [clickedPoint.id],
+      compassTransferSource: null,
       validation: null,
     };
   }
 
-  return constructBetweenPoints(state, state.selectedPointIds[0], clickedPoint.id, tool);
+  const result = constructBetweenPoints(state, state.selectedPointIds[0], clickedPoint.id, tool);
+  if (result.newObjects.length === 0) {
+    return result;
+  }
+
+  return {
+    ...addObjectsAndSelect(state, result.newObjects, result.selectedPointIds),
+    validation: result.validation ?? null,
+    compassTransferSource: null,
+  };
 }
 
 export const useGeometryStore = create<GeometryStore>((set, get) => ({
@@ -174,6 +253,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
   completedPropositionIds: initialProgress.completedPropositionIds,
   selectedTool: "compass",
   selectedPointIds: [],
+  compassTransferSource: null,
   animatedObjectId: null,
   objects: cloneInitialObjects(FIRST_PROPOSITION_ID),
   history: [],
@@ -184,6 +264,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     set({
       phase: "laws",
       selectedPointIds: [],
+      compassTransferSource: null,
       validation: null,
       animatedObjectId: null,
     }),
@@ -192,6 +273,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       phase: "intro",
       selectedTool: "compass",
       selectedPointIds: [],
+      compassTransferSource: null,
       objects: cloneInitialObjects(state.currentPropositionId),
       history: [],
       validation: null,
@@ -210,6 +292,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       currentPropositionId: id,
       selectedTool: "compass",
       selectedPointIds: [],
+      compassTransferSource: null,
       objects: cloneInitialObjects(id),
       history: [],
       validation: null,
@@ -223,6 +306,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       phase: "construction",
       selectedTool: "compass",
       selectedPointIds: [],
+      compassTransferSource: null,
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
@@ -236,6 +320,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     set({
       selectedTool: tool,
       selectedPointIds: [],
+      compassTransferSource: null,
       validation: null,
     }),
   handleCanvasClick: (x, y) => {
@@ -274,6 +359,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
             color: "gold",
             auxiliary: false,
             source: "intersection",
+            createdBy: "intersection",
             parentObjectIds: intersection.objects.map((object) => object.id),
           };
 
@@ -300,16 +386,10 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       }
 
       const label = nextPointLabel(state.objects, getProposition(state.currentPropositionId).pointLabelSequence);
-      const point: Point = {
-        id: label,
-        type: "point",
-        x: intersection.x,
-        y: intersection.y,
-        label,
+      const point = createPoint(label, intersection.x, intersection.y, "intersection", {
         color: "gold",
-        source: "intersection",
         parentObjectIds: intersection.objects.map((object) => object.id),
-      };
+      });
 
       set({
         ...addObjectWithHistory(state, point),
@@ -318,32 +398,132 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       return;
     }
 
-    if (state.selectedTool === "select") {
-      const point = findNearbyPoint(state.objects, x, y);
+    if (state.selectedTool === "point") {
+      const resolved = resolvePointAt(state, x, y);
+      if (resolved.newPoint) {
+        set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
+        return;
+      }
+
       set({
-        selectedPointIds: point ? [point.id] : [],
+        selectedPointIds: [resolved.point.id],
+        compassTransferSource: null,
         validation: null,
       });
       return;
     }
 
-    const clickedPoint = findNearbyPoint(state.objects, x, y);
-    if (!clickedPoint) {
+    if (state.selectedTool === "compass-transfer") {
+      if (state.compassTransferSource) {
+        const resolvedCenter = resolvePointAt(state, x, y);
+        const objectsWithCenter = resolvedCenter.newPoint ? [...state.objects, resolvedCenter.newPoint] : state.objects;
+        const { p1, p2 } = state.compassTransferSource;
+
+        if (transferredCircleExists(objectsWithCenter, resolvedCenter.point.id, p1, p2)) {
+          set({
+            selectedPointIds: [],
+            compassTransferSource: null,
+            validation: {
+              success: false,
+              message: "That transferred-width circle is already on the page.",
+            },
+          });
+          return;
+        }
+
+        const circle = createCircleFromLength(resolvedCenter.point.id, p1, p2, "gold", "I.2");
+        set(addObjectsAndSelect(state, [...(resolvedCenter.newPoint ? [resolvedCenter.newPoint] : []), circle], [], circle.id));
+        return;
+      }
+
+      if (state.selectedPointIds.length === 0) {
+        const sourceSegment = findNearbySegment(state.objects, x, y, 20);
+        if (sourceSegment) {
+          set({
+            selectedPointIds: [sourceSegment.p1, sourceSegment.p2],
+            compassTransferSource: {
+              p1: sourceSegment.p1,
+              p2: sourceSegment.p2,
+              segmentId: sourceSegment.id,
+            },
+            validation: null,
+          });
+          return;
+        }
+
+        const resolved = resolvePointAt(state, x, y);
+        if (resolved.newPoint) {
+          set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
+          return;
+        }
+
+        set({
+          selectedPointIds: [resolved.point.id],
+          validation: null,
+        });
+        return;
+      }
+
+      const firstPointId = state.selectedPointIds[0];
+      const resolvedSecond = resolvePointAt(state, x, y);
+      const newObjects = resolvedSecond.newPoint ? [resolvedSecond.newPoint] : [];
+      if (firstPointId === resolvedSecond.point.id) {
+        set({
+          selectedPointIds: [],
+          validation: {
+            success: false,
+            message: "Choose two distinct points for the compass width.",
+          },
+        });
+        return;
+      }
+
       set({
-        validation: {
-          success: false,
-          message:
-            state.selectedTool === "straightedge"
-              ? "Choose an existing point. Mark an intersection first if you want to draw from it."
-              : state.selectedTool === "extend"
-                ? "Choose an endpoint of an existing segment, then the point it should pass through."
-              : "Choose an existing point. Euclid's tools begin from points already on the page.",
+        ...addObjectsAndSelect(state, newObjects, [firstPointId, resolvedSecond.point.id], resolvedSecond.newPoint?.id),
+        compassTransferSource: {
+          p1: firstPointId,
+          p2: resolvedSecond.point.id,
         },
       });
       return;
     }
 
-    set(handlePointToolClick(state, clickedPoint, state.selectedTool));
+    const resolvedPoint = resolvePointAt(state, x, y);
+    if (state.selectedPointIds.length === 0) {
+      if (resolvedPoint.newPoint) {
+        set(addObjectsAndSelect(state, [resolvedPoint.newPoint], [resolvedPoint.point.id], resolvedPoint.point.id));
+        return;
+      }
+
+      set(handlePointToolClick(state, resolvedPoint.point, state.selectedTool));
+      return;
+    }
+
+    const baseObjects = resolvedPoint.newPoint ? [...state.objects, resolvedPoint.newPoint] : state.objects;
+    const result = constructBetweenPoints(
+      state,
+      state.selectedPointIds[0],
+      resolvedPoint.point.id,
+      state.selectedTool,
+      baseObjects,
+    );
+
+    if (result.newObjects.length === 0) {
+      set({
+        selectedPointIds: result.selectedPointIds,
+        validation: result.validation ?? null,
+      });
+      return;
+    }
+
+    set(
+      addObjectsAndSelect(
+        state,
+        [...(resolvedPoint.newPoint ? [resolvedPoint.newPoint] : []), ...result.newObjects],
+        result.selectedPointIds,
+        result.newObjects[result.newObjects.length - 1]?.id ?? resolvedPoint.newPoint?.id,
+      ),
+    );
   },
   handleCanvasDrag: (startPointId, startX, startY, endX, endY) => {
     const state = get();
@@ -354,19 +534,19 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       return;
     }
 
-    const start = startPointId ? getPoint(state.objects, startPointId) : findNearbyPoint(state.objects, startX, startY);
-    if (!start) {
-      set({
-        selectedPointIds: [],
-        validation: {
-          success: false,
-          message: "Begin from an existing point.",
-        },
-      });
-      return;
-    }
-
     if (state.selectedTool === "extend") {
+      const start = startPointId ? getPoint(state.objects, startPointId) : findNearbyPoint(state.objects, startX, startY);
+      if (!start) {
+        set({
+          selectedPointIds: [],
+          validation: {
+            success: false,
+            message: "Begin from an endpoint of an existing segment.",
+          },
+        });
+        return;
+      }
+
       const guidedEnd = snapToPointRay(state.objects, start, endX, endY);
       if (!guidedEnd) {
         set({
@@ -410,23 +590,20 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       return;
     }
 
-    const end = findNearbyPoint(state.objects, endX, endY);
-
-    if (!end) {
-      set({
-        selectedPointIds: [],
-        validation: {
-          success: false,
-          message:
-            state.selectedTool === "compass"
-              ? "Compass needs an existing center point and an existing radius point."
-              : "Straightedge needs two existing points. Use Extend Line to produce a segment.",
-        },
-      });
+    const resolvedStart = startPointId
+      ? { point: getPoint(state.objects, startPointId), newPoint: undefined }
+      : resolvePointAt(state, startX, startY);
+    if (!resolvedStart.point) {
       return;
     }
 
-    if (start.id === end.id || Math.hypot(start.x - end.x, start.y - end.y) < 2) {
+    const objectsWithStart = resolvedStart.newPoint ? [...state.objects, resolvedStart.newPoint] : state.objects;
+    const resolvedEnd = resolvePointAt(state, endX, endY, objectsWithStart);
+
+    if (
+      resolvedStart.point.id === resolvedEnd.point.id ||
+      Math.hypot(resolvedStart.point.x - resolvedEnd.point.x, resolvedStart.point.y - resolvedEnd.point.y) < 2
+    ) {
       set({
         selectedPointIds: [],
         validation: {
@@ -437,44 +614,33 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       return;
     }
 
-    if (state.selectedTool === "straightedge") {
-      if (segmentExistsBetween(state.objects, start.id, end.id)) {
-        set({
-          selectedPointIds: [],
-          validation: {
-            success: false,
-            message: "That straight line is already drawn. Choose another pair of points.",
-          },
-        });
-        return;
-      }
-
-      const segment = createSegment(start.id, end.id, "ink");
+    const preliminaryObjects = [
+      ...(resolvedStart.newPoint ? [resolvedStart.newPoint] : []),
+      ...(resolvedEnd.newPoint ? [resolvedEnd.newPoint] : []),
+    ];
+    const result = constructBetweenPoints(
+      state,
+      resolvedStart.point.id,
+      resolvedEnd.point.id,
+      state.selectedTool,
+      [...state.objects, ...preliminaryObjects],
+    );
+    if (result.newObjects.length === 0) {
       set({
-        ...addObjectWithHistory(state, segment),
-        selectedPointIds: [],
+        selectedPointIds: result.selectedPointIds,
+        validation: result.validation ?? null,
       });
       return;
     }
 
-    if (circleExists(state.objects, start.id, end.id)) {
-      set({
-        selectedPointIds: [],
-        validation: {
-          success: false,
-          message: "That circle is already on the page. Choose a new center or radius point.",
-        },
-      });
-      return;
-    }
-
-    const isFirstEuclidCircle = state.currentPropositionId === "I.1" && start.id === "A" && end.id === "B";
-    const isSecondEuclidCircle = state.currentPropositionId === "I.1" && start.id === "B" && end.id === "A";
-    const circle = createCircle(start.id, end.id, isFirstEuclidCircle ? "red" : isSecondEuclidCircle ? "blue" : "gold");
-    set({
-      ...addObjectWithHistory(state, circle),
-      selectedPointIds: [],
-    });
+    set(
+      addObjectsAndSelect(
+        state,
+        [...preliminaryObjects, ...result.newObjects],
+        result.selectedPointIds,
+        result.newObjects[result.newObjects.length - 1]?.id ?? preliminaryObjects[preliminaryObjects.length - 1]?.id,
+      ),
+    );
   },
   checkConstruction: () => {
     const state = get();
@@ -529,6 +695,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       phase: "intro",
       selectedTool: "compass",
       selectedPointIds: [],
+      compassTransferSource: null,
       objects: cloneInitialObjects(state.currentPropositionId),
       history: [],
       validation: null,
@@ -547,6 +714,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         objects: previous,
         history: state.history.slice(0, -1),
         selectedPointIds: [],
+        compassTransferSource: null,
         validation: null,
         phase:
           state.phase === "logicReplay" || state.phase === "completed" || state.phase === "success"

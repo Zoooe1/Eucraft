@@ -6,14 +6,14 @@ import { useUnlockStore } from "../state/useUnlockStore";
 
 const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHint: string }> = {
   "primitive-point-selector": {
-    tool: "select",
+    tool: "point",
     mark: "•",
-    fallbackHint: "Select existing points.",
+    fallbackHint: "Create a point, or select an existing nearby point.",
   },
   "primitive-straightedge": {
     tool: "straightedge",
     mark: "╱",
-    fallbackHint: "Draw a straight-line segment between existing points.",
+    fallbackHint: "Draw a straight-line segment between points.",
   },
   "primitive-extend-line": {
     tool: "extend",
@@ -32,13 +32,17 @@ const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHin
   },
 };
 
-function toolInstruction(tool: GeometryTool, selectedCount: number) {
+function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTransferSource: boolean) {
+  if (tool === "point") {
+    return "Click anywhere to place a point; nearby points and intersections snap first.";
+  }
+
   if (tool === "compass" && selectedCount === 1) {
-    return "Choose an existing radius point.";
+    return "Choose a radius point, or click freely to create one.";
   }
 
   if (tool === "straightedge" && selectedCount === 1) {
-    return "Choose another existing point.";
+    return "Choose another point, or click freely to create one.";
   }
 
   if (tool === "extend" && selectedCount === 1) {
@@ -49,10 +53,44 @@ function toolInstruction(tool: GeometryTool, selectedCount: number) {
     return "Move near a crossing, then click when the gold snap dot appears.";
   }
 
+  if (tool === "compass-transfer") {
+    if (hasCompassTransferSource) {
+      return "Choose the center point for the transferred-width circle.";
+    }
+
+    if (selectedCount === 1) {
+      return "Choose the second point of the source length.";
+    }
+
+    return "Choose a source segment, or choose two points for the compass width.";
+  }
+
   return "Euclid begins from given points, constructed points, and intersections.";
 }
 
-function TheoremActionButton({ unlock }: { unlock: Unlock }) {
+function TheoremActionButton({
+  unlock,
+  selectedTool,
+  setTool,
+}: {
+  unlock: Unlock;
+  selectedTool: GeometryTool;
+  setTool: (tool: GeometryTool) => void;
+}) {
+  if (unlock.functionName === "createCircleWithTransferredRadius") {
+    return (
+      <button
+        className={selectedTool === "compass-transfer" ? "theorem-action-button active" : "theorem-action-button"}
+        type="button"
+        onClick={() => setTool("compass-transfer")}
+        title={unlock.description}
+      >
+        <span>{unlock.source}</span>
+        {unlock.name}
+      </button>
+    );
+  }
+
   return (
     <button className="theorem-action-button" type="button" title={unlock.description}>
       <span>{unlock.source}</span>
@@ -64,6 +102,7 @@ function TheoremActionButton({ unlock }: { unlock: Unlock }) {
 export function ToolShelf() {
   const selectedTool = useGeometryStore((state) => state.selectedTool);
   const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
+  const compassTransferSource = useGeometryStore((state) => state.compassTransferSource);
   const setTool = useGeometryStore((state) => state.setTool);
   const checkConstruction = useGeometryStore((state) => state.checkConstruction);
   const undo = useGeometryStore((state) => state.undo);
@@ -129,14 +168,14 @@ export function ToolShelf() {
         </div>
       </div>
 
-      <p className="tool-instruction">{toolInstruction(selectedTool, selectedPointIds.length)}</p>
+      <p className="tool-instruction">{toolInstruction(selectedTool, selectedPointIds.length, Boolean(compassTransferSource))}</p>
 
       {theoremActions.length > 0 && (
         <div className="theorem-action-shelf">
           <p className="panel-label">Theorem-Actions</p>
           <div className="unlock-button-list">
             {theoremActions.map((unlock) => (
-              <TheoremActionButton key={unlock.id} unlock={unlock} />
+              <TheoremActionButton key={unlock.id} unlock={unlock} selectedTool={selectedTool} setTool={setTool} />
             ))}
           </div>
         </div>

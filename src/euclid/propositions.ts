@@ -42,7 +42,7 @@ export const euclidPropositions: EuclidProposition[] = [
     playerGoal: "Transfer a given length so it starts from a chosen point.",
     type: "construction",
     dependencies: ["I.1"],
-    unlocks: ["unlock-I.2-transfer-length", "token-transferred-length"],
+    unlocks: ["unlock-I.2-transfer-length", "unlock-I.2-set-compass-width", "token-transferred-length"],
     initialObjects: emptyObjects,
     validationGoal: {
       id: "verifyTransferredSegment",
@@ -72,8 +72,8 @@ export const euclidPropositions: EuclidProposition[] = [
       hiddenConstraints: ["isPointBetween", "compareSegmentLengths"],
     },
     replaySteps: infrastructureReplay(
-      "Use I.2 to place a segment from A equal to the lesser line.",
-      "A circle centered at A cuts the greater line at the required distance.",
+      "Use I.2 to set the compass width to the lesser line CD.",
+      "A circle centered at A with that transferred width cuts the greater line at the required distance.",
       "Cut Off Equal Segment becomes available for later constructions.",
     ),
   },

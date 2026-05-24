@@ -1,4 +1,4 @@
-export type GeometryTool = "select" | "straightedge" | "extend" | "compass" | "intersection";
+export type GeometryTool = "point" | "straightedge" | "extend" | "compass" | "compass-transfer" | "intersection";
 
 export type AppPhase = "title" | "laws" | "intro" | "construction" | "success" | "logicReplay" | "completed";
 
@@ -12,6 +12,7 @@ export type Point = {
   color?: string;
   auxiliary?: boolean;
   source?: string;
+  createdBy?: "free" | "given" | "intersection" | "snap" | "theorem-action";
   parentObjectIds?: string[];
 };
 
@@ -31,11 +32,17 @@ export type Circle = {
   id: string;
   type: "circle";
   center: string;
-  through: string;
+  through?: string;
+  radiusSegment?: {
+    p1: string;
+    p2: string;
+  };
+  radiusValue?: number;
   label?: string;
   color?: string;
   source?: string;
-  createdBy?: string;
+  createdBy?: "Post.3" | "I.2" | "free-compass-transfer" | string;
+  sourceDescription?: string;
 };
 
 export type ExtendedLine = {

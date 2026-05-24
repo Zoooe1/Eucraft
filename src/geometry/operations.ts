@@ -5,6 +5,7 @@ export const INTERSECTION_TOLERANCE = 76;
 export const EQUALITY_TOLERANCE = 5;
 export const COLLINEAR_TOLERANCE = 0.015;
 export const STRAIGHTEDGE_GUIDE_TOLERANCE = 22;
+export const OBJECT_SNAP_TOLERANCE = 14;
 
 export function isPoint(object: GeometryObject): object is Point {
   return object.type === "point";
@@ -60,11 +61,22 @@ export function distance(a: Point, b: Point): number {
 
 export function circleRadius(circle: Circle, objects: GeometryObject[]): number {
   const center = getPoint(objects, circle.center);
-  const through = getPoint(objects, circle.through);
-  if (!center || !through) {
+  if (!center) {
     return 0;
   }
-  return distance(center, through);
+
+  if (circle.through) {
+    const through = getPoint(objects, circle.through);
+    return through ? distance(center, through) : 0;
+  }
+
+  if (circle.radiusSegment) {
+    const p1 = getPoint(objects, circle.radiusSegment.p1);
+    const p2 = getPoint(objects, circle.radiusSegment.p2);
+    return p1 && p2 ? distance(p1, p2) : 0;
+  }
+
+  return circle.radiusValue ?? 0;
 }
 
 export function areDistancesEqual(d1: number, d2: number, tolerance = EQUALITY_TOLERANCE): boolean {
@@ -156,6 +168,46 @@ export function circleExists(objects: GeometryObject[], center: string, through:
   return allCircles(objects).find((circle) => circle.center === center && circle.through === through);
 }
 
+export function transferredCircleExists(
+  objects: GeometryObject[],
+  center: string,
+  sourceP1: string,
+  sourceP2: string,
+): Circle | undefined {
+  return allCircles(objects).find(
+    (circle) =>
+      circle.center === center &&
+      ((circle.radiusSegment?.p1 === sourceP1 && circle.radiusSegment?.p2 === sourceP2) ||
+        (circle.radiusSegment?.p1 === sourceP2 && circle.radiusSegment?.p2 === sourceP1)),
+  );
+}
+
+export function createPoint(
+  label: string,
+  x: number,
+  y: number,
+  createdBy: Point["createdBy"] = "free",
+  options: {
+    color?: string;
+    fixed?: boolean;
+    parentObjectIds?: string[];
+    source?: string;
+  } = {},
+): Point {
+  return {
+    id: label,
+    type: "point",
+    x,
+    y,
+    label,
+    color: options.color ?? (createdBy === "intersection" ? "gold" : "ink"),
+    fixed: options.fixed,
+    source: options.source ?? createdBy,
+    createdBy,
+    parentObjectIds: options.parentObjectIds,
+  };
+}
+
 export function createSegment(p1: string, p2: string, color?: string, source = "Post.1"): Segment {
   const id = `segment-${p1}-${p2}-${crypto.randomUUID().slice(0, 6)}`;
   const label = /^[A-Z]$/.test(p1) && /^[A-Z]$/.test(p2) ? `${p1}${p2}` : undefined;
@@ -165,7 +217,32 @@ export function createSegment(p1: string, p2: string, color?: string, source = "
 export function createCircle(center: string, through: string, color?: string, source = "Post.3"): Circle {
   const id = `circle-${center}-${through}-${crypto.randomUUID().slice(0, 6)}`;
   const label = /^[A-Z]$/.test(center) && /^[A-Z]$/.test(through) ? `${center}${through}` : undefined;
-  return { id, type: "circle", center, through, label, color, source };
+  return { id, type: "circle", center, through, label, color, source, createdBy: "Post.3" };
+}
+
+export function createCircleFromLength(
+  center: string,
+  sourceP1: string,
+  sourceP2: string,
+  color?: string,
+  createdBy: "I.2" | "free-compass-transfer" = "I.2",
+): Circle {
+  const id = `circle-${center}-${sourceP1}${sourceP2}-${crypto.randomUUID().slice(0, 6)}`;
+  const sourceLabel = /^[A-Z]$/.test(sourceP1) && /^[A-Z]$/.test(sourceP2) ? `${sourceP1}${sourceP2}` : "source segment";
+  return {
+    id,
+    type: "circle",
+    center,
+    radiusSegment: {
+      p1: sourceP1,
+      p2: sourceP2,
+    },
+    label: /^[A-Z]$/.test(center) ? `${center}:${sourceLabel}` : undefined,
+    color,
+    source: "I.2",
+    createdBy,
+    sourceDescription: `radius equals ${sourceLabel}`,
+  };
 }
 
 export function extendedLineExists(objects: GeometryObject[], from: string, through: string): ExtendedLine | undefined {
@@ -196,6 +273,115 @@ export function createAuxiliaryPoint(x: number, y: number): Point {
     auxiliary: true,
     color: "ink",
   };
+}
+
+function projectToLine(a: Point, b: Point, x: number, y: number) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared === 0) {
+    return undefined;
+  }
+
+  const t = ((x - a.x) * dx + (y - a.y) * dy) / lengthSquared;
+  return {
+    x: a.x + t * dx,
+    y: a.y + t * dy,
+    t,
+  };
+}
+
+export function findNearbySegment(
+  objects: GeometryObject[],
+  x: number,
+  y: number,
+  tolerance = OBJECT_SNAP_TOLERANCE,
+): Segment | undefined {
+  return allSegments(objects)
+    .map((segment) => {
+      const p1 = getPoint(objects, segment.p1);
+      const p2 = getPoint(objects, segment.p2);
+      const projection = p1 && p2 ? projectToLine(p1, p2, x, y) : undefined;
+      if (!projection || projection.t < -0.03 || projection.t > 1.03) {
+        return undefined;
+      }
+
+      return { segment, distance: Math.hypot(x - projection.x, y - projection.y) };
+    })
+    .filter((candidate): candidate is { segment: Segment; distance: number } => Boolean(candidate))
+    .filter(({ distance: candidateDistance }) => candidateDistance <= tolerance)
+    .sort((a, b) => a.distance - b.distance)[0]?.segment;
+}
+
+export function findNearbyObjectSnap(
+  objects: GeometryObject[],
+  x: number,
+  y: number,
+  tolerance = OBJECT_SNAP_TOLERANCE,
+): { x: number; y: number; parentObjectIds: string[] } | undefined {
+  const lineSnaps = [...allSegments(objects), ...allExtendedLines(objects)]
+    .map((object) => {
+      const p1 = getPoint(objects, object.type === "segment" ? object.p1 : object.from);
+      const p2 = getPoint(objects, object.type === "segment" ? object.p2 : object.through);
+      const projection = p1 && p2 ? projectToLine(p1, p2, x, y) : undefined;
+      if (!projection) {
+        return undefined;
+      }
+
+      if (object.type === "segment" && (projection.t < -0.03 || projection.t > 1.03)) {
+        return undefined;
+      }
+
+      if (object.type === "extended-line" && projection.t < -0.03) {
+        return undefined;
+      }
+
+      const snapDistance = Math.hypot(x - projection.x, y - projection.y);
+      return snapDistance <= tolerance
+        ? {
+            x: projection.x,
+            y: projection.y,
+            parentObjectIds: [object.id],
+            distance: snapDistance,
+          }
+        : undefined;
+    })
+    .filter(
+      (candidate): candidate is { x: number; y: number; parentObjectIds: string[]; distance: number } =>
+        Boolean(candidate),
+    );
+
+  const circleSnaps = allCircles(objects)
+    .map((circle) => {
+      const center = getPoint(objects, circle.center);
+      const radius = circleRadius(circle, objects);
+      if (!center || radius === 0) {
+        return undefined;
+      }
+
+      const dx = x - center.x;
+      const dy = y - center.y;
+      const distanceFromCenter = Math.hypot(dx, dy);
+      if (distanceFromCenter === 0) {
+        return undefined;
+      }
+
+      const snapDistance = Math.abs(distanceFromCenter - radius);
+      return snapDistance <= tolerance
+        ? {
+            x: center.x + (dx / distanceFromCenter) * radius,
+            y: center.y + (dy / distanceFromCenter) * radius,
+            parentObjectIds: [circle.id],
+            distance: snapDistance,
+          }
+        : undefined;
+    })
+    .filter(
+      (candidate): candidate is { x: number; y: number; parentObjectIds: string[]; distance: number } =>
+        Boolean(candidate),
+    );
+
+  return [...lineSnaps, ...circleSnaps].sort((a, b) => a.distance - b.distance)[0];
 }
 
 export function nextPointLabel(objects: GeometryObject[], sequence: Iterable<string> = "CDEFGHIJKLMNOPQRSTUVWXYZ"): string {

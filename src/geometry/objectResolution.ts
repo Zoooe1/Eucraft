@@ -6,6 +6,7 @@ import {
   allSegments,
   areDistancesEqual,
   arePointsCollinear,
+  circleRadius,
   circleExists,
   distance,
   getPoint,
@@ -33,8 +34,7 @@ export function circleUsingBase(objects: GeometryObject[], center: string, throu
       return false;
     }
 
-    const radiusPoint = getPoint(objects, circle.through);
-    return radiusPoint ? areDistancesEqual(distance(centerPoint, radiusPoint), baseRadius) : false;
+    return areDistancesEqual(circleRadius(circle, objects), baseRadius);
   });
 }
 
@@ -152,17 +152,13 @@ export function resolveBook1Prop2Context(objects: GeometryObject[]): ProofContex
   const segmentDG = D && G ? segmentExistsBetween(objects, D.id, G.id) : undefined;
   const segmentDL = D ? segmentExistsBetween(objects, D.id, final.other.id) : undefined;
   const circleB = allCircles(objects).find((circle) => {
-    const center = getPoint(objects, circle.center);
-    const through = getPoint(objects, circle.through);
-    return center?.id === "B" && through ? areDistancesEqual(distance(center, through), bcLength) : false;
+    return circle.center === "B" && areDistancesEqual(circleRadius(circle, objects), bcLength);
   });
   const circleD =
     D &&
     G &&
     allCircles(objects).find((circle) => {
-      const center = getPoint(objects, circle.center);
-      const through = getPoint(objects, circle.through);
-      return center?.id === D.id && through ? areDistancesEqual(distance(center, through), distance(D, G)) : false;
+      return circle.center === D.id && areDistancesEqual(circleRadius(circle, objects), distance(D, G));
     });
 
   return {
@@ -208,7 +204,7 @@ export function resolveBook1Prop3Context(objects: GeometryObject[]): ProofContex
 
   for (const E of candidates) {
     const segmentAE = segmentExistsBetween(objects, "A", E.id);
-    if (!segmentAE || !areDistancesEqual(distance(A, E), lesserLength)) {
+    if (!areDistancesEqual(distance(A, E), lesserLength)) {
       continue;
     }
 
@@ -219,9 +215,7 @@ export function resolveBook1Prop3Context(objects: GeometryObject[]): ProofContex
     );
     const segmentAP = P ? segmentExistsBetween(objects, "A", P.id) : undefined;
     const circleA = allCircles(objects).find((circle) => {
-      const center = getPoint(objects, circle.center);
-      const through = getPoint(objects, circle.through);
-      return center?.id === "A" && through ? areDistancesEqual(distance(center, through), lesserLength) : false;
+      return circle.center === "A" && areDistancesEqual(circleRadius(circle, objects), lesserLength);
     });
 
     return {
@@ -233,8 +227,8 @@ export function resolveBook1Prop3Context(objects: GeometryObject[]): ProofContex
       pointP: P?.id ?? E.id,
       segmentAB: segmentAB.id,
       segmentCD: segmentCD.id,
-      segmentAE: segmentAE.id,
-      segmentAP: segmentAP?.id ?? segmentAE.id,
+      segmentAE: segmentAE?.id,
+      segmentAP: segmentAP?.id ?? segmentAE?.id,
       circleA: circleA?.id,
     };
   }

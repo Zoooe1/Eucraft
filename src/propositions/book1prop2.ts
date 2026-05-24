@@ -19,6 +19,7 @@ export const book1Prop2: Proposition = {
       y: 330,
       label: "A",
       fixed: true,
+      createdBy: "given",
       color: "red",
     },
     {
@@ -28,6 +29,7 @@ export const book1Prop2: Proposition = {
       y: 330,
       label: "B",
       fixed: true,
+      createdBy: "given",
       color: "blue",
     },
     {
@@ -37,6 +39,7 @@ export const book1Prop2: Proposition = {
       y: 330,
       label: "C",
       fixed: true,
+      createdBy: "given",
       color: "gold",
     },
     {
@@ -50,7 +53,7 @@ export const book1Prop2: Proposition = {
       source: "given",
     },
   ],
-  allowedTools: ["select", "straightedge", "extend", "compass", "intersection"],
+  allowedTools: ["point", "straightedge", "extend", "compass", "intersection"],
   pointLabelSequence: ["D", "G", "L", "E", "F", "H", "K", "M", "N", "O", "P", "Q", "R", "S", "T"],
   nextPropositionId: "I.3",
   lawSections: book1Prop1.lawSections,
