@@ -1,4 +1,4 @@
-export type GeometryTool = "select" | "straightedge" | "compass" | "intersection";
+export type GeometryTool = "select" | "straightedge" | "extend" | "compass" | "intersection";
 
 export type AppPhase = "title" | "laws" | "intro" | "construction" | "success" | "logicReplay" | "completed";
 
@@ -11,6 +11,8 @@ export type Point = {
   fixed?: boolean;
   color?: string;
   auxiliary?: boolean;
+  source?: string;
+  parentObjectIds?: string[];
 };
 
 export type Segment = {
@@ -21,6 +23,8 @@ export type Segment = {
   label?: string;
   color?: string;
   given?: boolean;
+  source?: string;
+  createdBy?: string;
 };
 
 export type Circle = {
@@ -30,9 +34,23 @@ export type Circle = {
   through: string;
   label?: string;
   color?: string;
+  source?: string;
+  createdBy?: string;
 };
 
-export type GeometryObject = Point | Segment | Circle;
+export type ExtendedLine = {
+  id: string;
+  type: "extended-line";
+  from: string;
+  through: string;
+  baseSegment: string;
+  label?: string;
+  color?: string;
+  source?: string;
+  createdBy?: string;
+};
+
+export type GeometryObject = Point | Segment | Circle | ExtendedLine;
 
 export type GeometryObjects = GeometryObject[];
 
@@ -73,4 +91,48 @@ export type ValidationResult = {
   success: boolean;
   message: string;
   context?: ProofContext;
+};
+
+export type ValidationGoal = {
+  id: string;
+  description: string;
+  hiddenConstraints?: string[];
+};
+
+export type UnlockType =
+  | "primitive-tool"
+  | "theorem-action"
+  | "logic-rule"
+  | "constraint-rule"
+  | "semantic-token";
+
+export type Unlock = {
+  id: string;
+  propositionId?: string;
+  unlockType: UnlockType;
+  name: string;
+  functionName: string;
+  visibleToPlayer: boolean;
+  dependsOn: string[];
+  description: string;
+  futureUses: string[];
+  source?: string;
+  originalStatement?: string;
+  whatItLetsYouDo?: string;
+  replaySteps?: ReplayStep[];
+};
+
+export type EuclidProposition = {
+  id: string;
+  book: number;
+  number: number;
+  title: string;
+  originalStatement: string;
+  playerGoal: string;
+  type: "construction" | "theorem";
+  dependencies: string[];
+  unlocks: string[];
+  initialObjects: GeometryObject[];
+  validationGoal: ValidationGoal;
+  replaySteps: ReplayStep[];
 };

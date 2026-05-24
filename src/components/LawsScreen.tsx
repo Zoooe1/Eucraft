@@ -1,4 +1,4 @@
-import { book1Prop1 } from "../propositions/book1prop1";
+import { openingLawSections } from "../euclid/laws";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 function LawsDiagram() {
@@ -27,19 +27,21 @@ export function LawsScreen() {
       <div className="screen-heading">
         <p className="app-kicker">Eucraft</p>
         <h1>Laws of the World</h1>
-        <p className="screen-copy">Euclid's world begins with these postulates and axioms.</p>
+        <p className="screen-copy">Euclid's world begins with a small set of usable laws. They are the physics of the page.</p>
         <LawsDiagram />
       </div>
 
       <div className="law-sections">
-        {book1Prop1.lawSections.map((section) => (
+        {openingLawSections.map((section) => (
           <article className="law-card" key={section.title}>
             <h2>{section.title}</h2>
             <ol>
               {section.items.map((item, index) => (
-                <li key={item}>
+                <li key={item.id}>
                   <span className="law-number">{index + 1}.</span>
-                  <span>{item}</span>
+                  <span>
+                    <strong>{item.title}:</strong> {item.text} <em>{item.source}</em>
+                  </span>
                 </li>
               ))}
             </ol>

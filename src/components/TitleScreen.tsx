@@ -1,11 +1,8 @@
-import { propositions } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
+import { PropositionMap } from "./PropositionMap";
 
 export function TitleScreen() {
   const startApp = useGeometryStore((state) => state.startApp);
-  const openProposition = useGeometryStore((state) => state.openProposition);
-  const unlockedPropositionIds = useGeometryStore((state) => state.unlockedPropositionIds);
-  const completedPropositionIds = useGeometryStore((state) => state.completedPropositionIds);
 
   return (
     <section className="screen-stage title-screen">
@@ -18,25 +15,7 @@ export function TitleScreen() {
           Begin
         </button>
 
-        <div className="proposition-shelf" aria-label="Unlocked propositions">
-          {propositions.map((proposition) => {
-            const unlocked = unlockedPropositionIds.includes(proposition.id);
-            const completed = completedPropositionIds.includes(proposition.id);
-            return (
-              <button
-                className={unlocked ? "proposition-card-button" : "proposition-card-button locked"}
-                disabled={!unlocked}
-                key={proposition.id}
-                onClick={() => openProposition(proposition.id)}
-                type="button"
-              >
-                <span>{proposition.id}</span>
-                <strong>{proposition.title}</strong>
-                <small>{completed ? "Completed" : unlocked ? "Unlocked" : "Locked"}</small>
-              </button>
-            );
-          })}
-        </div>
+        <PropositionMap />
       </div>
 
       <svg className="title-diagram" viewBox="0 0 560 500" role="img" aria-label="A Byrne-inspired geometric diagram">

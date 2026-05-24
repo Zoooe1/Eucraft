@@ -1,4 +1,4 @@
-import type { Circle, GeometryObject, Point, Segment } from "./types";
+import type { Circle, ExtendedLine, GeometryObject, Point, Segment } from "./types";
 
 export const POINT_TOLERANCE = 20;
 export const INTERSECTION_TOLERANCE = 76;
@@ -16,6 +16,10 @@ export function isSegment(object: GeometryObject): object is Segment {
 
 export function isCircle(object: GeometryObject): object is Circle {
   return object.type === "circle";
+}
+
+export function isExtendedLine(object: GeometryObject): object is ExtendedLine {
+  return object.type === "extended-line";
 }
 
 export function getPoint(objects: GeometryObject[], id: string): Point | undefined {
@@ -44,6 +48,10 @@ export function allSegments(objects: GeometryObject[]): Segment[] {
 
 export function allCircles(objects: GeometryObject[]): Circle[] {
   return objects.filter(isCircle);
+}
+
+export function allExtendedLines(objects: GeometryObject[]): ExtendedLine[] {
+  return objects.filter(isExtendedLine);
 }
 
 export function distance(a: Point, b: Point): number {
@@ -148,16 +156,35 @@ export function circleExists(objects: GeometryObject[], center: string, through:
   return allCircles(objects).find((circle) => circle.center === center && circle.through === through);
 }
 
-export function createSegment(p1: string, p2: string, color?: string): Segment {
+export function createSegment(p1: string, p2: string, color?: string, source = "Post.1"): Segment {
   const id = `segment-${p1}-${p2}-${crypto.randomUUID().slice(0, 6)}`;
   const label = /^[A-Z]$/.test(p1) && /^[A-Z]$/.test(p2) ? `${p1}${p2}` : undefined;
-  return { id, type: "segment", p1, p2, label, color };
+  return { id, type: "segment", p1, p2, label, color, source };
 }
 
-export function createCircle(center: string, through: string, color?: string): Circle {
+export function createCircle(center: string, through: string, color?: string, source = "Post.3"): Circle {
   const id = `circle-${center}-${through}-${crypto.randomUUID().slice(0, 6)}`;
   const label = /^[A-Z]$/.test(center) && /^[A-Z]$/.test(through) ? `${center}${through}` : undefined;
-  return { id, type: "circle", center, through, label, color };
+  return { id, type: "circle", center, through, label, color, source };
+}
+
+export function extendedLineExists(objects: GeometryObject[], from: string, through: string): ExtendedLine | undefined {
+  return allExtendedLines(objects).find((line) => line.from === from && line.through === through);
+}
+
+export function createExtendedLine(from: string, through: string, baseSegment: string, color?: string): ExtendedLine {
+  const id = `extend-${from}-${through}-${crypto.randomUUID().slice(0, 6)}`;
+  const label = /^[A-Z]$/.test(from) && /^[A-Z]$/.test(through) ? `${from}${through}` : undefined;
+  return {
+    id,
+    type: "extended-line",
+    from,
+    through,
+    baseSegment,
+    label,
+    color,
+    source: "Post.2",
+  };
 }
 
 export function createAuxiliaryPoint(x: number, y: number): Point {

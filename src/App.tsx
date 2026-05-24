@@ -1,11 +1,11 @@
 import { CompletionCard } from "./components/CompletionCard";
 import { GeometryCanvas } from "./components/GeometryCanvas";
 import { LawsScreen } from "./components/LawsScreen";
-import { LogicReplayPanel } from "./components/LogicReplayPanel";
+import { LogicReplay } from "./components/LogicReplay";
 import { Marginalia } from "./components/Marginalia";
 import { PropositionIntro } from "./components/PropositionIntro";
 import { TitleScreen } from "./components/TitleScreen";
-import { ToolPanel } from "./components/ToolPanel";
+import { ToolShelf } from "./components/ToolShelf";
 import { ValidationMessage } from "./components/ValidationMessage";
 import { getProposition } from "./propositions";
 import { useGeometryStore } from "./state/useGeometryStore";
@@ -50,10 +50,10 @@ export default function App() {
               <blockquote>{proposition.originalStatement}</blockquote>
             </header>
 
-            {phase === "construction" && <ToolPanel />}
+            {phase === "construction" && <ToolShelf />}
             {phase === "construction" && <Marginalia />}
             <ValidationMessage validation={validation} />
-            {(phase === "success" || phase === "logicReplay") && <LogicReplayPanel />}
+            {(phase === "success" || phase === "logicReplay") && <LogicReplay />}
             {phase === "completed" && <CompletionCard />}
           </>
         )}

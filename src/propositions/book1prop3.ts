@@ -56,6 +56,7 @@ export const book1Prop3: Proposition = {
       label: "AB",
       color: "black",
       given: true,
+      source: "given",
     },
     {
       id: "CD",
@@ -65,9 +66,10 @@ export const book1Prop3: Proposition = {
       label: "CD",
       color: "black",
       given: true,
+      source: "given",
     },
   ],
-  allowedTools: ["select", "straightedge", "compass", "intersection"],
+  allowedTools: ["select", "straightedge", "extend", "compass", "intersection"],
   pointLabelSequence: ["P", "E", "F", "G", "H", "K", "L", "M", "N", "O", "Q", "R", "S", "T"],
   lawSections: book1Prop1.lawSections,
   replaySteps: [

@@ -1,10 +1,12 @@
-import type { Circle, GeometryObject, Point, Segment } from "./types";
-import { allCircles, allSegments, circleRadius, distance, getPoint } from "./operations";
+import type { Circle, ExtendedLine, GeometryObject, Point, Segment } from "./types";
+import { allCircles, allExtendedLines, allSegments, circleRadius, distance, getPoint } from "./operations";
+
+type LineObject = Segment | ExtendedLine;
 
 export type CircleIntersection = {
   x: number;
   y: number;
-  objects: [Circle, Circle] | [Circle, Segment];
+  objects: [Circle, Circle] | [Circle, LineObject] | [LineObject, LineObject];
 };
 
 export function circleCircleIntersections(
@@ -48,14 +50,22 @@ export function circleCircleIntersections(
   ];
 }
 
+function parameterWithinLineObject(line: LineObject, t: number) {
+  if (line.type === "segment") {
+    return t >= -0.001 && t <= 1.001;
+  }
+
+  return t >= -0.001;
+}
+
 export function circleLineIntersections(
   circle: Circle,
-  segment: Segment,
+  line: LineObject,
   objects: GeometryObject[],
 ): CircleIntersection[] {
   const center = getPoint(objects, circle.center);
-  const p1 = getPoint(objects, segment.p1);
-  const p2 = getPoint(objects, segment.p2);
+  const p1 = getPoint(objects, line.type === "segment" ? line.p1 : line.from);
+  const p2 = getPoint(objects, line.type === "segment" ? line.p2 : line.through);
   if (!center || !p1 || !p2) {
     return [];
   }
@@ -81,21 +91,55 @@ export function circleLineIntersections(
 
   if (Math.abs(discriminant) <= 0.001) {
     const t = -b / (2 * a);
-    return [{ x: p1.x + t * dx, y: p1.y + t * dy, objects: [circle, segment] }];
+    return parameterWithinLineObject(line, t)
+      ? [{ x: p1.x + t * dx, y: p1.y + t * dy, objects: [circle, line] }]
+      : [];
   }
 
   const root = Math.sqrt(Math.max(discriminant, 0));
   const t1 = (-b + root) / (2 * a);
   const t2 = (-b - root) / (2 * a);
-  return [
-    { x: p1.x + t1 * dx, y: p1.y + t1 * dy, objects: [circle, segment] },
-    { x: p1.x + t2 * dx, y: p1.y + t2 * dy, objects: [circle, segment] },
-  ];
+  return [t1, t2]
+    .filter((t) => parameterWithinLineObject(line, t))
+    .map((t) => ({ x: p1.x + t * dx, y: p1.y + t * dy, objects: [circle, line] }));
 }
 
-export function allCircleIntersections(objects: GeometryObject[]): CircleIntersection[] {
+export function lineLineIntersection(
+  line1: LineObject,
+  line2: LineObject,
+  objects: GeometryObject[],
+): CircleIntersection[] {
+  const a1 = getPoint(objects, line1.type === "segment" ? line1.p1 : line1.from);
+  const a2 = getPoint(objects, line1.type === "segment" ? line1.p2 : line1.through);
+  const b1 = getPoint(objects, line2.type === "segment" ? line2.p1 : line2.from);
+  const b2 = getPoint(objects, line2.type === "segment" ? line2.p2 : line2.through);
+
+  if (!a1 || !a2 || !b1 || !b2) {
+    return [];
+  }
+
+  const aDx = a2.x - a1.x;
+  const aDy = a2.y - a1.y;
+  const bDx = b2.x - b1.x;
+  const bDy = b2.y - b1.y;
+  const determinant = aDx * bDy - aDy * bDx;
+
+  if (Math.abs(determinant) < 0.001) {
+    return [];
+  }
+
+  const t = ((b1.x - a1.x) * bDy - (b1.y - a1.y) * bDx) / determinant;
+  const u = ((b1.x - a1.x) * aDy - (b1.y - a1.y) * aDx) / determinant;
+  if (!parameterWithinLineObject(line1, t) || !parameterWithinLineObject(line2, u)) {
+    return [];
+  }
+
+  return [{ x: a1.x + t * aDx, y: a1.y + t * aDy, objects: [line1, line2] }];
+}
+
+export function allIntersections(objects: GeometryObject[]): CircleIntersection[] {
   const circles = allCircles(objects);
-  const segments = allSegments(objects);
+  const lines: LineObject[] = [...allSegments(objects), ...allExtendedLines(objects)];
   const intersections: CircleIntersection[] = [];
 
   for (let i = 0; i < circles.length; i += 1) {
@@ -105,8 +149,14 @@ export function allCircleIntersections(objects: GeometryObject[]): CircleInterse
   }
 
   for (const circle of circles) {
-    for (const segment of segments) {
-      intersections.push(...circleLineIntersections(circle, segment, objects));
+    for (const line of lines) {
+      intersections.push(...circleLineIntersections(circle, line, objects));
+    }
+  }
+
+  for (let i = 0; i < lines.length; i += 1) {
+    for (let j = i + 1; j < lines.length; j += 1) {
+      intersections.push(...lineLineIntersection(lines[i], lines[j], objects));
     }
   }
 
@@ -119,7 +169,7 @@ export function findNearbyIntersection(
   y: number,
   tolerance: number,
 ): CircleIntersection | undefined {
-  return allCircleIntersections(objects)
+  return allIntersections(objects)
     .map((intersection) => ({ intersection, d: Math.hypot(intersection.x - x, intersection.y - y) }))
     .filter(({ d }) => d <= tolerance)
     .sort((a, b) => a.d - b.d)[0]?.intersection;

@@ -1,5 +1,8 @@
+import type { Unlock } from "../geometry/types";
 import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
+import { getUnlockById, useUnlockStore } from "../state/useUnlockStore";
+import { UnlockCard } from "./UnlockCard";
 
 export function CompletionCard() {
   const objectCount = useGeometryStore((state) => state.objects.length);
@@ -7,8 +10,12 @@ export function CompletionCard() {
   const startLogicReplay = useGeometryStore((state) => state.startLogicReplay);
   const resetProposition = useGeometryStore((state) => state.resetProposition);
   const openProposition = useGeometryStore((state) => state.openProposition);
+  const lastUnlockedIds = useUnlockStore((state) => state.lastUnlockedIds);
   const proposition = getProposition(currentPropositionId);
   const nextProposition = proposition.nextPropositionId ? getProposition(proposition.nextPropositionId) : null;
+  const visibleUnlocks = lastUnlockedIds
+    .map((id) => getUnlockById(id))
+    .filter((unlock): unlock is Unlock => Boolean(unlock?.visibleToPlayer));
 
   return (
     <section className="completion-card">
@@ -28,7 +35,10 @@ export function CompletionCard() {
       </svg>
 
       <p className="completion-line">Completed</p>
-      <p>You have constructed your first Euclidean truth.</p>
+      <p>The construction is now part of your playable Euclidean infrastructure.</p>
+      {visibleUnlocks.map((unlock) => (
+        <UnlockCard key={unlock.id} unlock={unlock} />
+      ))}
       <div className="stat-row" aria-label="Completion stats">
         <span>{objectCount} objects</span>
         <span>Replay completed</span>

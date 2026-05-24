@@ -467,6 +467,62 @@ blockquote {
   box-shadow: inset 0 0 0 1px rgba(163, 58, 50, 0.2);
 }
 
+.theorem-action-shelf,
+.reasoning-library {
+  display: grid;
+  gap: 8px;
+}
+
+.unlock-button-list {
+  display: grid;
+  gap: 8px;
+}
+
+.theorem-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid rgba(40, 95, 159, 0.3);
+  border-radius: 6px;
+  background: #f7fbff;
+  color: #2d2418;
+  cursor: default;
+  font-weight: 760;
+}
+
+.theorem-action-button span {
+  color: #285f9f;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reasoning-library ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reasoning-library li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid rgba(45, 36, 24, 0.1);
+  color: #4f473d;
+  font-size: 0.9rem;
+}
+
+.reasoning-library li span {
+  color: #8f5616;
+  font-weight: 760;
+}
+
 .tool-instruction {
   min-height: 48px;
 }
@@ -536,6 +592,39 @@ blockquote {
 
 .completion-card {
   gap: 12px;
+}
+
+.unlock-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(45, 36, 24, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.unlock-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.unlock-card div {
+  display: grid;
+  gap: 2px;
+}
+
+.unlock-card dt {
+  color: #a33a32;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.unlock-card dd {
+  margin: 0;
+  color: #4f473d;
+  line-height: 1.45;
 }
 
 .completion-diagram {
@@ -608,7 +697,8 @@ blockquote {
 }
 
 .svg-segment,
-.svg-circle {
+.svg-circle,
+.svg-extended-line {
   vector-effect: non-scaling-stroke;
   transition:
     stroke-width 180ms ease,
@@ -617,14 +707,16 @@ blockquote {
 }
 
 .svg-segment.draw-in,
-.svg-circle.draw-in {
+.svg-circle.draw-in,
+.svg-extended-line.draw-in {
   stroke-dasharray: var(--draw-length) var(--draw-length);
   stroke-dashoffset: var(--draw-length);
   animation: drawStroke 720ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
 
 .svg-segment.replay-draw,
-.svg-circle.replay-draw {
+.svg-circle.replay-draw,
+.svg-extended-line.replay-draw {
   stroke-dasharray: var(--draw-length) var(--draw-length);
   stroke-dashoffset: var(--draw-length);
   animation:
@@ -634,9 +726,15 @@ blockquote {
 
 .svg-segment.highlighted,
 .svg-circle.highlighted,
+.svg-extended-line.highlighted,
 .svg-point.highlighted {
   filter: url("#soft-glow");
   opacity: 1;
+}
+
+.svg-extended-line {
+  opacity: 0.7;
+  stroke-dasharray: 12 8;
 }
 
 .svg-segment-label {

@@ -12,10 +12,15 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
     mark: "╱",
     hint: "Drag between points, or drag through a point to produce a straight-line.",
   },
+  extend: {
+    label: "Extend",
+    mark: "↗",
+    hint: "Produce an existing finite straight-line.",
+  },
   compass: {
     label: "Compass",
     mark: "○",
-    hint: "Drag from a center to any point or free position to set the radius.",
+    hint: "Drag from a center point to an existing radius point.",
   },
   intersection: {
     label: "Intersection",
@@ -24,15 +29,19 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   },
 };
 
-const toolOrder: GeometryTool[] = ["select", "straightedge", "compass", "intersection"];
+const toolOrder: GeometryTool[] = ["select", "straightedge", "extend", "compass", "intersection"];
 
 function toolInstruction(tool: GeometryTool, selectedCount: number) {
   if (tool === "compass" && selectedCount === 1) {
-    return "Choose a radius point, or drag freely to set the radius.";
+    return "Choose an existing radius point.";
   }
 
   if (tool === "straightedge" && selectedCount === 1) {
     return "Choose another point, or drag through a point to produce the line.";
+  }
+
+  if (tool === "extend" && selectedCount === 1) {
+    return "Choose the point the extension passes through.";
   }
 
   return toolLabels[tool].hint;

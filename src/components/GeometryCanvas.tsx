@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
-import type { Circle, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
+import type { Circle, ExtendedLine, GeometryObject, Point, ProofHighlight, Segment } from "../geometry/types";
 import { findNearbyIntersection } from "../geometry/intersections";
 import {
   circleRadius,
@@ -7,6 +7,7 @@ import {
   getPoint,
   INTERSECTION_TOLERANCE,
   isCircle,
+  isExtendedLine,
   isPoint,
   isSegment,
   snapToPointRay,
@@ -39,7 +40,7 @@ type CanvasPoint = {
 };
 
 type DragPreview = {
-  tool: "compass" | "straightedge";
+  tool: "compass" | "straightedge" | "extend";
   start: CanvasPoint;
   current: CanvasPoint;
   startPoint: Point;
@@ -158,6 +159,62 @@ function CircleElement({
   );
 }
 
+function ExtendedLineElement({
+  line,
+  objects,
+  highlighted,
+  animated,
+  replaying,
+}: {
+  line: ExtendedLine;
+  objects: GeometryObject[];
+  highlighted: boolean;
+  animated: boolean;
+  replaying: boolean;
+}) {
+  const from = getPoint(objects, line.from);
+  const through = getPoint(objects, line.through);
+  if (!from || !through) {
+    return null;
+  }
+
+  const dx = through.x - from.x;
+  const dy = through.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) {
+    return null;
+  }
+
+  const scale = 1600 / length;
+  const end = {
+    x: from.x + dx * scale,
+    y: from.y + dy * scale,
+  };
+  const drawLength = Math.hypot(from.x - end.x, from.y - end.y) + 2;
+  const drawStyle: DrawStyle = { "--draw-length": `${drawLength}` };
+
+  return (
+    <line
+      className={[
+        "svg-extended-line",
+        highlighted ? "highlighted" : "",
+        animated ? "draw-in" : "",
+        replaying ? "replay-draw" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      x1={from.x}
+      y1={from.y}
+      x2={end.x}
+      y2={end.y}
+      style={drawStyle}
+      stroke={colorFor(line)}
+      strokeWidth={highlighted ? 5 : 2.5}
+      strokeLinecap="round"
+    />
+  );
+}
+
 function PointElement({
   point,
   highlighted,
@@ -195,7 +252,7 @@ function PointElement({
 function DragPreviewElement({ preview, objects }: { preview: DragPreview; objects: GeometryObject[] }) {
   const snappedPoint = findNearbyPoint(objects, preview.current.x, preview.current.y);
   const guidedEnd =
-    preview.tool === "straightedge" && !snappedPoint
+    preview.tool === "extend" && !snappedPoint
       ? snapToPointRay(objects, preview.startPoint, preview.current.x, preview.current.y)
       : undefined;
   const end = snappedPoint ?? guidedEnd ?? preview.current;
@@ -322,20 +379,18 @@ export function GeometryCanvas() {
 
     setIntersectionPreview(null);
     event.currentTarget.setPointerCapture(event.pointerId);
-    if (selectedTool === "compass" || selectedTool === "straightedge") {
+    if (selectedTool === "compass" || selectedTool === "straightedge" || selectedTool === "extend") {
       const startPoint = findNearbyPoint(objects, point.x, point.y);
+      if (!startPoint) {
+        return;
+      }
+
       setDragPreview({
         tool: selectedTool,
         start: point,
         current: point,
-        startPoint: startPoint ?? {
-          id: "free-preview",
-          type: "point",
-          x: point.x,
-          y: point.y,
-          auxiliary: true,
-        },
-        startPointId: startPoint?.id ?? null,
+        startPoint,
+        startPointId: startPoint.id,
         hasMoved: false,
       });
     }
@@ -446,6 +501,17 @@ export function GeometryCanvas() {
             key={highlightedIds.has(circle.id) ? `${circle.id}-${replayAnimationKey}` : circle.id}
             objects={objects}
             replaying={phase === "logicReplay" && highlightedIds.has(circle.id)}
+          />
+        ))}
+
+        {objects.filter(isExtendedLine).map((line) => (
+          <ExtendedLineElement
+            animated={animatedObjectId === line.id}
+            highlighted={highlightedIds.has(line.id)}
+            key={highlightedIds.has(line.id) ? `${line.id}-${replayAnimationKey}` : line.id}
+            line={line}
+            objects={objects}
+            replaying={phase === "logicReplay" && highlightedIds.has(line.id)}
           />
         ))}
 
