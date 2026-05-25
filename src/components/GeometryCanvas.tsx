@@ -19,11 +19,11 @@ const VIEW_BOX = { minX: -120, minY: 0, width: 1000, height: 660 };
 const DRAG_THRESHOLD = 5;
 
 const geometryColor: Record<string, string> = {
-  red: "#bd342a",
-  blue: "#2461a8",
-  gold: "#c9971a",
-  black: "#2b251f",
-  ink: "#2b251f",
+  red: "#8e1410",
+  blue: "#15549a",
+  gold: "#b98a2d",
+  black: "#240e08",
+  ink: "#240e08",
 };
 
 type DrawStyle = CSSProperties & {
@@ -512,8 +512,9 @@ export function GeometryCanvas() {
             </feMerge>
           </filter>
           <pattern id="paper-grain" width="80" height="80" patternUnits="userSpaceOnUse">
-            <rect width="80" height="80" fill="#fbf4e6" />
-            <path d="M0 22H80M0 54H80M18 0V80M56 0V80" stroke="#eadcc5" strokeWidth="0.5" opacity="0.28" />
+            <rect width="80" height="80" fill="#f3dfb8" />
+            <path d="M0 22H80M0 54H80M18 0V80M56 0V80" stroke="#b78b4f" strokeWidth="0.5" opacity="0.16" />
+            <path d="M7 9L73 61M24 78L66 6" stroke="#fff6d8" strokeWidth="0.45" opacity="0.22" />
           </pattern>
         </defs>
 
