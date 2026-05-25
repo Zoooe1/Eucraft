@@ -113,12 +113,71 @@ export type PropositionType =
   | "pythagorean-theorem"
   | "converse-theorem";
 
+export type ChallengeType =
+  | "construct"
+  | "select"
+  | "compare"
+  | "arrange"
+  | "transform"
+  | "trace"
+  | "classify"
+  | "derive";
+
+export type RequiredActionType =
+  | "create-point"
+  | "draw-segment"
+  | "extend-line"
+  | "draw-circle"
+  | "set-compass-width"
+  | "select-intersection"
+  | "construct-perpendicular"
+  | "construct-parallel"
+  | "construct-square"
+  | "construct-parallelogram"
+  | "select-angle"
+  | "select-side"
+  | "select-triangle"
+  | "select-area"
+  | "compare-objects"
+  | "trace-auxiliary-line"
+  | "match-congruent-parts"
+  | "decompose-area"
+  | "recompose-area";
+
+export type RequiredAction = {
+  id: string;
+  actionType: RequiredActionType;
+  description: string;
+  optional?: boolean;
+};
+
 export type ConstructionStep = {
   id: string;
   text: string;
   tool?: GeometryTool | "theorem-action" | "logic-replay";
   refs?: string[];
 };
+
+export type SegmentRef = string;
+export type AngleRef = string;
+export type LineRef = string;
+export type PointRef = string;
+export type FigureRef = string;
+
+export type GeometricRelation =
+  | { type: "equal-length"; a: SegmentRef; b: SegmentRef }
+  | { type: "greater-length"; a: SegmentRef; b: SegmentRef }
+  | { type: "equal-angle"; a: AngleRef; b: AngleRef }
+  | { type: "greater-angle"; a: AngleRef; b: AngleRef }
+  | { type: "parallel"; a: LineRef; b: LineRef }
+  | { type: "perpendicular"; a: LineRef; b: LineRef }
+  | { type: "collinear"; points: PointRef[] }
+  | { type: "between"; point: PointRef; endpoints: [PointRef, PointRef] }
+  | { type: "same-area"; a: FigureRef; b: FigureRef }
+  | { type: "double-area"; a: FigureRef; b: FigureRef }
+  | { type: "is-square"; figure: FigureRef }
+  | { type: "is-parallelogram"; figure: FigureRef }
+  | { type: "is-triangle"; figure: FigureRef };
 
 export type Proposition = {
   id: string;
@@ -131,6 +190,11 @@ export type Proposition = {
   originalStatement: string;
   instruction: string;
   type?: PropositionType;
+  startState?: "minimal-givens-only";
+  challengeType?: ChallengeType;
+  userTask?: string;
+  forbiddenInitialObjects?: string[];
+  requiredUserActions?: RequiredAction[];
   dependencies?: string[];
   unlocks?: string[];
   initialObjects: GeometryObjects;
@@ -153,7 +217,22 @@ export type ValidationResult = {
 
 export type ValidationGoal = {
   id: string;
+  goalType?:
+    | "object-exists"
+    | "relation-holds"
+    | "construction-complete"
+    | "theorem-identified"
+    | "area-equivalence"
+    | "angle-equivalence"
+    | "parallelism"
+    | "perpendicularity"
+    | "inequality"
+    | "shape-recognition";
   description: string;
+  requiredRelations?: GeometricRelation[];
+  minimumUserActions?: string[];
+  minimumConstructedObjects?: number;
+  acceptEquivalentConstructions?: boolean;
   hiddenConstraints?: string[];
 };
 
@@ -190,6 +269,11 @@ export type EuclidProposition = {
   originalStatement: string;
   playerGoal: string;
   type: PropositionType;
+  startState?: "minimal-givens-only";
+  challengeType?: ChallengeType;
+  userTask?: string;
+  forbiddenInitialObjects?: string[];
+  requiredUserActions?: RequiredAction[];
   dependencies: string[];
   unlocks: string[];
   initialObjects: GeometryObject[];

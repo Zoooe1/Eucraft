@@ -39,6 +39,7 @@ type GeometryStore = {
   validation: ValidationResult | null;
   proofContext: ProofContext | null;
   currentReplayStep: number;
+  completedActionIds: string[];
   startApp: () => void;
   returnToTitle: () => void;
   enterProposition: () => void;
@@ -46,6 +47,7 @@ type GeometryStore = {
   startConstruction: () => void;
   setBackgroundColor: (color: string) => void;
   setTool: (tool: GeometryTool) => void;
+  markChallengeAction: (actionId: string) => void;
   handleCanvasClick: (x: number, y: number) => void;
   handleCanvasDrag: (startPointId: string | null, startX: number, startY: number, endX: number, endY: number) => void;
   checkConstruction: () => void;
@@ -69,8 +71,18 @@ function readProgress() {
 
 const initialProgress = readProgress();
 
-const cloneInitialObjects = (propositionId: string) =>
-  getProposition(propositionId).initialObjects.map((object) => ({ ...object }));
+const cloneInitialObjects = (propositionId: string) => {
+  const proposition = getProposition(propositionId);
+  const forbidden = new Set(proposition.forbiddenInitialObjects ?? []);
+
+  return proposition.initialObjects
+    .filter((object) => !forbidden.has(object.id) && !forbidden.has(object.label ?? ""))
+    .map((object) => ({ ...object }));
+};
+
+function defaultToolFor(propositionId: string): GeometryTool {
+  return getProposition(propositionId).allowedTools[0] ?? "point";
+}
 
 function addObjectsWithHistory(state: GeometryStore, newObjects: GeometryObject[], animatedObjectId?: string) {
   return {
@@ -636,7 +648,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
   currentPropositionId: FIRST_PROPOSITION_ID,
   unlockedPropositionIds: initialProgress.unlockedPropositionIds,
   completedPropositionIds: initialProgress.completedPropositionIds,
-  selectedTool: "compass",
+  selectedTool: defaultToolFor(FIRST_PROPOSITION_ID),
   selectedPointIds: [],
   compassTransferSource: null,
   animatedObjectId: null,
@@ -645,6 +657,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
   validation: null,
   proofContext: null,
   currentReplayStep: 0,
+  completedActionIds: [],
   startApp: () =>
     set({
       phase: "laws",
@@ -652,6 +665,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       compassTransferSource: null,
       validation: null,
       animatedObjectId: null,
+      completedActionIds: [],
     }),
   returnToTitle: () =>
     set(() => {
@@ -664,12 +678,13 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         animatedObjectId: null,
         unlockedPropositionIds: progress.unlockedPropositionIds,
         completedPropositionIds: progress.completedPropositionIds,
+        completedActionIds: [],
       };
     }),
   enterProposition: () =>
     set((state) => ({
       phase: "intro",
-      selectedTool: "compass",
+      selectedTool: defaultToolFor(state.currentPropositionId),
       selectedPointIds: [],
       compassTransferSource: null,
       objects: cloneInitialObjects(state.currentPropositionId),
@@ -678,6 +693,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       proofContext: null,
       currentReplayStep: 0,
       animatedObjectId: null,
+      completedActionIds: [],
     })),
   openProposition: (id) => {
     const state = get();
@@ -688,7 +704,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     set({
       phase: "intro",
       currentPropositionId: id,
-      selectedTool: "compass",
+      selectedTool: defaultToolFor(id),
       selectedPointIds: [],
       compassTransferSource: null,
       objects: cloneInitialObjects(id),
@@ -697,18 +713,20 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       proofContext: null,
       currentReplayStep: 0,
       animatedObjectId: null,
+      completedActionIds: [],
     });
   },
   startConstruction: () =>
     set({
       phase: "construction",
-      selectedTool: "compass",
+      selectedTool: defaultToolFor(get().currentPropositionId),
       selectedPointIds: [],
       compassTransferSource: null,
       validation: null,
       proofContext: null,
       currentReplayStep: 0,
       animatedObjectId: null,
+      completedActionIds: [],
     }),
   setBackgroundColor: (color) =>
     set({
@@ -721,6 +739,13 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       compassTransferSource: null,
       validation: null,
     }),
+  markChallengeAction: (actionId) =>
+    set((state) => ({
+      completedActionIds: state.completedActionIds.includes(actionId)
+        ? state.completedActionIds
+        : [...state.completedActionIds, actionId],
+      validation: null,
+    })),
   handleCanvasClick: (x, y) => {
     const state = get();
     if (state.phase !== "construction") {
@@ -1327,7 +1352,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
   },
   checkConstruction: () => {
     const state = get();
-    const result = validateProposition(state.currentPropositionId, state.objects);
+    const result = validateProposition(state.currentPropositionId, state.objects, state.completedActionIds);
     set({
       validation: result,
       proofContext: result.context ?? null,
@@ -1376,7 +1401,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
   resetProposition: () =>
     set((state) => ({
       phase: "intro",
-      selectedTool: "compass",
+      selectedTool: defaultToolFor(state.currentPropositionId),
       selectedPointIds: [],
       compassTransferSource: null,
       objects: cloneInitialObjects(state.currentPropositionId),
@@ -1385,6 +1410,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       proofContext: null,
       currentReplayStep: 0,
       animatedObjectId: null,
+      completedActionIds: [],
     })),
   undo: () =>
     set((state) => {
@@ -1409,6 +1435,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         proofContext: null,
         currentReplayStep: 0,
         animatedObjectId: null,
+        completedActionIds: [],
       };
     }),
 }));

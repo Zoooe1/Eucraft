@@ -1,5 +1,5 @@
 import type { EuclidProposition, GeometryObject, ReplayStep } from "../geometry/types";
-import { book1ExtendedSpecs } from "./book1ExtendedData";
+import { book1ExtendedSpecs, getBook1PlayableProfile } from "./book1ExtendedData";
 
 const emptyObjects: GeometryObject[] = [];
 
@@ -233,21 +233,33 @@ export const euclidPropositions: EuclidProposition[] = [
       "Bisect Segment / Find Midpoint becomes an earned theorem-action.",
     ),
   },
-  ...book1ExtendedSpecs.map((spec): EuclidProposition => ({
-    id: `I.${spec.number}`,
-    book: 1,
-    number: spec.number,
-    title: spec.title,
-    originalStatement: spec.originalStatement,
-    playerGoal: spec.playerGoal,
-    type: spec.type,
-    dependencies: spec.dependencies,
-    unlocks: spec.unlocks,
-    initialObjects: emptyObjects,
-    constructionGuide: spec.constructionGuide,
-    validationGoal: spec.validationGoal,
-    replaySteps: spec.replaySteps,
-  })),
+  ...book1ExtendedSpecs.map((spec): EuclidProposition => {
+    const playable = getBook1PlayableProfile(spec.number, spec.type);
+
+    return {
+      id: `I.${spec.number}`,
+      book: 1,
+      number: spec.number,
+      title: spec.title,
+      originalStatement: spec.originalStatement,
+      playerGoal: spec.playerGoal,
+      type: spec.type,
+      startState: playable.startState,
+      challengeType: playable.challengeType,
+      userTask: playable.userTask,
+      forbiddenInitialObjects: playable.forbiddenInitialObjects,
+      requiredUserActions: playable.requiredUserActions,
+      dependencies: spec.dependencies,
+      unlocks: spec.unlocks,
+      initialObjects: emptyObjects,
+      constructionGuide: spec.constructionGuide,
+      validationGoal: {
+        ...spec.validationGoal,
+        ...playable.validationGoalPatch,
+      },
+      replaySteps: spec.replaySteps,
+    };
+  }),
 ];
 
 export function getEuclidProposition(id: string): EuclidProposition | undefined {

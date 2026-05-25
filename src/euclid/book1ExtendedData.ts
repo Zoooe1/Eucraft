@@ -1,8 +1,10 @@
 import type {
+  ChallengeType,
   ConstructionStep,
   EuclidProposition,
   GeometryTool,
   ReplayStep,
+  RequiredAction,
   Unlock,
   ValidationGoal,
 } from "../geometry/types";
@@ -21,6 +23,15 @@ type Book1ExtendedSpec = {
   constructionGuide: ConstructionStep[];
   validationGoal: ValidationGoal;
   replaySteps: ReplayStep[];
+};
+
+export type Book1PlayableProfile = {
+  startState: "minimal-givens-only";
+  challengeType: ChallengeType;
+  userTask: string;
+  forbiddenInitialObjects: string[];
+  requiredUserActions: RequiredAction[];
+  validationGoalPatch: Partial<ValidationGoal>;
 };
 
 const primitives: GeometryTool[] = ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"];
@@ -46,6 +57,156 @@ function validationGoal(id: string, description: string, hiddenConstraints: stri
 
 function deps(previous: number, extra: string[] = []) {
   return [`I.${previous}`, ...extra];
+}
+
+function requiredAction(id: string, actionType: RequiredAction["actionType"], description: string): RequiredAction {
+  return { id, actionType, description };
+}
+
+function profile(
+  challengeType: ChallengeType,
+  userTask: string,
+  forbiddenInitialObjects: string[],
+  requiredUserActions: RequiredAction[],
+  goalType: NonNullable<ValidationGoal["goalType"]>,
+  minimumConstructedObjects = 0,
+): Book1PlayableProfile {
+  return {
+    startState: "minimal-givens-only",
+    challengeType,
+    userTask,
+    forbiddenInitialObjects,
+    requiredUserActions,
+    validationGoalPatch: {
+      goalType,
+      minimumUserActions: requiredUserActions.filter((action) => !action.optional).map((action) => action.id),
+      minimumConstructedObjects,
+      acceptEquivalentConstructions: true,
+    },
+  };
+}
+
+const theoremMove = (id: string, description: string, actionType: RequiredAction["actionType"] = "select-angle") =>
+  requiredAction(id, actionType, description);
+
+export function getBook1PlayableProfile(number: number, type: EuclidProposition["type"]): Book1PlayableProfile {
+  const constructionProfile = (userTask: string, forbiddenInitialObjects: string[], actions: RequiredAction[], minObjects = 2) =>
+    profile("construct", userTask, forbiddenInitialObjects, actions, "construction-complete", minObjects);
+
+  switch (number) {
+    case 11:
+      return constructionProfile("Construct a perpendicular through C on the given line AB.", ["CD", "D", "E", "F", "circleC", "perpendicular"], [
+        requiredAction("equal-offsets", "set-compass-width", "Create equal cut-offs or an equivalent auxiliary setup around C."),
+        requiredAction("candidate-perpendicular", "construct-perpendicular", "Draw a candidate perpendicular through C."),
+      ]);
+    case 12:
+      return constructionProfile("Drop a perpendicular from C to the given line AB.", ["D", "E", "F", "CF", "circleC", "foot"], [
+        requiredAction("cut-line", "draw-circle", "Draw a circle from C that cuts the line in two places."),
+        requiredAction("drop-line", "construct-perpendicular", "Bisect the chord or otherwise draw the dropped perpendicular."),
+      ]);
+    case 22:
+      return constructionProfile("Build a triangle from the three given straight-lines.", ["triangle", "apex", "construction-circles"], [
+        requiredAction("set-two-widths", "set-compass-width", "Use two given segments as compass widths."),
+        requiredAction("select-apex", "select-intersection", "Select the circle intersection that becomes the apex."),
+        requiredAction("join-apex", "draw-segment", "Join the apex to the base endpoints."),
+      ], 3);
+    case 23:
+      return constructionProfile("Copy the given angle onto the target ray.", ["copied-ray", "target-triangle"], [
+        requiredAction("represent-angle", "draw-segment", "Build or trace the source angle's representative triangle."),
+        requiredAction("copy-angle-ray", "draw-segment", "Draw the new ray forming the copied angle."),
+      ]);
+    case 31:
+      return constructionProfile("Draw a line through C parallel to AB.", ["parallel-through-C", "copied-angle"], [
+        requiredAction("draw-transversal", "draw-segment", "Draw a transversal from C to the given line."),
+        requiredAction("construct-parallel-line", "construct-parallel", "Draw the candidate parallel through C."),
+      ]);
+    case 42:
+      return profile("transform", "Transform the given triangle into an equal-area parallelogram in the given angle.", ["target-parallelogram", "midpoint", "parallels"], [
+        requiredAction("bisect-base", "draw-segment", "Create the midpoint or half-base setup."),
+        requiredAction("complete-parallelogram", "construct-parallelogram", "Complete the parallelogram with the given angle."),
+      ], "area-equivalence", 3);
+    case 44:
+      return profile("transform", "Apply an equal-area parallelogram to the given line.", ["final-parallelogram", "complements", "parallels"], [
+        requiredAction("helper-parallelogram", "construct-parallelogram", "Build the helper parallelogram equal to the triangle."),
+        requiredAction("apply-to-line", "construct-parallelogram", "Complete the applied parallelogram on AB."),
+      ], "area-equivalence", 3);
+    case 45:
+      return profile("transform", "Turn the rectilinear figure into an equal-area parallelogram.", ["decomposition-lines", "final-parallelogram"], [
+        requiredAction("decompose-figure", "decompose-area", "Decompose the figure into triangle pieces."),
+        requiredAction("recompose-parallelogram", "recompose-area", "Recompose the pieces as one parallelogram."),
+      ], "area-equivalence", 2);
+    case 46:
+      return constructionProfile("Construct a square on AB.", ["square", "perpendicular", "parallel-sides", "fourth-vertex"], [
+        requiredAction("raise-right-angle", "construct-perpendicular", "Raise a perpendicular from one endpoint of AB."),
+        requiredAction("carry-side", "set-compass-width", "Carry the length AB onto the adjacent side."),
+        requiredAction("complete-square", "construct-square", "Draw the remaining sides of the square."),
+      ], 3);
+    case 47:
+      return profile("transform", "Build the three squares on the right triangle and trace the area equivalence.", ["squares", "auxiliary-lines", "area-labels", "pythagorean-label"], [
+        requiredAction("square-leg-one", "construct-square", "Construct the square on AB."),
+        requiredAction("square-leg-two", "construct-square", "Construct the square on AC."),
+        requiredAction("square-hypotenuse", "construct-square", "Construct the square on BC."),
+        requiredAction("trace-area-lines", "trace-auxiliary-line", "Trace Euclid's auxiliary area lines."),
+        requiredAction("match-area-parts", "decompose-area", "Select the two area correspondences inside the hypotenuse square."),
+      ], "area-equivalence", 8);
+    case 48:
+      return profile("derive", "Construct a comparison right triangle and identify the original right angle.", ["comparison-triangle", "right-angle-conclusion", "sss-highlights"], [
+        requiredAction("construct-right-comparison", "construct-perpendicular", "Construct the comparison right triangle at A."),
+        requiredAction("match-sss", "match-congruent-parts", "Match the two triangles by SSS."),
+        requiredAction("mark-right-angle", "select-angle", "Identify angle BAC as a right angle."),
+      ], "shape-recognition", 3);
+    default:
+      break;
+  }
+
+  if ([13, 14, 15, 27, 28, 29, 30].includes(number)) {
+    return profile("select", "Select the angle or line relation that makes this theorem come alive.", ["conclusion-highlight", "parallel-mark", "equality-mark"], [
+      theoremMove("select-given-relation", "Select the given angle or parallel relation."),
+      theoremMove("mark-conclusion", "Mark the hidden conclusion.", number >= 27 ? "construct-parallel" : "select-angle"),
+    ], number >= 27 ? "parallelism" : "angle-equivalence");
+  }
+
+  if ([16, 17, 18, 19, 20, 21, 24, 25].includes(number)) {
+    return profile("compare", "Compare the relevant sides or angles and mark the greater relation.", ["greater-highlight", "extension", "auxiliary-cut"], [
+      theoremMove("select-comparison-source", "Select the side or angle that starts the comparison.", "select-side"),
+      theoremMove("mark-greater-relation", "Mark the greater-than conclusion.", "compare-objects"),
+    ], "inequality", number === 21 ? 2 : 0);
+  }
+
+  if ([26, 34, 35, 36, 37, 38, 39, 40, 41].includes(number)) {
+    const traceOrArrange = [34, 41].includes(number) ? "trace" : "arrange";
+    return profile(traceOrArrange, "Complete the missing match or area comparison before the proof begins.", ["diagonal", "area-equality", "conclusion-highlight"], [
+      theoremMove("complete-figure", "Draw or identify the missing helper part.", traceOrArrange === "trace" ? "trace-auxiliary-line" : "select-area"),
+      theoremMove("mark-equivalence", "Mark the equal parts or equal areas.", "match-congruent-parts"),
+    ], [35, 36, 37, 38, 39, 40, 41].includes(number) ? "area-equivalence" : "angle-equivalence", [34, 41].includes(number) ? 1 : 0);
+  }
+
+  if (number === 32) {
+    return profile("derive", "Extend a side, draw the parallel, and identify the triangle angle sum.", ["extension", "auxiliary-parallel", "angle-sum-label"], [
+      requiredAction("extend-side", "extend-line", "Extend one side of the triangle."),
+      requiredAction("draw-parallel", "construct-parallel", "Draw the parallel through the opposite vertex."),
+      requiredAction("mark-angle-sum", "select-angle", "Mark the exterior-angle and triangle-sum relations."),
+    ], "angle-equivalence", 2);
+  }
+
+  if (number === 33) {
+    return profile("construct", "Join corresponding endpoints and identify the equal parallel connectors.", ["AC", "BD", "connector-marks"], [
+      requiredAction("draw-first-connector", "draw-segment", "Draw one connector between corresponding endpoints."),
+      requiredAction("draw-second-connector", "draw-segment", "Draw the other connector."),
+      requiredAction("mark-connectors", "construct-parallel", "Mark the connectors equal and parallel."),
+    ], "parallelism", 2);
+  }
+
+  if (number === 43) {
+    return profile("trace", "Draw the internal pieces and select the equal complements.", ["complement-highlights", "equal-area-conclusion"], [
+      requiredAction("trace-diagonal", "trace-auxiliary-line", "Trace the diagonal or internal parallelogram pieces."),
+      requiredAction("select-complements", "select-area", "Select the two complement regions."),
+    ], "area-equivalence", 1);
+  }
+
+  return profile(type === "construction" ? "construct" : "derive", "Complete the required Euclidean interaction before Logic Replay.", ["final-conclusion"], [
+    theoremMove("make-required-move", "Make the required construction or theorem selection.", type === "construction" ? "draw-segment" : "select-angle"),
+  ], type === "construction" ? "construction-complete" : "theorem-identified", type === "construction" ? 1 : 0);
 }
 
 export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
@@ -145,7 +306,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(14),
     unlocks: ["unlock-I.15-vertical-angles"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "theorem-square"],
     instruction: "Watch the crossing lines: adjacent angle sums make opposite angles equal.",
     constructionGuide: [guide("inspect", "Inspect the four angles at the crossing.", "logic-replay")],
     validationGoal: validationGoal("verticalAnglesEqual", "Infer equality of vertically opposite angles."),
@@ -165,7 +326,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(15, ["I.10"]),
     unlocks: ["unlock-I.16-exterior-angle-greater"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "theorem-perpendicular-on-line", "compass-transfer"],
     instruction: "Follow Euclid's auxiliary midpoint and extension argument.",
     constructionGuide: [guide("extend", "Produce one side of the triangle.", "extend"), guide("replay", "Use Logic Replay for the comparison.", "logic-replay")],
     validationGoal: validationGoal("exteriorAngleGreaterThanOppositeInterior", "Infer that an exterior angle is greater than the two remote interior angles."),
@@ -813,7 +974,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "pythagorean-theorem",
     dependencies: deps(46, ["I.14", "I.31", "I.41"]),
     unlocks: ["unlock-I.47-pythagorean"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "theorem-square"],
     instruction: "Build the three squares and replay Euclid's area decomposition.",
     constructionGuide: [guide("squares", "Construct squares on all three sides. [Prop. I.46]", "theorem-square")],
     validationGoal: validationGoal("pythagoreanTheorem", "Infer the hypotenuse square equals the sum of the two leg squares.", ["internalAreaEquality"]),
@@ -835,7 +996,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "converse-theorem",
     dependencies: deps(47, ["I.8", "I.11"]),
     unlocks: ["unlock-I.48-converse-pythagorean"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "theorem-perpendicular-on-line", "compass-transfer"],
     instruction: "Replay the comparison with a constructed right triangle.",
     constructionGuide: [guide("right", "Construct a comparison right triangle with matching legs. [Prop. I.11, I.3]", "theorem-perpendicular-on-line")],
     validationGoal: validationGoal("conversePythagoreanTheorem", "Infer a right angle from the square-area relation.", ["internalAreaEquality", "rightAngle"]),

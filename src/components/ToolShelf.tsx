@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { unlocks } from "../euclid/unlocks";
 import type { GeometryTool, Unlock } from "../geometry/types";
+import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 import { useUnlockStore } from "../state/useUnlockStore";
 
@@ -171,6 +172,7 @@ function TheoremActionButton({
 
 export function ToolShelf() {
   const selectedTool = useGeometryStore((state) => state.selectedTool);
+  const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
   const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
   const compassTransferSource = useGeometryStore((state) => state.compassTransferSource);
   const setTool = useGeometryStore((state) => state.setTool);
@@ -179,25 +181,36 @@ export function ToolShelf() {
   const resetProposition = useGeometryStore((state) => state.resetProposition);
   const history = useGeometryStore((state) => state.history);
   const unlockedIds = useUnlockStore((state) => state.unlockedIds);
+  const allowedTools = getProposition(currentPropositionId).allowedTools;
   const visibleTools = useMemo(
     () =>
       unlocks.filter(
-        (unlock) =>
-          unlock.unlockType === "primitive-tool" &&
-          unlock.visibleToPlayer &&
-          unlockedIds.includes(unlock.id),
+        (unlock) => {
+          const config = toolConfig[unlock.id];
+          return (
+            Boolean(config && allowedTools.includes(config.tool)) &&
+            unlock.unlockType === "primitive-tool" &&
+            unlock.visibleToPlayer &&
+            unlockedIds.includes(unlock.id)
+          );
+        },
       ),
-    [unlockedIds],
+    [allowedTools, unlockedIds],
   );
   const theoremActions = useMemo(
     () =>
       unlocks.filter(
-        (unlock) =>
-          unlock.unlockType === "theorem-action" &&
-          unlock.visibleToPlayer &&
-          unlockedIds.includes(unlock.id),
+        (unlock) => {
+          const tool = theoremActionTools[unlock.functionName];
+          return (
+            Boolean(tool && allowedTools.includes(tool)) &&
+            unlock.unlockType === "theorem-action" &&
+            unlock.visibleToPlayer &&
+            unlockedIds.includes(unlock.id)
+          );
+        },
       ),
-    [unlockedIds],
+    [allowedTools, unlockedIds],
   );
   const logicRules = useMemo(
     () =>

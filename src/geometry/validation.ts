@@ -48,19 +48,60 @@ function genericProofContext(objects: GeometryObject[]) {
   return context;
 }
 
-function validateExtendedBook1Proposition(propositionId: string, objects: GeometryObject[]): ValidationResult {
+function validateExtendedBook1Proposition(
+  propositionId: string,
+  objects: GeometryObject[],
+  completedActionIds: string[] = [],
+): ValidationResult {
   const proposition = getEuclidProposition(propositionId);
   const type = proposition?.type ?? "theorem";
   const isConstruction = type === "construction";
   const isCapstone = type === "pythagorean-theorem" || type === "converse-theorem";
+  const minimumUserActions =
+    proposition?.validationGoal.minimumUserActions ??
+    proposition?.requiredUserActions?.filter((action) => !action.optional).map((action) => action.id) ??
+    [];
+  const missingActions = minimumUserActions.filter((actionId) => !completedActionIds.includes(actionId));
+  if (missingActions.length > 0) {
+    const nextAction = proposition?.requiredUserActions?.find((action) => action.id === missingActions[0]);
+    return {
+      success: false,
+      message: nextAction
+        ? `Finish the challenge move first: ${nextAction.description}`
+        : "Finish the challenge moves before revealing the Logic Replay.",
+      context: genericProofContext(objects),
+    };
+  }
+
+  const minimumConstructedObjects = proposition?.validationGoal.minimumConstructedObjects ?? 0;
+  const constructedObjectCount = objects.filter((object) => {
+    if (object.type === "point") {
+      return object.createdBy !== "given";
+    }
+
+    if (object.type === "segment") {
+      return !object.given && object.source !== "given";
+    }
+
+    return true;
+  }).length;
+  if (constructedObjectCount < minimumConstructedObjects) {
+    return {
+      success: false,
+      message: isConstruction || isCapstone
+        ? "The starting diagram is only the givens. Add the missing construction objects on the canvas before checking."
+        : "Add or trace the missing helper object before checking this theorem challenge.",
+      context: genericProofContext(objects),
+    };
+  }
 
   return {
     success: true,
     message: isConstruction
-      ? "Guided construction accepted. Logic Replay will show the Euclidean construction and validation target."
+      ? "Challenge complete. Now Logic Replay will explain why your construction works."
       : isCapstone
-        ? "Capstone theorem ready. Logic Replay will unfold the area argument."
-        : "The theorem diagram is ready for Logic Replay.",
+        ? "Capstone challenge complete. Logic Replay will unfold the area argument."
+        : "The theorem challenge is solved. Logic Replay is unlocked.",
     context: genericProofContext(objects),
   };
 }
@@ -329,10 +370,14 @@ export function validateBook1Prop10(objects: GeometryObject[]): ValidationResult
   };
 }
 
-export function validateProposition(propositionId: string, objects: GeometryObject[]): ValidationResult {
+export function validateProposition(
+  propositionId: string,
+  objects: GeometryObject[],
+  completedActionIds: string[] = [],
+): ValidationResult {
   const propositionNumber = Number(propositionId.split(".")[1]);
   if (propositionNumber >= 11) {
-    return validateExtendedBook1Proposition(propositionId, objects);
+    return validateExtendedBook1Proposition(propositionId, objects, completedActionIds);
   }
 
   switch (propositionId) {

@@ -1,5 +1,6 @@
 import { CompletionCard } from "./components/CompletionCard";
 import { CompletionAnimation } from "./components/CompletionAnimation";
+import { ChallengePanel } from "./components/ChallengePanel";
 import { GeometryCanvas } from "./components/GeometryCanvas";
 import { LawsScreen } from "./components/LawsScreen";
 import { LogicReplay } from "./components/LogicReplay";
@@ -62,6 +63,7 @@ export default function App() {
               <blockquote>{proposition.originalStatement}</blockquote>
             </header>
 
+            {phase === "construction" && <ChallengePanel />}
             {phase === "construction" && <ToolShelf />}
             {phase === "construction" && <Marginalia />}
             <ValidationMessage validation={validation} />

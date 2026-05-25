@@ -61,6 +61,7 @@ button {
 .screen-heading,
 .intro-panel,
 .proposition-header,
+.challenge-panel,
 .tool-panel,
 .marginalia,
 .logic-panel,
@@ -421,6 +422,7 @@ blockquote {
 }
 
 .tool-panel,
+.challenge-panel,
 .marginalia,
 .logic-panel,
 .completion-card,
@@ -429,8 +431,65 @@ blockquote {
   border-top: 1px solid rgba(45, 36, 24, 0.16);
 }
 
-.tool-panel {
+.tool-panel,
+.challenge-panel {
   gap: 14px;
+}
+
+.challenge-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.challenge-meta span {
+  padding: 3px 8px;
+  border: 1px solid rgba(40, 95, 159, 0.25);
+  border-radius: 999px;
+  color: #285f9f;
+  font-size: 0.74rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.given-list,
+.user-task {
+  margin: 0;
+  color: #4f473d;
+  line-height: 1.45;
+}
+
+.challenge-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.challenge-action {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-color: rgba(45, 36, 24, 0.18);
+  color: #2d2418;
+  text-align: left;
+}
+
+.challenge-action span {
+  color: #a33a32;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.challenge-action.complete {
+  border-color: rgba(47, 115, 80, 0.35);
+  background: rgba(239, 248, 236, 0.75);
+}
+
+.challenge-action.complete span {
+  color: #2f7350;
 }
 
 .tool-grid {
