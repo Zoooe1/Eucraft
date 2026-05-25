@@ -1831,7 +1831,7 @@ button {
   }
 
   .title-map-panel {
-    padding: 42px 24px;
+    padding: 42px 24px 42px max(190px, 22vw);
   }
 
   .title-screen .proposition-shelf {
@@ -1896,6 +1896,14 @@ button {
   .title-screen .proposition-shelf {
     grid-template-columns: repeat(2, minmax(92px, 1fr));
     gap: 20px;
+  }
+
+  .title-map-panel {
+    padding: 32px 24px;
+  }
+
+  .title-map-panel::before {
+    display: none;
   }
 
   .laws-screen {
