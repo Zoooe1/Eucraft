@@ -1,7 +1,7 @@
 import type { GeometryTool } from "../geometry/types";
 import { useGeometryStore } from "../state/useGeometryStore";
 
-const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: string }> = {
+const toolLabels: Partial<Record<GeometryTool, { label: string; mark: string; hint: string }>> = {
   point: {
     label: "Point",
     mark: "•",
@@ -49,6 +49,12 @@ const toolLabels: Record<GeometryTool, { label: string; mark: string; hint: stri
   },
 };
 
+const fallbackToolLabel = {
+  label: "Euclid Action",
+  mark: "◇",
+  hint: "Use the active theorem-action on the construction page.",
+};
+
 const toolOrder: GeometryTool[] = ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"];
 
 function toolInstruction(tool: GeometryTool, selectedCount: number) {
@@ -57,7 +63,7 @@ function toolInstruction(tool: GeometryTool, selectedCount: number) {
   }
 
   if (tool === "compass-transfer") {
-    return selectedCount === 1 ? "Choose the second point of the source length." : toolLabels[tool].hint;
+    return selectedCount === 1 ? "Choose the second point of the source length." : toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
   }
 
   if (tool === "straightedge" && selectedCount === 1) {
@@ -68,7 +74,7 @@ function toolInstruction(tool: GeometryTool, selectedCount: number) {
     return "Choose the point the extension passes through.";
   }
 
-  return toolLabels[tool].hint;
+  return toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
 }
 
 export function ToolPanel() {
@@ -84,7 +90,7 @@ export function ToolPanel() {
     <section className="tool-panel" aria-label="Construction tools">
       <div className="tool-grid">
         {toolOrder.map((toolKey) => {
-          const toolInfo = toolLabels[toolKey];
+          const toolInfo = toolLabels[toolKey] ?? fallbackToolLabel;
           return (
             <button
               className={selectedTool === toolKey ? "tool-button active" : "tool-button"}

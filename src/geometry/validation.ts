@@ -1,3 +1,4 @@
+import { getEuclidProposition } from "../euclid/propositions";
 import type { GeometryObject, ValidationResult } from "./types";
 import {
   allNamedPoints,
@@ -22,6 +23,47 @@ import {
 
 const A_ID = "A";
 const B_ID = "B";
+
+function genericProofContext(objects: GeometryObject[]) {
+  const context: Record<string, string> = {};
+
+  for (const object of objects) {
+    if (object.type === "point" && object.label) {
+      context[`point${object.label}`] = object.id;
+    }
+
+    if (object.type === "segment") {
+      const label = object.label ?? object.id;
+      if (/^[A-Z]{2}$/.test(label)) {
+        context[`segment${label}`] = object.id;
+        context[`segment${label[1]}${label[0]}`] = object.id;
+      }
+    }
+
+    if (object.type === "circle") {
+      context[`circle${object.center}`] = object.id;
+    }
+  }
+
+  return context;
+}
+
+function validateExtendedBook1Proposition(propositionId: string, objects: GeometryObject[]): ValidationResult {
+  const proposition = getEuclidProposition(propositionId);
+  const type = proposition?.type ?? "theorem";
+  const isConstruction = type === "construction";
+  const isCapstone = type === "pythagorean-theorem" || type === "converse-theorem";
+
+  return {
+    success: true,
+    message: isConstruction
+      ? "Guided construction accepted. Logic Replay will show the Euclidean construction and validation target."
+      : isCapstone
+        ? "Capstone theorem ready. Logic Replay will unfold the area argument."
+        : "The theorem diagram is ready for Logic Replay.",
+    context: genericProofContext(objects),
+  };
+}
 
 export function validateBook1Prop1(objects: GeometryObject[]): ValidationResult {
   const A = getPoint(objects, A_ID);
@@ -288,6 +330,11 @@ export function validateBook1Prop10(objects: GeometryObject[]): ValidationResult
 }
 
 export function validateProposition(propositionId: string, objects: GeometryObject[]): ValidationResult {
+  const propositionNumber = Number(propositionId.split(".")[1]);
+  if (propositionNumber >= 11) {
+    return validateExtendedBook1Proposition(propositionId, objects);
+  }
+
   switch (propositionId) {
     case "I.2":
       return validateBook1Prop2(objects);

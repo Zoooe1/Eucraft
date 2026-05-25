@@ -1,4 +1,5 @@
 import type { Unlock } from "../geometry/types";
+import { book1Unlocks11To48 } from "./book1ExtendedData";
 
 function withReplay(unlock: Unlock): Unlock {
   if (unlock.replaySteps) {
@@ -371,6 +372,7 @@ const unlockDefinitions: Unlock[] = [
   ...initialLogicUnlocks,
   ...hiddenAxiomUnlocks,
   ...propositionUnlocks,
+  ...book1Unlocks11To48,
   ...semanticTokenUnlocks,
 ];
 

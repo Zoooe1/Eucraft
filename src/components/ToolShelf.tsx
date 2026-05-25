@@ -37,6 +37,15 @@ const theoremActionTools: Record<string, GeometryTool> = {
   createCircleWithTransferredRadius: "compass-transfer",
   bisectAngle: "theorem-bisect-angle",
   bisectSegment: "theorem-bisect-segment",
+  drawPerpendicularFromPointOnLine: "theorem-perpendicular-on-line",
+  dropPerpendicularFromPointToLine: "theorem-drop-perpendicular",
+  constructTriangleFromThreeSegments: "theorem-triangle-sss",
+  copyAngleToLine: "theorem-copy-angle",
+  drawParallelThroughPoint: "theorem-parallel",
+  constructParallelogramEqualToTriangle: "theorem-parallelogram-triangle",
+  applyParallelogramEqualToTriangleOnLine: "theorem-parallelogram-line",
+  constructParallelogramEqualToRectilinearFigure: "theorem-parallelogram-figure",
+  constructSquareOnSegment: "theorem-square",
 };
 
 function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTransferSource: boolean) {
@@ -90,6 +99,38 @@ function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTr
 
   if (tool === "theorem-bisect-segment") {
     return "Choose a segment. The earned I.10 action will mark its midpoint.";
+  }
+
+  if (tool === "theorem-perpendicular-on-line") {
+    return "Click a point on a segment to raise a perpendicular from that point.";
+  }
+
+  if (tool === "theorem-drop-perpendicular") {
+    return selectedCount === 0 ? "Choose the external point." : "Choose the line to receive the perpendicular.";
+  }
+
+  if (tool === "theorem-triangle-sss") {
+    return "Choose a base segment. The I.22 action previews a triangle from available side lengths.";
+  }
+
+  if (tool === "theorem-copy-angle") {
+    return "Choose a target point; the I.23 action previews a copied angle ray.";
+  }
+
+  if (tool === "theorem-parallel") {
+    return selectedCount === 0 ? "Choose the point the parallel should pass through." : "Choose the line to copy.";
+  }
+
+  if (
+    tool === "theorem-parallelogram-triangle" ||
+    tool === "theorem-parallelogram-line" ||
+    tool === "theorem-parallelogram-figure"
+  ) {
+    return "Choose a base segment to preview the earned parallelogram construction.";
+  }
+
+  if (tool === "theorem-square") {
+    return "Choose a segment. The I.46 action will construct a square on it.";
   }
 
   return "Euclid begins from given points, constructed points, and intersections.";
@@ -169,6 +210,20 @@ export function ToolShelf() {
       ),
     [unlockedIds],
   );
+  const reasoningRules = useMemo(
+    () =>
+      unlocks.filter(
+        (unlock) =>
+          (unlock.unlockType === "logic-rule" ||
+            unlock.unlockType === "parallel-rule" ||
+            unlock.unlockType === "area-rule" ||
+            unlock.unlockType === "constraint-rule") &&
+          unlock.propositionId &&
+          unlock.visibleToPlayer &&
+          unlockedIds.includes(unlock.id),
+      ),
+    [unlockedIds],
+  );
 
   return (
     <section className="tool-panel" aria-label="Construction tools">
@@ -210,11 +265,11 @@ export function ToolShelf() {
         </div>
       )}
 
-      {logicRules.length > 0 && (
+      {(logicRules.length > 0 || reasoningRules.length > 0) && (
         <div className="reasoning-library">
           <p className="panel-label">Reasoning Library</p>
           <ul>
-            {logicRules.map((unlock) => (
+            {[...logicRules, ...reasoningRules.filter((unlock) => !logicRules.some((rule) => rule.id === unlock.id))].map((unlock) => (
               <li key={unlock.id}>
                 <strong>{unlock.name}</strong>
                 <span>{unlock.source}</span>

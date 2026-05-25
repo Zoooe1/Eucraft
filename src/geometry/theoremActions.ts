@@ -38,6 +38,42 @@ export function bisectSegment() {
   return theoremActionPlaceholder();
 }
 
+export function drawPerpendicularFromPointOnLine() {
+  return theoremActionPlaceholder();
+}
+
+export function dropPerpendicularFromPointToLine() {
+  return theoremActionPlaceholder();
+}
+
+export function constructTriangleFromThreeSegments() {
+  return theoremActionPlaceholder();
+}
+
+export function copyAngleToLine() {
+  return theoremActionPlaceholder();
+}
+
+export function drawParallelThroughPoint() {
+  return theoremActionPlaceholder();
+}
+
+export function constructParallelogramEqualToTriangle() {
+  return theoremActionPlaceholder();
+}
+
+export function applyParallelogramEqualToTriangleOnLine() {
+  return theoremActionPlaceholder();
+}
+
+export function constructParallelogramEqualToRectilinearFigure() {
+  return theoremActionPlaceholder();
+}
+
+export function constructSquareOnSegment() {
+  return theoremActionPlaceholder();
+}
+
 export const theoremActions: Record<string, TheoremActionDefinition> = {
   constructEquilateralTriangleOnSegment: {
     requiredUnlock: "unlock-I.1-equilateral",
@@ -116,5 +152,122 @@ export const theoremActions: Record<string, TheoremActionDefinition> = {
       "I.4 proves the two pieces of the base are equal.",
     ],
     execute: bisectSegment,
+  },
+  drawPerpendicularFromPointOnLine: {
+    requiredUnlock: "unlock-I.11-perpendicular-on-line",
+    inputs: ["line", "pointOnLine"],
+    outputs: ["perpendicularLine"],
+    dependencies: ["I.3", "I.8", "I.11"],
+    validationFunction: "validatePerpendicularFromPointOnLine",
+    logicReplay: [
+      "Cut equal segments on both sides of the point.",
+      "Use congruence to show the adjacent angles are equal.",
+      "Equal adjacent angles on a straight-line are right angles.",
+    ],
+    execute: drawPerpendicularFromPointOnLine,
+  },
+  dropPerpendicularFromPointToLine: {
+    requiredUnlock: "unlock-I.12-drop-perpendicular",
+    inputs: ["point", "line"],
+    outputs: ["perpendicularSegment", "footPoint"],
+    dependencies: ["I.10", "I.11", "I.12"],
+    validationFunction: "validateDroppedPerpendicular",
+    logicReplay: [
+      "Cut the target line with a circle from the external point.",
+      "Bisect the chord on the target line.",
+      "Join the external point to the midpoint to drop a perpendicular.",
+    ],
+    execute: dropPerpendicularFromPointToLine,
+  },
+  constructTriangleFromThreeSegments: {
+    requiredUnlock: "unlock-I.22-triangle-from-three-segments",
+    inputs: ["segment", "segment", "segment"],
+    outputs: ["triangle"],
+    dependencies: ["I.20", "I.22", "Post.3"],
+    validationFunction: "validateTriangleFromThreeSegments",
+    logicReplay: [
+      "The triangle inequality allows the side lengths to meet.",
+      "Circles from the base endpoints locate the apex.",
+      "Radius equality gives the three requested sides.",
+    ],
+    execute: constructTriangleFromThreeSegments,
+  },
+  copyAngleToLine: {
+    requiredUnlock: "unlock-I.23-copy-angle",
+    inputs: ["sourceAngle", "targetLine", "targetPoint"],
+    outputs: ["angle"],
+    dependencies: ["I.22", "I.8", "I.23"],
+    validationFunction: "validateCopiedAngle",
+    logicReplay: [
+      "Represent the source angle by a triangle.",
+      "Construct a matching triangle on the target line.",
+      "Use SSS to prove the placed angle equals the source.",
+    ],
+    execute: copyAngleToLine,
+  },
+  drawParallelThroughPoint: {
+    requiredUnlock: "unlock-I.31-draw-parallel",
+    inputs: ["point", "line"],
+    outputs: ["parallelLine"],
+    dependencies: ["I.23", "I.27", "I.31"],
+    validationFunction: "validateParallelThroughPoint",
+    logicReplay: [
+      "Copy the transversal angle at the given point.",
+      "Equal alternate angles imply the new line is parallel.",
+      "The parallel construction is now an earned action.",
+    ],
+    execute: drawParallelThroughPoint,
+  },
+  constructParallelogramEqualToTriangle: {
+    requiredUnlock: "unlock-I.42-parallelogram-equal-triangle",
+    inputs: ["triangle", "angle"],
+    outputs: ["parallelogram"],
+    dependencies: ["I.10", "I.23", "I.31", "I.41", "I.42"],
+    validationFunction: "validateParallelogramEqualToTriangle",
+    logicReplay: [
+      "Bisect the triangle base.",
+      "Construct the requested angle and complete the parallelogram.",
+      "I.41 proves the parallelogram equals the triangle.",
+    ],
+    execute: constructParallelogramEqualToTriangle,
+  },
+  applyParallelogramEqualToTriangleOnLine: {
+    requiredUnlock: "unlock-I.44-apply-parallelogram-line",
+    inputs: ["line", "triangle", "angle"],
+    outputs: ["parallelogram"],
+    dependencies: ["I.42", "I.43", "I.44"],
+    validationFunction: "validateAppliedParallelogramEqualToTriangle",
+    logicReplay: [
+      "Construct an equal parallelogram by I.42.",
+      "Use complements around a diagonal by I.43.",
+      "Apply the equal area to the given line.",
+    ],
+    execute: applyParallelogramEqualToTriangleOnLine,
+  },
+  constructParallelogramEqualToRectilinearFigure: {
+    requiredUnlock: "unlock-I.45-parallelogram-equal-figure",
+    inputs: ["rectilinearFigure", "angle"],
+    outputs: ["parallelogram"],
+    dependencies: ["I.44", "I.45"],
+    validationFunction: "validateParallelogramEqualToRectilinearFigure",
+    logicReplay: [
+      "Decompose the rectilinear figure into triangles.",
+      "Apply each triangle as an equal parallelogram.",
+      "Combine the parts into one parallelogram in the given angle.",
+    ],
+    execute: constructParallelogramEqualToRectilinearFigure,
+  },
+  constructSquareOnSegment: {
+    requiredUnlock: "unlock-I.46-build-square",
+    inputs: ["segment"],
+    outputs: ["square"],
+    dependencies: ["I.11", "I.31", "I.34", "I.46"],
+    validationFunction: "validateSquareOnSegment",
+    logicReplay: [
+      "Erect a perpendicular on the given line.",
+      "Carry the side length onto the perpendicular.",
+      "Draw parallels and use parallelogram properties to make a square.",
+    ],
+    execute: constructSquareOnSegment,
   },
 };

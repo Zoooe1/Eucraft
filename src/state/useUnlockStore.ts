@@ -82,6 +82,7 @@ function writeProgress(progress: UnlockProgress) {
 
 function resolveUnlocksForCompleted(completedPropositionIds: string[], currentUnlockedIds: string[]) {
   const unlockedIds = new Set(currentUnlockedIds);
+  const completedIds = new Set(completedPropositionIds);
   let changed = true;
 
   while (changed) {
@@ -90,7 +91,8 @@ function resolveUnlocksForCompleted(completedPropositionIds: string[], currentUn
       const proposition = getEuclidProposition(propositionId);
       for (const unlockId of proposition?.unlocks ?? []) {
         const unlock = unlockById.get(unlockId);
-        const dependenciesMet = unlock?.dependsOn.every((dependency) => unlockedIds.has(dependency)) ?? false;
+        const dependenciesMet =
+          unlock?.dependsOn.every((dependency) => unlockedIds.has(dependency) || completedIds.has(dependency)) ?? false;
         if (dependenciesMet && !unlockedIds.has(unlockId)) {
           unlockedIds.add(unlockId);
           changed = true;
@@ -145,7 +147,9 @@ export const useUnlockStore = create<UnlockStore>((set, get) => ({
   getLogicRules: () =>
     unlocks.filter(
       (unlock) =>
-        unlock.unlockType === "logic-rule" &&
+        (unlock.unlockType === "logic-rule" ||
+          unlock.unlockType === "parallel-rule" ||
+          unlock.unlockType === "area-rule") &&
         unlock.visibleToPlayer &&
         get().unlockedIds.includes(unlock.id),
     ),

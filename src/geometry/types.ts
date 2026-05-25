@@ -7,7 +7,16 @@ export type GeometryTool =
   | "intersection"
   | "theorem-equilateral"
   | "theorem-bisect-angle"
-  | "theorem-bisect-segment";
+  | "theorem-bisect-segment"
+  | "theorem-perpendicular-on-line"
+  | "theorem-drop-perpendicular"
+  | "theorem-triangle-sss"
+  | "theorem-copy-angle"
+  | "theorem-parallel"
+  | "theorem-parallelogram-triangle"
+  | "theorem-parallelogram-line"
+  | "theorem-parallelogram-figure"
+  | "theorem-square";
 
 export type AppPhase =
   | "title"
@@ -85,6 +94,10 @@ export type ReplayStep = {
   text: string;
   highlight: ProofHighlight[];
   futureTokens?: string[];
+  highlightRoles?: ProofHighlight[];
+  ruleRefs?: string[];
+  dependencyRefs?: string[];
+  durationMs?: number;
 };
 
 export type PropositionLawSection = {
@@ -92,17 +105,38 @@ export type PropositionLawSection = {
   items: string[];
 };
 
+export type PropositionType =
+  | "construction"
+  | "theorem"
+  | "parallel-theorem"
+  | "area-theorem"
+  | "pythagorean-theorem"
+  | "converse-theorem";
+
+export type ConstructionStep = {
+  id: string;
+  text: string;
+  tool?: GeometryTool | "theorem-action" | "logic-replay";
+  refs?: string[];
+};
+
 export type Proposition = {
   id: string;
   book: string;
+  bookNumber?: 1;
   number: number;
   title: string;
   subtitle: string;
   playerGoal: string;
   originalStatement: string;
   instruction: string;
+  type?: PropositionType;
+  dependencies?: string[];
+  unlocks?: string[];
   initialObjects: GeometryObjects;
   allowedTools: GeometryTool[];
+  constructionGuide?: ConstructionStep[];
+  validationGoal?: ValidationGoal;
   lawSections: PropositionLawSection[];
   replaySteps: ReplayStep[];
   pointLabelSequence?: string[];
@@ -128,6 +162,8 @@ export type UnlockType =
   | "theorem-action"
   | "logic-rule"
   | "constraint-rule"
+  | "area-rule"
+  | "parallel-rule"
   | "semantic-token";
 
 export type Unlock = {
@@ -153,10 +189,11 @@ export type EuclidProposition = {
   title: string;
   originalStatement: string;
   playerGoal: string;
-  type: "construction" | "theorem";
+  type: PropositionType;
   dependencies: string[];
   unlocks: string[];
   initialObjects: GeometryObject[];
+  constructionGuide?: ConstructionStep[];
   validationGoal: ValidationGoal;
   replaySteps: ReplayStep[];
 };

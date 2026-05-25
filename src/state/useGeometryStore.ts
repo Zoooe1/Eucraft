@@ -282,6 +282,247 @@ function bisectSegmentWithMidpoint(state: GeometryStore, segment: Segment) {
   };
 }
 
+function pointAtForAction(
+  state: GeometryStore,
+  objects: GeometryObject[],
+  x: number,
+  y: number,
+  source: string,
+  color = "gold",
+) {
+  const existing = pointNearCoordinates(
+    objects.filter((object): object is Point => object.type === "point"),
+    x,
+    y,
+    4,
+  );
+  if (existing) {
+    return { point: existing, objects: [] as GeometryObject[] };
+  }
+
+  const point = createPoint(pointLabel(state, objects), x, y, "theorem-action", { color, source });
+  return { point, objects: [point] as GeometryObject[] };
+}
+
+function segmentPoints(objects: GeometryObject[], segment: Segment) {
+  const p1 = getPoint(objects, segment.p1);
+  const p2 = getPoint(objects, segment.p2);
+  return p1 && p2 ? { p1, p2 } : undefined;
+}
+
+function addSegmentIfMissing(objects: GeometryObject[], p1: string, p2: string, color: string, source: string) {
+  return segmentExistsBetween(objects, p1, p2) ? [] : [createSegment(p1, p2, color, source)];
+}
+
+function constructPerpendicularOnSegment(state: GeometryStore, segment: Segment, x: number, y: number) {
+  const points = segmentPoints(state.objects, segment);
+  if (!points) {
+    return undefined;
+  }
+
+  const dx = points.p2.x - points.p1.x;
+  const dy = points.p2.y - points.p1.y;
+  const lengthSquared = dx * dx + dy * dy;
+  const length = Math.sqrt(lengthSquared);
+  if (length < 1) {
+    return undefined;
+  }
+
+  const t = ((x - points.p1.x) * dx + (y - points.p1.y) * dy) / lengthSquared;
+  const baseX = points.p1.x + Math.max(0, Math.min(1, t)) * dx;
+  const baseY = points.p1.y + Math.max(0, Math.min(1, t)) * dy;
+  const base = pointAtForAction(state, state.objects, baseX, baseY, "I.11", "gold");
+  const objectsWithBase = [...state.objects, ...base.objects];
+  const height = Math.min(220, Math.max(120, length * 0.45));
+  const endpoint = pointAtForAction(
+    state,
+    objectsWithBase,
+    base.point.x - (dy / length) * height,
+    base.point.y + (dx / length) * height,
+    "I.11",
+    "gold",
+  );
+  const objectsWithPoints = [...objectsWithBase, ...endpoint.objects];
+  const line = addSegmentIfMissing(objectsWithPoints, base.point.id, endpoint.point.id, "gold", "I.11");
+
+  return {
+    objects: [...base.objects, ...endpoint.objects, ...line],
+    animatedObjectId: line[0]?.id ?? endpoint.point.id,
+  };
+}
+
+function dropPerpendicularToSegment(state: GeometryStore, externalPointId: string, segment: Segment) {
+  const externalPoint = getPoint(state.objects, externalPointId);
+  const points = segmentPoints(state.objects, segment);
+  if (!externalPoint || !points) {
+    return undefined;
+  }
+
+  const dx = points.p2.x - points.p1.x;
+  const dy = points.p2.y - points.p1.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared < 1) {
+    return undefined;
+  }
+
+  const t = ((externalPoint.x - points.p1.x) * dx + (externalPoint.y - points.p1.y) * dy) / lengthSquared;
+  const foot = pointAtForAction(
+    state,
+    state.objects,
+    points.p1.x + Math.max(0, Math.min(1, t)) * dx,
+    points.p1.y + Math.max(0, Math.min(1, t)) * dy,
+    "I.12",
+    "gold",
+  );
+  const objectsWithFoot = [...state.objects, ...foot.objects];
+  const segmentToFoot = addSegmentIfMissing(objectsWithFoot, externalPoint.id, foot.point.id, "gold", "I.12");
+
+  return {
+    objects: [...foot.objects, ...segmentToFoot],
+    animatedObjectId: segmentToFoot[0]?.id ?? foot.point.id,
+  };
+}
+
+function constructParallelThroughPoint(state: GeometryStore, pointId: string, segment: Segment) {
+  const throughPoint = getPoint(state.objects, pointId);
+  const points = segmentPoints(state.objects, segment);
+  if (!throughPoint || !points) {
+    return undefined;
+  }
+
+  const dx = points.p2.x - points.p1.x;
+  const dy = points.p2.y - points.p1.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 1) {
+    return undefined;
+  }
+
+  const endpoint = pointAtForAction(
+    state,
+    state.objects,
+    throughPoint.x + (dx / length) * Math.min(260, Math.max(150, length * 0.65)),
+    throughPoint.y + (dy / length) * Math.min(260, Math.max(150, length * 0.65)),
+    "I.31",
+    "gold",
+  );
+  const objectsWithEndpoint = [...state.objects, ...endpoint.objects];
+  const line = addSegmentIfMissing(objectsWithEndpoint, throughPoint.id, endpoint.point.id, "gold", "I.31");
+
+  return {
+    objects: [...endpoint.objects, ...line],
+    animatedObjectId: line[0]?.id ?? endpoint.point.id,
+  };
+}
+
+function constructPreviewTriangleOnSegment(state: GeometryStore, segment: Segment) {
+  const points = segmentPoints(state.objects, segment);
+  if (!points) {
+    return undefined;
+  }
+
+  const dx = points.p2.x - points.p1.x;
+  const dy = points.p2.y - points.p1.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 1) {
+    return undefined;
+  }
+
+  const apex = pointAtForAction(
+    state,
+    state.objects,
+    (points.p1.x + points.p2.x) / 2 - (dy / length) * length * 0.72,
+    (points.p1.y + points.p2.y) / 2 + (dx / length) * length * 0.72,
+    "I.22",
+    "gold",
+  );
+  const objectsWithApex = [...state.objects, ...apex.objects];
+  const sides = [
+    ...addSegmentIfMissing(objectsWithApex, points.p1.id, apex.point.id, "gold", "I.22"),
+    ...addSegmentIfMissing(objectsWithApex, points.p2.id, apex.point.id, "gold", "I.22"),
+  ];
+
+  return {
+    objects: [...apex.objects, ...sides],
+    animatedObjectId: sides[sides.length - 1]?.id ?? apex.point.id,
+  };
+}
+
+function constructCopiedAnglePreview(state: GeometryStore, vertex: Point) {
+  const side1 = pointAtForAction(state, state.objects, vertex.x + 140, vertex.y, "I.23", "gold");
+  const objectsWithSide1 = [...state.objects, ...side1.objects];
+  const side2 = pointAtForAction(state, objectsWithSide1, vertex.x + 70, vertex.y - 120, "I.23", "gold");
+  const objectsWithPoints = [...objectsWithSide1, ...side2.objects];
+  const sides = [
+    ...addSegmentIfMissing(objectsWithPoints, vertex.id, side1.point.id, "gold", "I.23"),
+    ...addSegmentIfMissing(objectsWithPoints, vertex.id, side2.point.id, "gold", "I.23"),
+  ];
+
+  return {
+    objects: [...side1.objects, ...side2.objects, ...sides],
+    animatedObjectId: sides[sides.length - 1]?.id ?? side2.point.id,
+  };
+}
+
+function constructParallelogramPreview(state: GeometryStore, segment: Segment, source: string) {
+  const points = segmentPoints(state.objects, segment);
+  if (!points) {
+    return undefined;
+  }
+
+  const dx = points.p2.x - points.p1.x;
+  const dy = points.p2.y - points.p1.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 1) {
+    return undefined;
+  }
+
+  const offset = { x: -dy / length * 105 + dx / length * 55, y: dx / length * 105 + dy / length * 55 };
+  const top1 = pointAtForAction(state, state.objects, points.p1.x + offset.x, points.p1.y + offset.y, source, "gold");
+  const objectsWithTop1 = [...state.objects, ...top1.objects];
+  const top2 = pointAtForAction(state, objectsWithTop1, points.p2.x + offset.x, points.p2.y + offset.y, source, "gold");
+  const objectsWithPoints = [...objectsWithTop1, ...top2.objects];
+  const sides = [
+    ...addSegmentIfMissing(objectsWithPoints, points.p1.id, top1.point.id, "gold", source),
+    ...addSegmentIfMissing(objectsWithPoints, top1.point.id, top2.point.id, "gold", source),
+    ...addSegmentIfMissing(objectsWithPoints, top2.point.id, points.p2.id, "gold", source),
+  ];
+
+  return {
+    objects: [...top1.objects, ...top2.objects, ...sides],
+    animatedObjectId: sides[sides.length - 1]?.id ?? top2.point.id,
+  };
+}
+
+function constructSquareOnSegmentPreview(state: GeometryStore, segment: Segment) {
+  const points = segmentPoints(state.objects, segment);
+  if (!points) {
+    return undefined;
+  }
+
+  const dx = points.p2.x - points.p1.x;
+  const dy = points.p2.y - points.p1.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 1) {
+    return undefined;
+  }
+
+  const offset = { x: -dy, y: dx };
+  const p3 = pointAtForAction(state, state.objects, points.p2.x + offset.x, points.p2.y + offset.y, "I.46", "gold");
+  const objectsWithP3 = [...state.objects, ...p3.objects];
+  const p4 = pointAtForAction(state, objectsWithP3, points.p1.x + offset.x, points.p1.y + offset.y, "I.46", "gold");
+  const objectsWithPoints = [...objectsWithP3, ...p4.objects];
+  const sides = [
+    ...addSegmentIfMissing(objectsWithPoints, points.p2.id, p3.point.id, "gold", "I.46"),
+    ...addSegmentIfMissing(objectsWithPoints, p3.point.id, p4.point.id, "gold", "I.46"),
+    ...addSegmentIfMissing(objectsWithPoints, p4.point.id, points.p1.id, "gold", "I.46"),
+  ];
+
+  return {
+    objects: [...p3.objects, ...p4.objects, ...sides],
+    animatedObjectId: sides[sides.length - 1]?.id ?? p4.point.id,
+  };
+}
+
 function constructBetweenPoints(
   state: GeometryStore,
   firstPointId: string,
@@ -667,6 +908,191 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
           result.animatedObjectId,
         ),
       );
+      return;
+    }
+
+    if (state.selectedTool === "theorem-perpendicular-on-line") {
+      const segment = findNearbySegment(state.objects, x, y, 28);
+      if (!segment) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose a point on an existing straight-line to raise the perpendicular.",
+          },
+        });
+        return;
+      }
+
+      const result = constructPerpendicularOnSegment(state, segment, x, y);
+      if (!result || result.objects.length === 0) {
+        set({
+          validation: {
+            success: false,
+            message: "The perpendicular action could not be placed on that line.",
+          },
+        });
+        return;
+      }
+
+      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      return;
+    }
+
+    if (state.selectedTool === "theorem-drop-perpendicular") {
+      if (state.selectedPointIds.length === 0) {
+        const resolved = resolvePointAt(state, x, y);
+        if (resolved.newPoint) {
+          set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
+          return;
+        }
+
+        set({
+          selectedPointIds: [resolved.point.id],
+          compassTransferSource: null,
+          validation: null,
+        });
+        return;
+      }
+
+      const segment = findNearbySegment(state.objects, x, y, 28);
+      const externalPointId = state.selectedPointIds[0];
+      if (!segment) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose the line that should receive the dropped perpendicular.",
+          },
+        });
+        return;
+      }
+
+      const result = dropPerpendicularToSegment(state, externalPointId, segment);
+      if (!result || result.objects.length === 0) {
+        set({
+          selectedPointIds: [],
+          validation: {
+            success: false,
+            message: "That dropped perpendicular could not be placed.",
+          },
+        });
+        return;
+      }
+
+      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      return;
+    }
+
+    if (state.selectedTool === "theorem-parallel") {
+      if (state.selectedPointIds.length === 0) {
+        const resolved = resolvePointAt(state, x, y);
+        if (resolved.newPoint) {
+          set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
+          return;
+        }
+
+        set({
+          selectedPointIds: [resolved.point.id],
+          compassTransferSource: null,
+          validation: null,
+        });
+        return;
+      }
+
+      const segment = findNearbySegment(state.objects, x, y, 28);
+      if (!segment) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose the line to copy in parallel through the selected point.",
+          },
+        });
+        return;
+      }
+
+      const result = constructParallelThroughPoint(state, state.selectedPointIds[0], segment);
+      if (!result || result.objects.length === 0) {
+        set({
+          selectedPointIds: [],
+          validation: {
+            success: false,
+            message: "That parallel could not be placed.",
+          },
+        });
+        return;
+      }
+
+      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      return;
+    }
+
+    if (state.selectedTool === "theorem-copy-angle") {
+      const resolved = resolvePointAt(state, x, y);
+      const actionState = resolved.newPoint ? { ...state, objects: [...state.objects, resolved.newPoint] } : state;
+      const result = constructCopiedAnglePreview(actionState, resolved.point);
+      if (!result || result.objects.length === 0) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose a target point for the copied angle.",
+          },
+        });
+        return;
+      }
+
+      set(
+        addObjectsAndSelect(
+          state,
+          [...(resolved.newPoint ? [resolved.newPoint] : []), ...result.objects],
+          [],
+          result.animatedObjectId,
+        ),
+      );
+      return;
+    }
+
+    if (
+      state.selectedTool === "theorem-triangle-sss" ||
+      state.selectedTool === "theorem-parallelogram-triangle" ||
+      state.selectedTool === "theorem-parallelogram-line" ||
+      state.selectedTool === "theorem-parallelogram-figure" ||
+      state.selectedTool === "theorem-square"
+    ) {
+      const segment = findNearbySegment(state.objects, x, y, 28);
+      if (!segment) {
+        set({
+          validation: {
+            success: false,
+            message: "Choose an existing segment as the base for this earned construction action.",
+          },
+        });
+        return;
+      }
+
+      const result =
+        state.selectedTool === "theorem-triangle-sss"
+          ? constructPreviewTriangleOnSegment(state, segment)
+          : state.selectedTool === "theorem-square"
+            ? constructSquareOnSegmentPreview(state, segment)
+            : constructParallelogramPreview(
+                state,
+                segment,
+                state.selectedTool === "theorem-parallelogram-triangle"
+                  ? "I.42"
+                  : state.selectedTool === "theorem-parallelogram-line"
+                    ? "I.44"
+                    : "I.45",
+              );
+      if (!result || result.objects.length === 0) {
+        set({
+          validation: {
+            success: false,
+            message: "That earned construction could not be placed on this segment.",
+          },
+        });
+        return;
+      }
+
+      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
       return;
     }
 

@@ -1,4 +1,5 @@
 import type { Proposition } from "../geometry/types";
+import { book1ExtendedPropositions } from "./book1extended";
 import { book1Prop1 } from "./book1prop1";
 import { book1Prop10 } from "./book1prop10";
 import { book1Prop2 } from "./book1prop2";
@@ -21,6 +22,7 @@ export const propositions: Proposition[] = [
   book1Prop8,
   book1Prop9,
   book1Prop10,
+  ...book1ExtendedPropositions,
 ];
 
 export function getProposition(id: string): Proposition {

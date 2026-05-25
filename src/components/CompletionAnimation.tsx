@@ -33,7 +33,7 @@ function unlockKind(unlock: Unlock) {
     return "New Action Unlocked";
   }
 
-  if (unlock.unlockType === "logic-rule") {
+  if (unlock.unlockType === "logic-rule" || unlock.unlockType === "parallel-rule" || unlock.unlockType === "area-rule") {
     return "New Logic Unlocked";
   }
 
@@ -49,7 +49,13 @@ export function CompletionAnimation({
 }: CompletionAnimationProps) {
   const lastUnlockedIds = useUnlockStore((state) => state.lastUnlockedIds);
   const unlocks = visibleLastUnlocks(lastUnlockedIds);
-  const advanceLabel = nextPropositionId ? `Advance to Proposition ${nextPropositionId}` : "Return to Proposition Map";
+  const bookComplete = propositionId === "I.48";
+  const advanceLabel = bookComplete
+    ? "Review Book I Map"
+    : nextPropositionId
+      ? `Advance to Proposition ${nextPropositionId}`
+      : "Return to Proposition Map";
+  const replayLabel = bookComplete ? "Replay Pythagorean Theorem" : "Replay Logic";
 
   return (
     <section className="completion-overlay" aria-label="Proposition completion">
@@ -65,11 +71,15 @@ export function CompletionAnimation({
           <line x1="116" y1="76" x2="90" y2="31" />
         </svg>
 
-        <p className="completion-title">Proposition Complete</p>
+        <p className="completion-title">{bookComplete ? "Book I Complete" : "Proposition Complete"}</p>
         <h2 className="completion-subtitle">
-          Euclid {propositionId} - {propositionTitle}
+          {bookComplete ? "Fundamentals of Plane Geometry Involving Straight-Lines" : `Euclid ${propositionId} - ${propositionTitle}`}
         </h2>
-        <p className="completion-message">{completionMessages[propositionId] ?? "A new Euclidean page has opened."}</p>
+        <p className="completion-message">
+          {bookComplete
+            ? "You have played through the first book of Euclid's Elements."
+            : completionMessages[propositionId] ?? "A new Euclidean page has opened."}
+        </p>
 
         {unlocks.length > 0 && (
           <div className="completion-unlocks" aria-label="New unlocks">
@@ -84,7 +94,12 @@ export function CompletionAnimation({
         <div className="completion-actions">
           {onReplayLogic && (
             <button className="quiet-button" type="button" onClick={onReplayLogic}>
-              Replay Logic
+              {replayLabel}
+            </button>
+          )}
+          {bookComplete && (
+            <button className="quiet-button" type="button" disabled title="Book II is not implemented yet.">
+              Continue to Book II Preview
             </button>
           )}
           <button className="primary-button advance-button" type="button" onClick={onAdvance}>

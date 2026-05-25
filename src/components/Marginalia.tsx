@@ -1,6 +1,7 @@
 import { allPoints, segmentExistsBetween } from "../geometry/operations";
 import { circleUsingBase } from "../geometry/objectResolution";
 import type { GeometryObject } from "../geometry/types";
+import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 
 function constructionNote(objects: GeometryObject[], propositionId: string) {
@@ -41,6 +42,16 @@ function constructionNote(objects: GeometryObject[], propositionId: string) {
 
   if (propositionId === "I.10") {
     return "Build the equilateral triangle on AB, then use the earned angle-bisector action or the manual I.9 construction.";
+  }
+
+  const proposition = getProposition(propositionId);
+  if (proposition.number >= 11) {
+    const firstGuide = proposition.constructionGuide?.[0]?.text;
+    if (firstGuide) {
+      return `${firstGuide} When the diagram is ready, check it to enter Logic Replay.`;
+    }
+
+    return "Study the fixed diagram, then check it to unfold the guided Logic Replay for this theorem.";
   }
 
   const circleA = circleUsingBase(objects, "A", "B");

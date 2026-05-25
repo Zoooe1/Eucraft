@@ -3,7 +3,7 @@ import { getUnlockedPropositionIds } from "../euclid/dependencies";
 import { euclidPropositions } from "../euclid/propositions";
 import { propositions as playablePropositions } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
-import { useUnlockStore } from "../state/useUnlockStore";
+import { getUnlockById, useUnlockStore } from "../state/useUnlockStore";
 
 const playableIds = new Set(playablePropositions.map((proposition) => proposition.id));
 
@@ -22,6 +22,20 @@ export function PropositionMap() {
         const completed = completedPropositionIds.includes(proposition.id);
         const playable = playableIds.has(proposition.id);
         const disabled = !unlocked || !playable;
+        const propositionUnlocks = proposition.unlocks.map((id) => getUnlockById(id)).filter(Boolean);
+        const unlocksTool = propositionUnlocks.some((unlock) => unlock?.unlockType === "theorem-action" && unlock.visibleToPlayer);
+        const unlocksLogic = propositionUnlocks.some(
+          (unlock) =>
+            unlock?.visibleToPlayer &&
+            (unlock.unlockType === "logic-rule" ||
+              unlock.unlockType === "parallel-rule" ||
+              unlock.unlockType === "area-rule" ||
+              unlock.unlockType === "constraint-rule"),
+        );
+        const mode = proposition.type === "construction" ? "Construction" : "Theorem Replay";
+        const status = completed ? "Completed" : unlocked && playable ? "Not Started" : "Locked";
+        const unlockBadge = unlocksTool ? "Unlocks Tool" : unlocksLogic ? "Unlocks Logic" : "";
+        const modeBadge = unlockBadge ? `${mode} - ${unlockBadge}` : mode;
 
         return (
           <button
@@ -33,7 +47,8 @@ export function PropositionMap() {
           >
             <span>{proposition.id}</span>
             <strong>{proposition.title}</strong>
-            <small>{completed ? "Completed" : unlocked && playable ? "Unlocked" : unlocked ? "Coming Soon" : "Locked"}</small>
+            <small>{status}</small>
+            <small>{modeBadge}</small>
           </button>
         );
       })}

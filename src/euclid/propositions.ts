@@ -1,4 +1,5 @@
 import type { EuclidProposition, GeometryObject, ReplayStep } from "../geometry/types";
+import { book1ExtendedSpecs } from "./book1ExtendedData";
 
 const emptyObjects: GeometryObject[] = [];
 
@@ -232,6 +233,21 @@ export const euclidPropositions: EuclidProposition[] = [
       "Bisect Segment / Find Midpoint becomes an earned theorem-action.",
     ),
   },
+  ...book1ExtendedSpecs.map((spec): EuclidProposition => ({
+    id: `I.${spec.number}`,
+    book: 1,
+    number: spec.number,
+    title: spec.title,
+    originalStatement: spec.originalStatement,
+    playerGoal: spec.playerGoal,
+    type: spec.type,
+    dependencies: spec.dependencies,
+    unlocks: spec.unlocks,
+    initialObjects: emptyObjects,
+    constructionGuide: spec.constructionGuide,
+    validationGoal: spec.validationGoal,
+    replaySteps: spec.replaySteps,
+  })),
 ];
 
 export function getEuclidProposition(id: string): EuclidProposition | undefined {
