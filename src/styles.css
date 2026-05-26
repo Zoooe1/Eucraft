@@ -1962,6 +1962,16 @@ button {
   box-shadow: inset 0 0 90px rgba(72, 37, 17, 0.24);
 }
 
+.eucraft-landing {
+  background-color: var(--eucraft-paper);
+  background-image:
+    linear-gradient(rgba(245, 230, 190, 0.06), rgba(245, 230, 190, 0.06)),
+    url("/assets/eucraft-home-background.jpg");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .eucraft-landing::before,
 .book-one-map::before,
 .proposition-sidebar::before,
@@ -1982,7 +1992,7 @@ button {
 .landing-title-block {
   position: absolute;
   z-index: 6;
-  top: 15.5%;
+  top: 13.5%;
   left: 8.1%;
   color: var(--eucraft-ink-red);
 }
@@ -2124,6 +2134,7 @@ button {
   top: var(--footprint-y);
   width: clamp(94px, 8vw, 168px);
   opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(0.9);
   animation: footprintReveal 780ms ease var(--footprint-delay) forwards;
 }
 
@@ -2131,7 +2142,6 @@ button {
   width: 100%;
   overflow: visible;
   fill: var(--footprint-color);
-  transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
 }
 
 .footprint-pair rect {
@@ -2141,12 +2151,12 @@ button {
 @keyframes footprintReveal {
   from {
     opacity: 0;
-    transform: scale(0.92);
+    transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(0.9);
     filter: blur(2px);
   }
   to {
     opacity: var(--target-opacity);
-    transform: scale(1);
+    transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
     filter: blur(0);
   }
 }
@@ -2155,6 +2165,7 @@ button {
   .footprint-pair {
     animation: none;
     opacity: var(--target-opacity);
+    transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
   }
 }
 

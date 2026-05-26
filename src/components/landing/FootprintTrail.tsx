@@ -1,39 +1,52 @@
 import type { CSSProperties } from "react";
 
-const steps = [
-  { x: 22, y: 102, rotate: -72, scale: 1.18, opacity: 0.98, color: "#760000" },
-  { x: 29, y: 92, rotate: -56, scale: 1.08, opacity: 0.9, color: "#662027" },
-  { x: 36, y: 82, rotate: -28, scale: 1.02, opacity: 0.78, color: "#8d3f4b" },
-  { x: 43, y: 72, rotate: -4, scale: 0.98, opacity: 0.64, color: "#b4808d" },
-  { x: 51, y: 63, rotate: 22, scale: 0.96, opacity: 0.68, color: "#b4808d" },
-  { x: 61, y: 53, rotate: 14, scale: 0.98, opacity: 0.72, color: "#a46370" },
-  { x: 68, y: 43, rotate: -12, scale: 1.02, opacity: 0.8, color: "#8e4550" },
-  { x: 75, y: 32, rotate: -46, scale: 1.06, opacity: 0.9, color: "#74303a" },
-  { x: 82, y: 20, rotate: -66, scale: 1.12, opacity: 0.98, color: "#6f0000" },
-  { x: 87, y: 10, rotate: -62, scale: 1.06, opacity: 0.98, color: "#760000" },
+type FootprintStep = {
+  id: string;
+  x: string;
+  y: string;
+  rotate: number;
+  scale: number;
+  opacity: number;
+  color: string;
+};
+
+const leftTrail: FootprintStep[] = [
+  { id: "left-1", x: "18%", y: "87%", rotate: -24, scale: 1.08, opacity: 0.92, color: "#760000" },
+  { id: "left-2", x: "25%", y: "78%", rotate: -16, scale: 1.02, opacity: 0.82, color: "#783139" },
+  { id: "left-3", x: "32%", y: "69%", rotate: -8, scale: 0.98, opacity: 0.72, color: "#8f4f5b" },
+  { id: "left-4", x: "39%", y: "60%", rotate: 4, scale: 0.94, opacity: 0.62, color: "#b98591" },
+  { id: "left-5", x: "46%", y: "53%", rotate: 13, scale: 0.92, opacity: 0.58, color: "#a56a76" },
+];
+
+const rightTrail: FootprintStep[] = [
+  { id: "right-1", x: "78%", y: "18%", rotate: 152, scale: 1.08, opacity: 0.94, color: "#760000" },
+  { id: "right-2", x: "72%", y: "27%", rotate: 146, scale: 1.02, opacity: 0.84, color: "#79323b" },
+  { id: "right-3", x: "66%", y: "36%", rotate: 140, scale: 0.98, opacity: 0.74, color: "#8f4f5b" },
+  { id: "right-4", x: "59%", y: "44%", rotate: 132, scale: 0.94, opacity: 0.64, color: "#b98591" },
+  { id: "right-5", x: "52%", y: "50%", rotate: 124, scale: 0.92, opacity: 0.58, color: "#a56a76" },
 ];
 
 function FootprintPair({
-  x,
-  y,
-  rotate,
-  scale,
-  opacity,
-  color,
+  step,
   index,
-}: (typeof steps)[number] & { index: number }) {
+  delayOffset = 0,
+}: {
+  step: FootprintStep;
+  index: number;
+  delayOffset?: number;
+}) {
   return (
     <div
       className="footprint-pair"
       style={
         {
-          "--footprint-x": `${x}%`,
-          "--footprint-y": `${y}%`,
-          "--footprint-rotate": `${rotate}deg`,
-          "--footprint-scale": scale,
-          "--target-opacity": opacity,
-          "--footprint-color": color,
-          "--footprint-delay": `${index * 430}ms`,
+          "--footprint-x": step.x,
+          "--footprint-y": step.y,
+          "--footprint-rotate": `${step.rotate}deg`,
+          "--footprint-scale": step.scale,
+          "--target-opacity": step.opacity,
+          "--footprint-color": step.color,
+          "--footprint-delay": `${index * 430 + delayOffset}ms`,
         } as CSSProperties
       }
     >
@@ -55,10 +68,17 @@ function FootprintPair({
 
 export function FootprintTrail() {
   return (
-    <div className="footprint-trail" aria-hidden="true">
-      {steps.map((step, index) => (
-        <FootprintPair key={`${step.x}-${step.y}`} {...step} index={index} />
-      ))}
-    </div>
+    <>
+      <div className="footprint-trail left-trail" aria-hidden="true">
+        {leftTrail.map((step, index) => (
+          <FootprintPair key={step.id} step={step} index={index} />
+        ))}
+      </div>
+      <div className="footprint-trail right-trail" aria-hidden="true">
+        {rightTrail.map((step, index) => (
+          <FootprintPair key={step.id} step={step} index={index} delayOffset={190} />
+        ))}
+      </div>
+    </>
   );
 }

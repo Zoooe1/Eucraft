@@ -1,7 +1,5 @@
 import { useGeometryStore } from "../../state/useGeometryStore";
-import { FaintGeometrySketches } from "./FaintGeometrySketches";
 import { FootprintTrail } from "./FootprintTrail";
-import { RightBookSpine } from "./RightBookSpine";
 
 export function EucraftLanding() {
   const startApp = useGeometryStore((state) => state.startApp);
@@ -9,9 +7,7 @@ export function EucraftLanding() {
 
   return (
     <section className="eucraft-landing" aria-label="Eucraft entrance">
-      <FaintGeometrySketches />
       <FootprintTrail />
-      <RightBookSpine />
 
       <div className="landing-title-block">
         <h1>Eucraft</h1>
