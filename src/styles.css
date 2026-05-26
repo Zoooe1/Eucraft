@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&display=swap");
+
 :root {
   --paper: #f3dfb8;
   --paper-light: #fff5d8;
@@ -1931,7 +1933,7 @@ button {
   --eucraft-sketch: rgba(70, 55, 38, 0.18);
   --eucraft-locked-grey: rgba(80, 70, 60, 0.38);
   --eucraft-gold: #b88a2d;
-  --eucraft-font-medieval: Luminari, "Apple Chancery", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --eucraft-font-medieval: "IM Fell English SC", Luminari, "Apple Chancery", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
 }
 
 .sr-only {
