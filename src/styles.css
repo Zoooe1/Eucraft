@@ -2138,14 +2138,40 @@ button {
   animation: footprintReveal 780ms ease var(--footprint-delay) forwards;
 }
 
-.footprint-pair svg {
+.footprint-pair-inner {
+  position: relative;
   width: 100%;
-  overflow: visible;
-  fill: var(--footprint-color);
+  aspect-ratio: 142 / 108;
+  color: var(--footprint-color);
 }
 
-.footprint-pair rect {
-  opacity: 0.62;
+.footprint-mark {
+  position: absolute;
+  width: 34%;
+  height: 70%;
+  overflow: visible;
+}
+
+.footprint-mark.left {
+  left: 12%;
+  top: 20%;
+  transform: rotate(-72deg);
+}
+
+.footprint-mark.right {
+  left: 54%;
+  top: 2%;
+  transform: rotate(-58deg);
+}
+
+.footprint-sole,
+.footprint-heel {
+  fill: currentColor;
+  stroke: none;
+}
+
+.footprint-heel {
+  opacity: 0.9;
 }
 
 @keyframes footprintReveal {
