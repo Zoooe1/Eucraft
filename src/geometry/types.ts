@@ -20,6 +20,7 @@ export type GeometryTool =
 
 export type AppPhase =
   | "title"
+  | "map"
   | "laws"
   | "intro"
   | "construction"

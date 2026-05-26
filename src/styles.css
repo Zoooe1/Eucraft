@@ -1916,3 +1916,835 @@ button {
     padding: 22px;
   }
 }
+
+/* Vintage walking-map entrance, Book I map, and shared proposition workbench. */
+:root {
+  --eucraft-paper: #efe2bf;
+  --eucraft-paper-light: #f7edcf;
+  --eucraft-paper-warm: #dfc28c;
+  --eucraft-ink-red: #760000;
+  --eucraft-ink-red-dark: #420000;
+  --eucraft-book-red: #740000;
+  --eucraft-book-red-dark: #310000;
+  --eucraft-muted-rose: #b4808d;
+  --eucraft-muted-mauve: #8e4550;
+  --eucraft-sketch: rgba(70, 55, 38, 0.18);
+  --eucraft-locked-grey: rgba(80, 70, 60, 0.38);
+  --eucraft-gold: #b88a2d;
+  --eucraft-font-medieval: Luminari, "Apple Chancery", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.eucraft-landing,
+.book-one-map {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: var(--eucraft-paper);
+  background-image:
+    radial-gradient(circle at 18% 14%, rgba(255, 252, 232, 0.52), transparent 25rem),
+    radial-gradient(circle at 82% 20%, rgba(92, 47, 20, 0.14), transparent 27rem),
+    radial-gradient(circle at 42% 84%, rgba(83, 37, 17, 0.11), transparent 31rem),
+    repeating-linear-gradient(14deg, rgba(70, 36, 18, 0.048) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(104deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 29px),
+    linear-gradient(105deg, rgba(255, 245, 214, 0.96), rgba(224, 194, 139, 0.86));
+  box-shadow: inset 0 0 90px rgba(72, 37, 17, 0.24);
+}
+
+.eucraft-landing::before,
+.book-one-map::before,
+.proposition-sidebar::before,
+.proposition-canvas-panel::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(16deg, transparent 0 41%, rgba(255, 255, 255, 0.13) 41.2% 41.5%, transparent 41.8%),
+    linear-gradient(150deg, transparent 0 58%, rgba(87, 42, 19, 0.075) 58.2% 58.45%, transparent 58.8%),
+    radial-gradient(circle at 10% 85%, rgba(77, 35, 17, 0.12), transparent 18rem),
+    radial-gradient(circle at 86% 8%, rgba(255, 255, 255, 0.2), transparent 20rem);
+  mix-blend-mode: multiply;
+  opacity: 0.65;
+  content: "";
+}
+
+.landing-title-block {
+  position: absolute;
+  z-index: 6;
+  top: 15.5%;
+  left: 8.1%;
+  color: var(--eucraft-ink-red);
+}
+
+.landing-title-block h1 {
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(5.5rem, 8.4vw, 10rem);
+  font-variant: small-caps;
+  font-weight: 800;
+  line-height: 0.74;
+  text-shadow:
+    0 1px 0 rgba(255, 245, 214, 0.7),
+    0 3px 0 rgba(82, 0, 0, 0.06);
+}
+
+.landing-title-block p {
+  margin-top: 1.5rem;
+  color: var(--eucraft-ink-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.35rem, 2.15vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.landing-actions {
+  display: grid;
+  justify-items: start;
+  gap: 1.75rem;
+  margin-top: clamp(5rem, 11vh, 8rem);
+}
+
+.landing-actions button {
+  min-width: clamp(190px, 15.5vw, 300px);
+  min-height: clamp(66px, 7vh, 86px);
+  padding: 0 1.6rem;
+  border: 5px solid var(--eucraft-ink-red);
+  border-radius: 0;
+  background: rgba(255, 244, 213, 0.2);
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(2.2rem, 3.5vw, 4.1rem);
+  font-variant: small-caps;
+  font-weight: 760;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.landing-actions button:hover,
+.landing-actions button:focus-visible {
+  background: rgba(116, 0, 0, 0.07);
+  box-shadow:
+    0 0 0 3px rgba(255, 236, 192, 0.58),
+    0 0 22px rgba(116, 0, 0, 0.16);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.landing-book-spine {
+  position: absolute;
+  z-index: 7;
+  inset: 0 0 0 auto;
+  width: 16.1vw;
+  min-width: 190px;
+  background:
+    linear-gradient(90deg, rgba(57, 0, 0, 0.32), transparent 26%),
+    linear-gradient(var(--eucraft-book-red), #680000);
+}
+
+.landing-book-spine::before {
+  position: absolute;
+  inset: 0 auto 0 33%;
+  width: 34%;
+  background: rgba(36, 0, 0, 0.28);
+  border-radius: 70px 70px 0 0;
+  content: "";
+}
+
+.book-spine-shadow {
+  position: absolute;
+  inset: 0 auto 0 -20px;
+  width: 28px;
+  background: linear-gradient(90deg, transparent, rgba(43, 0, 0, 0.28));
+}
+
+.book-spine-ribbon {
+  position: absolute;
+  top: 0;
+  right: 12%;
+  width: 46%;
+  height: 43%;
+  background: linear-gradient(#510000, var(--eucraft-book-red-dark));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  opacity: 0.92;
+}
+
+.faint-geometry-sketches {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.faint-geometry-sketches .sketch {
+  fill: none;
+  stroke: var(--eucraft-sketch);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.faint-geometry-sketches text {
+  fill: rgba(70, 55, 38, 0.2);
+  stroke: none;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 44px;
+  font-style: italic;
+}
+
+.sketch-lower {
+  opacity: 0.82;
+}
+
+.footprint-trail {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.footprint-pair {
+  position: absolute;
+  left: var(--footprint-x);
+  top: var(--footprint-y);
+  width: clamp(94px, 8vw, 168px);
+  opacity: 0;
+  animation: footprintReveal 780ms ease var(--footprint-delay) forwards;
+}
+
+.footprint-pair svg {
+  width: 100%;
+  overflow: visible;
+  fill: var(--footprint-color);
+  transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
+}
+
+.footprint-pair rect {
+  opacity: 0.62;
+}
+
+@keyframes footprintReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(2px);
+  }
+  to {
+    opacity: var(--target-opacity);
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footprint-pair {
+    animation: none;
+    opacity: var(--target-opacity);
+  }
+}
+
+.book-map-shell {
+  display: block;
+  padding: 0;
+}
+
+.book-one-map {
+  display: grid;
+  align-items: center;
+  min-height: 100vh;
+  padding: clamp(62px, 11vh, 118px) clamp(50px, 6vw, 112px) clamp(56px, 9vh, 92px) clamp(310px, 25vw, 440px);
+}
+
+.book-one-map .faint-geometry-sketches {
+  opacity: 0.35;
+}
+
+.book-map-sidebar {
+  position: absolute;
+  z-index: 4;
+  inset: 0 auto 0 0;
+  width: 17vw;
+  min-width: 230px;
+  background:
+    linear-gradient(90deg, rgba(49, 0, 0, 0.28), transparent 44%),
+    linear-gradient(var(--eucraft-book-red), #650000);
+  box-shadow: 14px 0 42px rgba(62, 0, 0, 0.16);
+}
+
+.book-map-grid {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(126px, 1fr));
+  column-gap: clamp(2.2rem, 5vw, 6.4rem);
+  row-gap: clamp(1rem, 2.7vh, 2rem);
+  width: min(100%, 1120px);
+  justify-self: center;
+}
+
+.book-map-proposition {
+  position: relative;
+  min-height: 34px;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(1rem, 1.65vw, 1.55rem);
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.book-map-proposition:hover:not(:disabled),
+.book-map-proposition:focus-visible {
+  color: var(--eucraft-ink-red-dark);
+  outline: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 7px;
+  text-shadow: 0 0 14px rgba(118, 0, 0, 0.14);
+}
+
+.book-map-proposition.locked {
+  color: var(--eucraft-locked-grey);
+  cursor: not-allowed;
+  text-shadow: none;
+}
+
+.book-map-proposition.current::after {
+  position: absolute;
+  right: calc(50% - 0.22rem);
+  bottom: -0.35rem;
+  width: 0.44rem;
+  height: 0.44rem;
+  border-radius: 50%;
+  background: var(--eucraft-gold);
+  box-shadow: 0 0 12px rgba(184, 138, 45, 0.42);
+  content: "";
+}
+
+.book-map-proposition.completed i {
+  position: absolute;
+  top: -0.25rem;
+  right: calc(50% - 3.5rem);
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--eucraft-gold);
+  box-shadow: 0 0 0 1px rgba(118, 0, 0, 0.18);
+}
+
+.proposition-page {
+  display: grid;
+  grid-template-columns: minmax(260px, 24vw) 1fr;
+  gap: clamp(1.1rem, 2vw, 2rem);
+  width: 100vw;
+  min-height: 100vh;
+  height: 100vh;
+  padding: clamp(1rem, 1.55vw, 1.8rem);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 28%, rgba(115, 0, 0, 0.4), transparent 18rem),
+    linear-gradient(var(--eucraft-book-red), var(--eucraft-book-red-dark)) !important;
+}
+
+.proposition-page .left-pane,
+.proposition-sidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  max-height: none;
+  min-height: 0;
+  overflow: auto;
+  gap: clamp(1rem, 1.6vh, 1.5rem);
+  padding: clamp(3rem, 6.5vh, 4.8rem) clamp(1.6rem, 3vw, 3.2rem) clamp(3rem, 5vh, 4.2rem);
+  border: 0;
+  border-radius: 8rem;
+  background-color: var(--eucraft-paper);
+  background-image:
+    radial-gradient(circle at 55% 2%, rgba(255, 253, 231, 0.56), transparent 13rem),
+    radial-gradient(circle at 24% 82%, rgba(90, 43, 19, 0.12), transparent 17rem),
+    repeating-linear-gradient(13deg, rgba(70, 36, 18, 0.043) 0 1px, transparent 1px 21px),
+    linear-gradient(105deg, rgba(255, 245, 214, 0.97), rgba(225, 194, 139, 0.86));
+  box-shadow:
+    inset 0 0 64px rgba(83, 37, 17, 0.16),
+    0 14px 42px rgba(44, 0, 0, 0.28);
+  color: var(--eucraft-ink-red);
+}
+
+.proposition-page .left-pane::-webkit-scrollbar {
+  width: 0;
+}
+
+.proposition-page .prop-label,
+.proposition-page .app-kicker {
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(1.55rem, 2vw, 2.25rem);
+  font-variant: small-caps;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.proposition-page .proposition-header,
+.proposition-page .intro-panel {
+  gap: 1.2rem;
+}
+
+.proposition-page .proposition-header h1,
+.proposition-page .intro-panel h1 {
+  display: none;
+  margin: 0;
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(1.05rem, 1.45vw, 1.45rem);
+  font-variant: small-caps;
+  font-weight: 800;
+  line-height: 1.18;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.proposition-page .sidebar-prompt,
+.proposition-page .intro-panel p,
+.proposition-page .user-task,
+.proposition-page .given-list,
+.proposition-page .marginalia p,
+.proposition-page .tool-instruction,
+.proposition-page .validation,
+.proposition-page .logic-panel p,
+.proposition-page .completion-card p {
+  color: var(--eucraft-ink-red);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.proposition-page .sidebar-prompt {
+  font-size: clamp(0.78rem, 1vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.65;
+  text-transform: uppercase;
+}
+
+.proposition-page blockquote {
+  display: none;
+}
+
+.proposition-page .challenge-panel,
+.proposition-page .tool-panel,
+.proposition-page .marginalia,
+.proposition-page .logic-panel,
+.proposition-page .completion-card,
+.proposition-page .validation,
+.proposition-page .completion-overlay {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.proposition-page .challenge-panel {
+  gap: 0.7rem;
+  margin-top: 0.2rem;
+}
+
+.proposition-page .challenge-meta,
+.proposition-page .given-list,
+.proposition-page .challenge-panel > .panel-label {
+  display: none;
+}
+
+.proposition-page .challenge-actions {
+  gap: 0.45rem;
+}
+
+.proposition-page .challenge-action {
+  grid-template-columns: 3.8rem 1fr;
+  padding: 0.42rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--eucraft-ink-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.proposition-page .challenge-action span {
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: 0.7rem;
+}
+
+.proposition-page .challenge-action.complete {
+  background: transparent;
+  color: #4f3318;
+}
+
+.proposition-page .tool-panel {
+  margin-top: auto;
+  gap: clamp(0.8rem, 1.5vh, 1.2rem);
+}
+
+.proposition-page .tool-grid,
+.proposition-page .unlock-button-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(3.3rem, 1fr));
+  gap: clamp(0.8rem, 1.5vh, 1.2rem);
+  place-items: center;
+}
+
+.proposition-page .tool-button,
+.proposition-page .theorem-action-button {
+  display: grid;
+  place-items: center;
+  width: clamp(3.8rem, 5.2vw, 5.2rem);
+  min-width: 0;
+  height: clamp(3.8rem, 5.2vw, 5.2rem);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--eucraft-ink-red);
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.proposition-page .tool-button:hover,
+.proposition-page .tool-button:focus-visible,
+.proposition-page .theorem-action-button.actionable:hover,
+.proposition-page .theorem-action-button.actionable:focus-visible {
+  outline: none;
+  background: rgba(116, 0, 0, 0.055);
+  box-shadow: 0 0 0 2px rgba(116, 0, 0, 0.16);
+  transform: none;
+}
+
+.proposition-page .tool-button.active,
+.proposition-page .theorem-action-button.active {
+  background: rgba(116, 0, 0, 0.08);
+  color: var(--eucraft-ink-red-dark);
+  box-shadow:
+    0 0 0 2px rgba(116, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 245, 214, 0.44);
+}
+
+.proposition-page .tool-icon-mark,
+.proposition-page .tool-button > span:not(.sr-only) {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: currentColor;
+  font-size: 0;
+}
+
+.proposition-page .tool-button svg,
+.proposition-page .theorem-action-button svg {
+  width: 78%;
+  height: 78%;
+  color: currentColor;
+  overflow: visible;
+}
+
+.proposition-page .tool-button svg line,
+.proposition-page .tool-button svg path,
+.proposition-page .tool-button svg polygon,
+.proposition-page .tool-button svg rect,
+.proposition-page .tool-button svg circle,
+.proposition-page .theorem-action-button svg line,
+.proposition-page .theorem-action-button svg path,
+.proposition-page .theorem-action-button svg polygon,
+.proposition-page .theorem-action-button svg rect,
+.proposition-page .theorem-action-button svg circle {
+  stroke: currentColor;
+}
+
+.proposition-page .tool-button svg circle:not([fill="none"]),
+.proposition-page .tool-button svg ellipse,
+.proposition-page .theorem-action-button svg circle:not([fill="none"]),
+.proposition-page .theorem-action-button svg ellipse {
+  fill: currentColor;
+}
+
+.proposition-page .tool-instruction,
+.proposition-page .marginalia {
+  margin-top: 0.4rem;
+  font-size: clamp(0.72rem, 0.95vw, 0.9rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.58;
+  text-transform: uppercase;
+}
+
+.proposition-page .marginalia .panel-label,
+.proposition-page .reasoning-library {
+  display: none;
+}
+
+.proposition-page .action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.proposition-page .primary-button,
+.proposition-page .quiet-button {
+  border: 2px solid var(--eucraft-ink-red);
+  border-radius: 0;
+  background: rgba(255, 245, 214, 0.25);
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+  font-variant: small-caps;
+  font-weight: 800;
+}
+
+.proposition-page .primary-button:hover,
+.proposition-page .quiet-button:hover,
+.proposition-page .primary-button:focus-visible,
+.proposition-page .quiet-button:focus-visible {
+  outline: none;
+  background: rgba(116, 0, 0, 0.08);
+  box-shadow: 0 0 0 2px rgba(184, 138, 45, 0.35);
+  transform: none;
+}
+
+.proposition-page .validation {
+  padding: 0.8rem 0 0;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.proposition-page .validation-success {
+  color: #35572d;
+}
+
+.proposition-page .validation-hint {
+  color: var(--eucraft-ink-red);
+}
+
+.proposition-page .logic-panel {
+  gap: 0.8rem;
+}
+
+.proposition-page .proof-meta {
+  color: var(--eucraft-ink-red);
+}
+
+.proposition-page .proof-text {
+  color: var(--eucraft-ink-red);
+  font-size: clamp(0.95rem, 1.15vw, 1.15rem);
+}
+
+.proposition-canvas-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 6.4rem;
+  background-color: var(--eucraft-paper);
+  background-image:
+    radial-gradient(circle at 44% 45%, rgba(255, 252, 236, 0.62), transparent 22rem),
+    radial-gradient(circle at 85% 16%, rgba(90, 43, 19, 0.1), transparent 18rem),
+    repeating-linear-gradient(13deg, rgba(70, 36, 18, 0.038) 0 1px, transparent 1px 22px),
+    linear-gradient(105deg, rgba(255, 246, 218, 0.97), rgba(224, 194, 139, 0.84));
+  box-shadow:
+    inset 0 0 72px rgba(83, 37, 17, 0.13),
+    0 15px 46px rgba(44, 0, 0, 0.22);
+}
+
+.proposition-canvas-panel .canvas-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.proposition-canvas-panel .geometry-canvas {
+  display: block;
+  width: min(860px, 72%);
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1000 / 660;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 250, 235, 0.64)),
+    #fff7e5;
+  box-shadow:
+    0 8px 18px rgba(74, 36, 17, 0.06),
+    inset 0 0 0 1px rgba(116, 0, 0, 0.05);
+}
+
+.proposition-canvas-panel .svg-circle {
+  opacity: 0.5;
+}
+
+.proposition-canvas-panel .completion-animation-card {
+  border-color: rgba(116, 0, 0, 0.36);
+}
+
+@media (max-width: 1100px) {
+  .landing-title-block {
+    left: 6%;
+  }
+
+  .landing-book-spine {
+    min-width: 132px;
+    width: 13vw;
+  }
+
+  .book-one-map {
+    padding-left: clamp(220px, 24vw, 300px);
+  }
+
+  .book-map-sidebar {
+    min-width: 170px;
+  }
+
+  .proposition-page {
+    grid-template-columns: minmax(230px, 27vw) 1fr;
+  }
+
+  .proposition-canvas-panel .geometry-canvas {
+    width: min(780px, 82%);
+  }
+}
+
+@media (max-width: 820px) {
+  .landing-title-block {
+    top: 13%;
+    left: 8%;
+    right: 8rem;
+  }
+
+  .landing-title-block h1 {
+    font-size: clamp(4.2rem, 17vw, 7rem);
+  }
+
+  .landing-book-spine {
+    width: 54px;
+    min-width: 54px;
+  }
+
+  .landing-book-spine::before,
+  .book-spine-ribbon {
+    display: none;
+  }
+
+  .footprint-pair {
+    width: clamp(54px, 10vw, 86px);
+  }
+
+  .book-one-map {
+    padding: 5rem 2rem 4rem 5.4rem;
+  }
+
+  .book-map-sidebar {
+    width: 3.8rem;
+    min-width: 3.8rem;
+  }
+
+  .book-map-grid {
+    grid-template-columns: repeat(3, minmax(86px, 1fr));
+    column-gap: 1.4rem;
+  }
+
+  .proposition-page {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .proposition-page .left-pane,
+  .proposition-sidebar {
+    min-height: auto;
+    border-radius: 3.8rem;
+  }
+
+  .proposition-page .tool-grid,
+  .proposition-page .unlock-button-list {
+    grid-template-columns: repeat(5, minmax(3.1rem, 1fr));
+  }
+
+  .proposition-canvas-panel {
+    min-height: 62vh;
+    border-radius: 3.8rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .landing-title-block {
+    top: 10%;
+    right: 4rem;
+  }
+
+  .landing-actions {
+    margin-top: 3.2rem;
+  }
+
+  .landing-actions button {
+    min-width: 170px;
+    min-height: 58px;
+    border-width: 3px;
+  }
+
+  .book-map-grid {
+    grid-template-columns: repeat(2, minmax(92px, 1fr));
+    row-gap: 0.75rem;
+  }
+
+  .book-map-proposition {
+    font-size: 0.95rem;
+  }
+
+  .proposition-page {
+    padding: 0.85rem;
+  }
+
+  .proposition-page .left-pane,
+  .proposition-sidebar,
+  .proposition-canvas-panel {
+    border-radius: 2.6rem;
+  }
+
+  .proposition-page .tool-grid,
+  .proposition-page .unlock-button-list {
+    grid-template-columns: repeat(4, minmax(2.9rem, 1fr));
+  }
+
+  .proposition-canvas-panel .geometry-canvas {
+    width: 92%;
+  }
+}

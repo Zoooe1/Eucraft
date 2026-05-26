@@ -4,6 +4,7 @@ import type { GeometryTool, Unlock } from "../geometry/types";
 import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
 import { useUnlockStore } from "../state/useUnlockStore";
+import { ToolIcon } from "./tools/ToolIcon";
 
 const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHint: string }> = {
   "primitive-point-selector": {
@@ -152,20 +153,20 @@ function TheoremActionButton({
     return (
       <button
         className={selectedTool === tool ? "theorem-action-button active" : "theorem-action-button actionable"}
+        aria-label={unlock.name}
         type="button"
         onClick={() => setTool(tool)}
         title={unlock.description}
       >
-        <span>{unlock.source}</span>
-        {unlock.name}
+        <ToolIcon tool={tool} />
+        <span className="sr-only">{unlock.source} {unlock.name}</span>
       </button>
     );
   }
 
   return (
-    <button className="theorem-action-button" type="button" title={unlock.description}>
-      <span>{unlock.source}</span>
-      {unlock.name}
+    <button className="theorem-action-button" aria-label={unlock.name} type="button" title={unlock.description}>
+      <span className="sr-only">{unlock.source} {unlock.name}</span>
     </button>
   );
 }
@@ -241,7 +242,6 @@ export function ToolShelf() {
   return (
     <section className="tool-panel" aria-label="Construction tools">
       <div>
-        <p className="panel-label">Primitive Tools</p>
         <div className="tool-grid">
           {visibleTools.map((unlock) => {
             const config = toolConfig[unlock.id];
@@ -252,13 +252,16 @@ export function ToolShelf() {
             return (
               <button
                 className={selectedTool === config.tool ? "tool-button active" : "tool-button"}
+                aria-label={unlock.name}
                 key={unlock.id}
                 type="button"
                 onClick={() => setTool(config.tool)}
                 title={unlock.description || config.fallbackHint}
               >
-                <span aria-hidden="true">{config.mark}</span>
-                {unlock.name}
+                <span className="tool-icon-mark" aria-hidden="true">
+                  <ToolIcon tool={config.tool} />
+                </span>
+                <span className="sr-only">{unlock.name}</span>
               </button>
             );
           })}
@@ -269,7 +272,6 @@ export function ToolShelf() {
 
       {theoremActions.length > 0 && (
         <div className="theorem-action-shelf">
-          <p className="panel-label">Theorem-Actions</p>
           <div className="unlock-button-list">
             {theoremActions.map((unlock) => (
               <TheoremActionButton key={unlock.id} unlock={unlock} selectedTool={selectedTool} setTool={setTool} />

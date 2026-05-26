@@ -41,6 +41,7 @@ type GeometryStore = {
   currentReplayStep: number;
   completedActionIds: string[];
   startApp: () => void;
+  startTutorial: () => void;
   returnToTitle: () => void;
   enterProposition: () => void;
   openProposition: (id: string) => void;
@@ -659,6 +660,20 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
   currentReplayStep: 0,
   completedActionIds: [],
   startApp: () =>
+    set(() => {
+      const progress = readProgress();
+      return {
+        phase: "map",
+        selectedPointIds: [],
+        compassTransferSource: null,
+        validation: null,
+        animatedObjectId: null,
+        unlockedPropositionIds: progress.unlockedPropositionIds,
+        completedPropositionIds: progress.completedPropositionIds,
+        completedActionIds: [],
+      };
+    }),
+  startTutorial: () =>
     set({
       phase: "laws",
       selectedPointIds: [],

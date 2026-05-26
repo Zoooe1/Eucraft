@@ -8,12 +8,9 @@ export function PropositionIntro() {
 
   return (
     <section className="intro-panel">
-      <p className="app-kicker">Eucraft</p>
-      <p className="prop-label">
-        {proposition.book}, Proposition {proposition.number}
-      </p>
+      <p className="prop-label">Prop {proposition.id}</p>
       <h1>{proposition.title}</h1>
-      <p className="challenge-goal">{proposition.playerGoal}</p>
+      <p className="sidebar-prompt">Prompt: {proposition.playerGoal}</p>
       <blockquote>{proposition.originalStatement}</blockquote>
       <p>{proposition.instruction}</p>
       <button className="primary-button large-command" type="button" onClick={startConstruction}>

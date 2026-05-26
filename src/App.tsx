@@ -5,6 +5,8 @@ import { GeometryCanvas } from "./components/GeometryCanvas";
 import { LawsScreen } from "./components/LawsScreen";
 import { LogicReplay } from "./components/LogicReplay";
 import { Marginalia } from "./components/Marginalia";
+import { BookOneMap } from "./components/proposition/BookOneMap";
+import { PropositionPlayLayout } from "./components/proposition/PropositionPlayLayout";
 import { PropositionIntro } from "./components/PropositionIntro";
 import { TitleScreen } from "./components/TitleScreen";
 import { ToolShelf } from "./components/ToolShelf";
@@ -46,20 +48,27 @@ export default function App() {
     );
   }
 
+  if (phase === "map") {
+    return (
+      <main className="app-shell screen-shell book-map-shell" style={{ backgroundColor }}>
+        <BookOneMap />
+      </main>
+    );
+  }
+
   return (
-    <main className={`app-shell phase-${phase}`} style={{ backgroundColor }}>
-      <aside className="left-pane">
-        {phase === "intro" ? (
+    <PropositionPlayLayout
+      phase={phase}
+      proposition={proposition}
+      sidebar={
+        phase === "intro" ? (
           <PropositionIntro />
         ) : (
           <>
             <header className="proposition-header">
-              <p className="app-kicker">Eucraft</p>
-              <p className="prop-label">
-                {proposition.book}, Proposition {proposition.number}
-              </p>
+              <p className="prop-label">Prop {proposition.id}</p>
               <h1>{proposition.title}</h1>
-              <p className="challenge-goal">{proposition.playerGoal}</p>
+              <p className="sidebar-prompt">Prompt: {proposition.playerGoal}</p>
               <blockquote>{proposition.originalStatement}</blockquote>
             </header>
 
@@ -79,10 +88,10 @@ export default function App() {
             )}
             {phase === "completed" && <CompletionCard />}
           </>
-        )}
-      </aside>
-
+        )
+      }
+    >
       <GeometryCanvas />
-    </main>
+    </PropositionPlayLayout>
   );
 }
