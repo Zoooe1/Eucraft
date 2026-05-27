@@ -511,14 +511,16 @@ export function GeometryCanvas() {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <pattern id="paper-grain" width="80" height="80" patternUnits="userSpaceOnUse">
-            <rect width="80" height="80" fill="#f3dfb8" />
-            <path d="M0 22H80M0 54H80M18 0V80M56 0V80" stroke="#b78b4f" strokeWidth="0.5" opacity="0.16" />
-            <path d="M7 9L73 61M24 78L66 6" stroke="#fff6d8" strokeWidth="0.45" opacity="0.22" />
-          </pattern>
         </defs>
 
-        <rect x={VIEW_BOX.minX} y={VIEW_BOX.minY} width={VIEW_BOX.width} height={VIEW_BOX.height} fill="url(#paper-grain)" />
+        <rect
+          x={VIEW_BOX.minX}
+          y={VIEW_BOX.minY}
+          width={VIEW_BOX.width}
+          height={VIEW_BOX.height}
+          fill="transparent"
+          pointerEvents="none"
+        />
 
         {shouldHighlightTriangle && <TriangleHighlight context={proofContext} objects={objects} />}
 

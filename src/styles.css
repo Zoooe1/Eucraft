@@ -2134,6 +2134,7 @@ button {
   top: var(--footprint-y);
   width: clamp(94px, 8vw, 168px);
   opacity: 0;
+  pointer-events: none;
   transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(0.9);
   animation: footprintReveal 780ms ease var(--footprint-delay) forwards;
 }
@@ -2293,7 +2294,7 @@ button {
 .proposition-page {
   display: grid;
   grid-template-columns: minmax(260px, 24vw) 1fr;
-  gap: clamp(1.1rem, 2vw, 2rem);
+  gap: clamp(1.5rem, 2.2vw, 2.5rem);
   width: 100vw;
   min-height: 100vh;
   height: 100vh;
@@ -2601,8 +2602,7 @@ button {
 
 .proposition-canvas-panel {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: block;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -2616,14 +2616,16 @@ button {
   box-shadow:
     inset 0 0 72px rgba(83, 37, 17, 0.13),
     0 15px 46px rgba(44, 0, 0, 0.22);
+  isolation: isolate;
 }
 
 .proposition-canvas-panel .canvas-shell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: clamp(1.5rem, 2.6vw, 2.9rem);
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: auto;
   min-height: 0;
   border: 0;
   border-radius: 0;
@@ -2633,16 +2635,11 @@ button {
 
 .proposition-canvas-panel .geometry-canvas {
   display: block;
-  width: min(860px, 72%);
-  height: auto;
+  width: 100%;
+  height: 100%;
   min-height: 0;
-  aspect-ratio: 1000 / 660;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 250, 235, 0.64)),
-    #fff7e5;
-  box-shadow:
-    0 8px 18px rgba(74, 36, 17, 0.06),
-    inset 0 0 0 1px rgba(116, 0, 0, 0.05);
+  background: transparent;
+  box-shadow: none;
 }
 
 .proposition-canvas-panel .svg-circle {
@@ -2675,8 +2672,8 @@ button {
     grid-template-columns: minmax(230px, 27vw) 1fr;
   }
 
-  .proposition-canvas-panel .geometry-canvas {
-    width: min(780px, 82%);
+  .proposition-canvas-panel .canvas-shell {
+    inset: clamp(1.25rem, 2.2vw, 2.4rem);
   }
 }
 
@@ -2741,6 +2738,10 @@ button {
     min-height: 62vh;
     border-radius: 3.8rem;
   }
+
+  .proposition-canvas-panel .canvas-shell {
+    inset: 1.35rem;
+  }
 }
 
 @media (max-width: 560px) {
@@ -2783,7 +2784,7 @@ button {
     grid-template-columns: repeat(4, minmax(2.9rem, 1fr));
   }
 
-  .proposition-canvas-panel .geometry-canvas {
-    width: 92%;
+  .proposition-canvas-panel .canvas-shell {
+    inset: 0.9rem;
   }
 }
