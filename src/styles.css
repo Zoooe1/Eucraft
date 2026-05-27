@@ -2135,7 +2135,6 @@ button {
   width: clamp(94px, 8vw, 168px);
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(0.9);
   animation: footprintReveal 780ms ease var(--footprint-delay) forwards;
 }
 
@@ -2144,6 +2143,8 @@ button {
   width: 100%;
   aspect-ratio: 142 / 108;
   color: var(--footprint-color);
+  transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
+  transform-origin: center;
 }
 
 .footprint-mark {
@@ -2178,12 +2179,10 @@ button {
 @keyframes footprintReveal {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(0.9);
     filter: blur(2px);
   }
   to {
     opacity: var(--target-opacity);
-    transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
     filter: blur(0);
   }
 }
@@ -2192,7 +2191,6 @@ button {
   .footprint-pair {
     animation: none;
     opacity: var(--target-opacity);
-    transform: translate(-50%, -50%) rotate(var(--footprint-rotate)) scale(var(--footprint-scale));
   }
 }
 
