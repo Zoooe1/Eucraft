@@ -19,8 +19,6 @@ export function unlockDependenciesMet(unlockId: string, unlockedIds: string[]) {
   return unlock.dependsOn.every((dependency) => unlockedIds.includes(dependency));
 }
 
-export function getUnlockedPropositionIds(completedPropositionIds: string[]) {
-  return euclidPropositions
-    .filter((proposition) => proposition.id === "I.1" || dependenciesMet(proposition.id, completedPropositionIds))
-    .map((proposition) => proposition.id);
+export function getUnlockedPropositionIds(_completedPropositionIds: string[] = []) {
+  return euclidPropositions.map((proposition) => proposition.id);
 }

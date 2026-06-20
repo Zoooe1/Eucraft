@@ -45,7 +45,6 @@ export function CompletionAnimation({
   propositionTitle,
   nextPropositionId,
   onAdvance,
-  onReplayLogic,
 }: CompletionAnimationProps) {
   const lastUnlockedIds = useUnlockStore((state) => state.lastUnlockedIds);
   const unlocks = visibleLastUnlocks(lastUnlockedIds);
@@ -55,20 +54,19 @@ export function CompletionAnimation({
     : nextPropositionId
       ? `Advance to Proposition ${nextPropositionId}`
       : "Return to Proposition Map";
-  const replayLabel = bookComplete ? "Replay Pythagorean Theorem" : "Replay Logic";
 
   return (
     <section className="completion-overlay" aria-label="Proposition completion">
       <div className="completion-animation-card">
         <div className="completion-border" aria-hidden="true" />
 
-        <svg className="completion-seal" viewBox="0 0 180 120" aria-hidden="true">
-          <circle cx="64" cy="76" r="42" />
-          <circle cx="116" cy="76" r="42" />
-          <path d="M64 76L116 76L90 31Z" />
-          <line x1="64" y1="76" x2="116" y2="76" />
-          <line x1="64" y1="76" x2="90" y2="31" />
-          <line x1="116" y1="76" x2="90" y2="31" />
+        <svg className="completion-seal" viewBox="0 0 240 150" aria-hidden="true">
+          <circle cx="92" cy="88" r="50" pathLength="1" />
+          <circle cx="148" cy="88" r="50" pathLength="1" />
+          <path d="M92 88L148 88L120 39.5Z" pathLength="1" />
+          <line x1="92" y1="88" x2="148" y2="88" pathLength="1" />
+          <line x1="92" y1="88" x2="120" y2="39.5" pathLength="1" />
+          <line x1="148" y1="88" x2="120" y2="39.5" pathLength="1" />
         </svg>
 
         <p className="completion-title">{bookComplete ? "Book I Complete" : "Proposition Complete"}</p>
@@ -92,11 +90,6 @@ export function CompletionAnimation({
         )}
 
         <div className="completion-actions">
-          {onReplayLogic && (
-            <button className="quiet-button" type="button" onClick={onReplayLogic}>
-              {replayLabel}
-            </button>
-          )}
           {bookComplete && (
             <button className="quiet-button" type="button" disabled title="Book II is not implemented yet.">
               Continue to Book II Preview

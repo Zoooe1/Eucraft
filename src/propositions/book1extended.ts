@@ -28,12 +28,26 @@ function segment(id: string, p1: string, p2: string, color = "black"): Segment {
   };
 }
 
+function infiniteLine(id: string, p1: string, p2: string, color = "black"): Segment {
+  return {
+    id,
+    type: "segment",
+    p1,
+    p2,
+    label: id,
+    color,
+    source: "given",
+    createdBy: "given",
+    dependencies: [p1, p2],
+  };
+}
+
 function lineWithPointGiven(): GeometryObject[] {
   return [
     point("A", 180, 360, "red"),
     point("C", 420, 360, "gold"),
     point("B", 660, 360, "blue"),
-    segment("AB", "A", "B"),
+    infiniteLine("AB", "A", "B"),
   ];
 }
 
@@ -42,7 +56,7 @@ function externalPointGiven(): GeometryObject[] {
     point("A", 180, 420, "red"),
     point("B", 700, 420, "blue"),
     point("C", 440, 170, "gold"),
-    segment("AB", "A", "B"),
+    infiniteLine("AB", "A", "B"),
   ];
 }
 
@@ -74,14 +88,54 @@ function doubleTriangleGiven(): GeometryObject[] {
   ];
 }
 
+function angleInequalityTrianglesGiven(): GeometryObject[] {
+  return [
+    point("A", 250, 220, "red"),
+    point("B", 150, 430, "blue"),
+    point("C", 390, 430, "gold"),
+    point("D", 580, 220, "red"),
+    point("E", 480, 430, "blue"),
+    point("F", 622, 469, "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "blue"),
+    segment("BC", "B", "C", "black"),
+    segment("DE", "D", "E", "red"),
+    segment("DF", "D", "F", "blue"),
+    segment("EF", "E", "F", "black"),
+  ];
+}
+
 function crossingLinesGiven(): GeometryObject[] {
   return [
     point("A", 190, 430, "red"),
     point("B", 710, 180, "blue"),
     point("C", 190, 180, "gold"),
     point("D", 710, 430, "gold"),
+    point("E", 450, 305, "red"),
     segment("AB", "A", "B", "black"),
     segment("CD", "C", "D", "black"),
+  ];
+}
+
+function exteriorTriangleGiven(): GeometryObject[] {
+  return [
+    point("A", 430, 150, "red"),
+    point("B", 240, 430, "blue"),
+    point("C", 640, 430, "gold"),
+    point("D", 800, 430, "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "blue"),
+    segment("BC", "B", "C", "black"),
+    segment("CD", "C", "D", "black"),
+  ];
+}
+
+function interiorBrokenLineGiven(): GeometryObject[] {
+  return [
+    ...triangleGiven(),
+    point("D", 440, 330, "gold"),
+    segment("BD", "B", "D", "gold"),
+    segment("DC", "D", "C", "gold"),
   ];
 }
 
@@ -93,6 +147,22 @@ function standingLineGiven(): GeometryObject[] {
     point("D", 500, 170, "gold"),
     segment("AB", "A", "B", "black"),
     segment("CD", "C", "D", "gold"),
+  ];
+}
+
+function lineCDGiven(): GeometryObject[] {
+  return [
+    point("D", 230, 390, "red"),
+    point("C", 690, 390, "blue"),
+    infiniteLine("CD", "C", "D", "black"),
+  ];
+}
+
+function lineABGiven(): GeometryObject[] {
+  return [
+    point("A", 360, 190, "red"),
+    point("B", 500, 390, "blue"),
+    infiniteLine("AB", "A", "B", "black"),
   ];
 }
 
@@ -110,12 +180,51 @@ function parallelGiven(): GeometryObject[] {
   ];
 }
 
+function parallelTransversalGiven(): GeometryObject[] {
+  return [
+    point("A", 165, 240, "red"),
+    point("G", 410, 240, "gold"),
+    point("B", 710, 240, "blue"),
+    point("C", 205, 440, "red"),
+    point("H", 530, 440, "gold"),
+    point("D", 780, 440, "blue"),
+    point("E", 320, 90, "gold"),
+    point("F", 610, 573, "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("CD", "C", "D", "blue"),
+    segment("EF", "E", "F", "black"),
+  ];
+}
+
+function threeParallelLinesGiven(): GeometryObject[] {
+  return [
+    point("A", 170, 220, "red"),
+    point("B", 730, 220, "blue"),
+    point("E", 150, 340, "gold"),
+    point("F", 710, 340, "gold"),
+    point("C", 210, 470, "red"),
+    point("D", 770, 470, "blue"),
+    segment("AB", "A", "B", "red"),
+    segment("EF", "E", "F", "gold"),
+    segment("CD", "C", "D", "blue"),
+  ];
+}
+
 function lineAndExternalPointGiven(): GeometryObject[] {
   return [
     point("A", 200, 390, "red"),
     point("B", 700, 390, "blue"),
     point("C", 450, 190, "gold"),
     segment("AB", "A", "B", "black"),
+  ];
+}
+
+function pointAndLineBCGiven(): GeometryObject[] {
+  return [
+    point("A", 450, 180, "red"),
+    point("B", 200, 410, "blue"),
+    point("C", 720, 410, "gold"),
+    segment("BC", "B", "C", "black"),
   ];
 }
 
@@ -157,6 +266,19 @@ function twoParallelSegmentsGiven(): GeometryObject[] {
   ];
 }
 
+function equalParallelJoinersGiven(): GeometryObject[] {
+  return [
+    point("A", 220, 300, "red"),
+    point("B", 520, 300, "blue"),
+    point("C", 340, 440, "red"),
+    point("D", 640, 440, "blue"),
+    segment("AB", "A", "B", "red"),
+    segment("CD", "C", "D", "red"),
+    segment("AC", "A", "C", "gold"),
+    segment("BD", "B", "D", "gold"),
+  ];
+}
+
 function parallelogramGiven(): GeometryObject[] {
   return [
     point("A", 220, 420, "red"),
@@ -167,6 +289,46 @@ function parallelogramGiven(): GeometryObject[] {
     segment("BC", "B", "C", "blue"),
     segment("CD", "C", "D", "black"),
     segment("DA", "D", "A", "red"),
+  ];
+}
+
+function parallelogramACDBGiven(): GeometryObject[] {
+  return [
+    point("A", 220, 420, "red"),
+    point("C", 360, 230, "gold"),
+    point("D", 700, 230, "red"),
+    point("B", 560, 420, "blue"),
+    segment("AC", "A", "C", "red"),
+    segment("CD", "C", "D", "black"),
+    segment("DB", "D", "B", "blue"),
+    segment("BA", "B", "A", "black"),
+  ];
+}
+
+function parallelogramComplementsGiven(): GeometryObject[] {
+  return [
+    point("A", 180, 470, "red"),
+    point("B", 700, 470, "blue"),
+    point("C", 820, 170, "gold"),
+    point("D", 300, 170, "red"),
+    point("E", 450, 470, "blue"),
+    point("F", 762, 314, "blue"),
+    point("G", 570, 170, "gold"),
+    point("H", 242, 314, "gold"),
+    point("K", 513, 314, "red"),
+    segment("AB", "A", "B", "black"),
+    segment("BC", "B", "C", "blue"),
+    segment("CD", "C", "D", "black"),
+    segment("DA", "D", "A", "red"),
+    segment("AC", "A", "C", "gold"),
+    segment("AE", "A", "E", "red"),
+    segment("EK", "E", "K", "blue"),
+    segment("KH", "K", "H", "black"),
+    segment("HA", "H", "A", "gold"),
+    segment("KF", "K", "F", "blue"),
+    segment("FC", "F", "C", "red"),
+    segment("CG", "C", "G", "gold"),
+    segment("GK", "G", "K", "black"),
   ];
 }
 
@@ -185,6 +347,114 @@ function baseAndParallelGiven(equalBases = false): GeometryObject[] {
     point("F", 720, 230, "gold"),
     segment("AB", "A", "B", "black"),
     segment("EF", "E", "F", "gold"),
+  ];
+}
+
+function sameBaseParallelogramsGiven(): GeometryObject[] {
+  return [
+    point("A", 70, 220, "red"),
+    point("D", 390, 220, "red"),
+    point("E", 530, 220, "gold"),
+    point("F", 850, 220, "gold"),
+    point("B", 300, 460, "blue"),
+    point("C", 620, 460, "blue"),
+    segment("AF", "A", "F", "black"),
+    segment("AD", "A", "D", "red"),
+    segment("EF", "E", "F", "red"),
+    segment("AB", "A", "B", "blue"),
+    segment("DC", "D", "C", "blue"),
+    segment("EB", "E", "B", "gold"),
+    segment("FC", "F", "C", "gold"),
+    segment("BC", "B", "C", "black"),
+  ];
+}
+
+function equalBaseParallelogramsGiven(): GeometryObject[] {
+  return [
+    point("A", 120, 220, "red"),
+    point("D", 280, 220, "red"),
+    point("E", 480, 220, "gold"),
+    point("H", 640, 220, "gold"),
+    point("B", 180, 460, "blue"),
+    point("C", 340, 460, "blue"),
+    point("F", 540, 460, "blue"),
+    point("G", 700, 460, "blue"),
+    segment("AH", "A", "H", "black"),
+    segment("BG", "B", "G", "black"),
+    segment("AD", "A", "D", "red"),
+    segment("BC", "B", "C", "red"),
+    segment("AB", "A", "B", "gold"),
+    segment("DC", "D", "C", "gold"),
+    segment("EH", "E", "H", "red"),
+    segment("FG", "F", "G", "red"),
+    segment("EF", "E", "F", "gold"),
+    segment("HG", "H", "G", "gold"),
+  ];
+}
+
+function sameBaseTrianglesBetweenParallelsGiven(): GeometryObject[] {
+  return [
+    point("A", 530, 340, "red"),
+    point("D", 350, 340, "gold"),
+    point("B", 260, 460, "blue"),
+    point("C", 620, 460, "blue"),
+    segment("AD", "A", "D", "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "red"),
+    segment("DB", "D", "B", "gold"),
+    segment("DC", "D", "C", "gold"),
+    segment("BC", "B", "C", "black"),
+  ];
+}
+
+function equalBaseTrianglesBetweenParallelsGiven(): GeometryObject[] {
+  return [
+    point("A", 250, 340, "red"),
+    point("D", 610, 340, "gold"),
+    point("B", 180, 460, "blue"),
+    point("C", 340, 460, "blue"),
+    point("E", 520, 460, "blue"),
+    point("F", 680, 460, "blue"),
+    segment("AD", "A", "D", "gold"),
+    segment("BF", "B", "F", "black"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "red"),
+    segment("ED", "E", "D", "gold"),
+    segment("DF", "D", "F", "gold"),
+    segment("BC", "B", "C", "red"),
+    segment("EF", "E", "F", "red"),
+  ];
+}
+
+function parallelogramAndTriangleGiven(): GeometryObject[] {
+  return [
+    point("A", 160, 220, "red"),
+    point("D", 520, 220, "red"),
+    point("E", 360, 220, "gold"),
+    point("B", 260, 460, "blue"),
+    point("C", 620, 460, "blue"),
+    segment("AD", "A", "D", "black"),
+    segment("AB", "A", "B", "red"),
+    segment("DC", "D", "C", "red"),
+    segment("BC", "B", "C", "black"),
+    segment("EB", "E", "B", "gold"),
+    segment("EC", "E", "C", "gold"),
+  ];
+}
+
+function triangleAndAngleGiven(): GeometryObject[] {
+  return [
+    point("A", 420, 220, "red"),
+    point("B", 260, 460, "blue"),
+    point("C", 620, 460, "blue"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "blue"),
+    segment("BC", "B", "C", "black"),
+    point("D", 760, 320, "red"),
+    point("H", 820, 320, "gold"),
+    point("K", 760, 260, "gold"),
+    segment("DH", "D", "H", "gold"),
+    segment("DK", "D", "K", "gold"),
   ];
 }
 
@@ -247,16 +517,28 @@ function initialObjectsFor(number: number, type: Proposition["type"]): GeometryO
     return externalPointGiven();
   }
 
-  if (number === 13 || number === 14) {
-    return standingLineGiven();
+  if (number === 13) {
+    return lineCDGiven();
+  }
+
+  if (number === 14) {
+    return lineABGiven();
   }
 
   if (number === 15) {
     return crossingLinesGiven();
   }
 
-  if ([16, 17, 18, 19, 20, 21, 32].includes(number)) {
+  if (number === 16) {
+    return exteriorTriangleGiven();
+  }
+
+  if ([17, 18, 19, 20, 32].includes(number)) {
     return triangleGiven();
+  }
+
+  if (number === 21) {
+    return interiorBrokenLineGiven();
   }
 
   if (number === 22) {
@@ -267,31 +549,67 @@ function initialObjectsFor(number: number, type: Proposition["type"]): GeometryO
     return sourceAngleTargetRayGiven();
   }
 
-  if ([24, 25, 26].includes(number)) {
+  if (number === 24) {
+    return angleInequalityTrianglesGiven();
+  }
+
+  if ([25, 26].includes(number)) {
     return doubleTriangleGiven();
   }
 
-  if ([27, 28, 29, 30].includes(number)) {
+  if (number === 28) {
+    return parallelTransversalGiven();
+  }
+
+  if (number === 30) {
+    return threeParallelLinesGiven();
+  }
+
+  if ([27, 29].includes(number)) {
     return parallelGiven();
   }
 
   if (number === 31) {
-    return lineAndExternalPointGiven();
+    return pointAndLineBCGiven();
   }
 
   if (number === 33) {
-    return twoParallelSegmentsGiven();
+    return equalParallelJoinersGiven();
   }
 
-  if ([34, 43].includes(number)) {
-    return parallelogramGiven();
+  if (number === 34) {
+    return parallelogramACDBGiven();
   }
 
-  if ([35, 37, 41].includes(number)) {
-    return baseAndParallelGiven();
+  if (number === 35) {
+    return sameBaseParallelogramsGiven();
   }
 
-  if ([36, 38, 40].includes(number)) {
+  if (number === 36) {
+    return equalBaseParallelogramsGiven();
+  }
+
+  if (number === 37) {
+    return sameBaseTrianglesBetweenParallelsGiven();
+  }
+
+  if (number === 38) {
+    return equalBaseTrianglesBetweenParallelsGiven();
+  }
+
+  if (number === 41) {
+    return parallelogramAndTriangleGiven();
+  }
+
+  if (number === 42) {
+    return triangleAndAngleGiven();
+  }
+
+  if (number === 43) {
+    return parallelogramComplementsGiven();
+  }
+
+  if ([40].includes(number)) {
     return baseAndParallelGiven(true);
   }
 
@@ -301,10 +619,6 @@ function initialObjectsFor(number: number, type: Proposition["type"]): GeometryO
 
   if (number === 40) {
     return equalBasesOneTriangleGiven();
-  }
-
-  if (number === 42) {
-    return [...triangleGiven(), point("D", 700, 270, "red"), point("E", 780, 420, "blue"), segment("DE", "D", "E", "gold")];
   }
 
   if (number === 44) {
@@ -347,6 +661,70 @@ function initialObjectsFor(number: number, type: Proposition["type"]): GeometryO
   return triangleGiven();
 }
 
+function pointLabelSequenceFor(number: number) {
+  if (number === 11) {
+    return ["D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 12) {
+    return ["D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 16) {
+    return ["E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if ([17, 18, 20].includes(number)) {
+    return ["D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 21) {
+    return ["E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 24) {
+    return ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 30) {
+    return ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 31) {
+    return ["D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 32) {
+    return ["D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 35) {
+    return ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 37) {
+    return ["E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 38) {
+    return ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 42) {
+    return ["E", "F", "G", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 13) {
+    return ["A", "B", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 14) {
+    return ["C", "D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  return ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+}
+
 export const book1ExtendedPropositions: Proposition[] = book1ExtendedSpecs.map((spec) => {
   const playable = getBook1PlayableProfile(spec.number, spec.type);
 
@@ -377,7 +755,7 @@ export const book1ExtendedPropositions: Proposition[] = book1ExtendedSpecs.map((
     },
     lawSections: book1Prop1.lawSections,
     replaySteps: spec.replaySteps,
-    pointLabelSequence: ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"],
+    pointLabelSequence: pointLabelSequenceFor(spec.number),
     nextPropositionId: spec.number < 48 ? `I.${spec.number + 1}` : undefined,
   };
 });

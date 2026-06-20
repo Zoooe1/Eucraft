@@ -34,7 +34,7 @@ export type Book1PlayableProfile = {
   validationGoalPatch: Partial<ValidationGoal>;
 };
 
-const primitives: GeometryTool[] = ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"];
+const primitives: GeometryTool[] = ["point", "straightedge", "compass", "compass-transfer", "intersection"];
 const theoremOnly: GeometryTool[] = ["point", "straightedge"];
 
 function step(id: string, text: string, highlight: string[] = ["segmentAB", "pointA", "pointB"]): ReplayStep {
@@ -95,65 +95,89 @@ export function getBook1PlayableProfile(number: number, type: EuclidProposition[
 
   switch (number) {
     case 11:
-      return constructionProfile("Construct a perpendicular through C on the given line AB.", ["CD", "D", "E", "F", "circleC", "perpendicular"], [
-        requiredAction("equal-offsets", "set-compass-width", "Create equal cut-offs or an equivalent auxiliary setup around C."),
-        requiredAction("candidate-perpendicular", "construct-perpendicular", "Draw a candidate perpendicular through C."),
-      ]);
+      return constructionProfile("Construct a perpendicular through C on the given line AB.", ["CD", "D", "E", "F", "circleC", "perpendicular"], [], 4);
     case 12:
-      return constructionProfile("Drop a perpendicular from C to the given line AB.", ["D", "E", "F", "CF", "circleC", "foot"], [
-        requiredAction("cut-line", "draw-circle", "Draw a circle from C that cuts the line in two places."),
-        requiredAction("drop-line", "construct-perpendicular", "Bisect the chord or otherwise draw the dropped perpendicular."),
-      ]);
+      return constructionProfile("Drop a perpendicular from C to the given line AB.", ["D", "E", "F", "CF", "circleC", "foot"], [], 4);
+    case 13:
+      return constructionProfile("Draw AB standing on CD, then raise EB perpendicular to CD on the same side as AB.", [], [
+        requiredAction("prop13-perpendicular-eb", "construct-perpendicular", "Use the perpendicular tool to construct EB from B on CD."),
+      ], 4);
+    case 14:
+      return constructionProfile("Construct CB and BD from B so the adjacent angles with AB make two right angles, then join CD.", [], [
+        requiredAction("prop14-connect-cd", "draw-segment", "Join C to D after constructing CB and BD."),
+      ], 5);
+    case 15:
+      return profile("select", "Select the target vertical angle pair CEA and BED.", [], [
+        requiredAction("prop15-select-vertical-pair", "select-angle", "Select angle CEA and angle BED as vertical opposite angles."),
+      ], "angle-equivalence");
+    case 16:
+      return constructionProfile(
+        "Bisect AC, join BE, extend BE past E, copy BE onto the extension, join FC, then use SAS.",
+        ["E", "F", "BE", "FC", "auxiliary-cut"],
+        [],
+        4,
+      );
+    case 17:
+      return constructionProfile("Extend BC past C and place D so exterior angle ACD is formed.", ["D", "CD", "extension"], [], 0);
+    case 18:
+      return constructionProfile("Copy AB from A onto the greater side AC, then join B to the new point D.", ["D", "BD"], [], 0);
+    case 20:
+      return constructionProfile("Extend BA beyond A, copy AC onto that extension as AD, then join D to C.", ["D", "DC"], [], 0);
+    case 21:
+      return constructionProfile("Extend BD through the interior point until it meets AC at E.", ["E", "extension"], [], 0);
     case 22:
-      return constructionProfile("Build a triangle from the three given straight-lines.", ["triangle", "apex", "construction-circles"], [
-        requiredAction("set-two-widths", "set-compass-width", "Use two given segments as compass widths."),
-        requiredAction("select-apex", "select-intersection", "Select the circle intersection that becomes the apex."),
-        requiredAction("join-apex", "draw-segment", "Join the apex to the base endpoints."),
-      ], 3);
+      return constructionProfile("Build a triangle from the three given straight-lines.", ["triangle", "apex", "construction-circles"], [], 7);
     case 23:
-      return constructionProfile("Copy the given angle onto the target ray.", ["copied-ray", "target-triangle"], [
-        requiredAction("represent-angle", "draw-segment", "Build or trace the source angle's representative triangle."),
-        requiredAction("copy-angle-ray", "draw-segment", "Draw the new ray forming the copied angle."),
-      ]);
+      return constructionProfile("Copy the given angle onto the target ray.", ["copied-ray", "target-triangle"], [], 3);
+    case 24:
+      return constructionProfile(
+        "Copy the larger included angle at D, copy DF onto that ray, join EG and FG, then use SAS.",
+        ["G", "EG", "FG", "copied-angle-ray"],
+        [],
+        0,
+      );
+    case 28:
+      return profile("select", "Select AB and CD with EF as the transversal and identify the given angle condition.", [], [
+        requiredAction("prop28-select-angle-condition", "construct-parallel", "Select AB and CD, EF, and one valid Prop. 28 angle condition."),
+      ], "parallelism", 0);
+    case 30:
+      return constructionProfile("Draw one transversal cutting AB, EF, and CD.", ["G", "H", "K", "transversal"], [], 0);
     case 31:
-      return constructionProfile("Draw a line through C parallel to AB.", ["parallel-through-C", "copied-angle"], [
-        requiredAction("draw-transversal", "draw-segment", "Draw a transversal from C to the given line."),
-        requiredAction("construct-parallel-line", "construct-parallel", "Draw the candidate parallel through C."),
-      ]);
+      return constructionProfile("Choose D on BC, join AD, copy angle ADC at A, then extend the copied ray into the parallel.", ["D", "AD", "copied-angle", "parallel-through-A"], [], 0);
+    case 32:
+      return constructionProfile("Extend BC past C, then draw through C a line parallel to AB.", ["D", "CE", "auxiliary-parallel"], [], 0);
+    case 33:
+      return constructionProfile("Join B to C, then use SAS on triangles ABC and DCB.", ["BC", "connector-marks"], [], 0);
+    case 34:
+      return profile("trace", "Draw diagonal BC, then identify the ASA/AAS match between triangles ABC and DCB.", ["BC", "asa-aas-match"], [
+        requiredAction("prop34-use-asa-aas", "match-congruent-parts", "Use ASA/AAS on triangles ABC and DCB with the diagonal as the corresponding side."),
+      ], "angle-equivalence", 0);
+    case 35:
+      return constructionProfile("Mark G where EB meets DC, then use SAS on triangles EAB and FDC.", ["G", "area-equality"], [], 0);
+    case 36:
+      return constructionProfile("Join BE and CH, then use Prop. 33 to recognize EBCH as a parallelogram.", ["BE", "CH", "middle-parallelogram"], [], 0);
+    case 37:
+      return constructionProfile("Extend the upper parallel and draw BE parallel to CA and CF parallel to BD.", ["E", "F", "BE", "CF"], [], 0);
+    case 38:
+      return constructionProfile("Draw BG parallel to CA and FH parallel to DE to complete the two parallelograms.", ["G", "H", "BG", "FH"], [], 0);
+    case 41:
+      return constructionProfile("Draw diagonal AC in the parallelogram.", ["AC"], [], 0);
     case 42:
-      return profile("transform", "Transform the given triangle into an equal-area parallelogram in the given angle.", ["target-parallelogram", "midpoint", "parallels"], [
-        requiredAction("bisect-base", "draw-segment", "Create the midpoint or half-base setup."),
-        requiredAction("complete-parallelogram", "construct-parallelogram", "Complete the parallelogram with the given angle."),
-      ], "area-equivalence", 3);
+      return constructionProfile("Bisect BC, join AE, copy the given angle at E, then draw the two parallels to form FECG.", ["E", "F", "G", "target-parallelogram"], [], 0);
     case 44:
       return profile("transform", "Apply an equal-area parallelogram to the given line.", ["final-parallelogram", "complements", "parallels"], [
-        requiredAction("helper-parallelogram", "construct-parallelogram", "Build the helper parallelogram equal to the triangle."),
-        requiredAction("apply-to-line", "construct-parallelogram", "Complete the applied parallelogram on AB."),
-      ], "area-equivalence", 3);
+      ], "area-equivalence", 6);
     case 45:
       return profile("transform", "Turn the rectilinear figure into an equal-area parallelogram.", ["decomposition-lines", "final-parallelogram"], [
-        requiredAction("decompose-figure", "decompose-area", "Decompose the figure into triangle pieces."),
-        requiredAction("recompose-parallelogram", "recompose-area", "Recompose the pieces as one parallelogram."),
-      ], "area-equivalence", 2);
+      ], "area-equivalence", 4);
     case 46:
       return constructionProfile("Construct a square on AB.", ["square", "perpendicular", "parallel-sides", "fourth-vertex"], [
-        requiredAction("raise-right-angle", "construct-perpendicular", "Raise a perpendicular from one endpoint of AB."),
-        requiredAction("carry-side", "set-compass-width", "Carry the length AB onto the adjacent side."),
-        requiredAction("complete-square", "construct-square", "Draw the remaining sides of the square."),
       ], 3);
     case 47:
       return profile("transform", "Build the three squares on the right triangle and trace the area equivalence.", ["squares", "auxiliary-lines", "area-labels", "pythagorean-label"], [
-        requiredAction("square-leg-one", "construct-square", "Construct the square on AB."),
-        requiredAction("square-leg-two", "construct-square", "Construct the square on AC."),
-        requiredAction("square-hypotenuse", "construct-square", "Construct the square on BC."),
-        requiredAction("trace-area-lines", "trace-auxiliary-line", "Trace Euclid's auxiliary area lines."),
-        requiredAction("match-area-parts", "decompose-area", "Select the two area correspondences inside the hypotenuse square."),
       ], "area-equivalence", 8);
     case 48:
       return profile("derive", "Construct a comparison right triangle and identify the original right angle.", ["comparison-triangle", "right-angle-conclusion", "sss-highlights"], [
-        requiredAction("construct-right-comparison", "construct-perpendicular", "Construct the comparison right triangle at A."),
-        requiredAction("match-sss", "match-congruent-parts", "Match the two triangles by SSS."),
-        requiredAction("mark-right-angle", "select-angle", "Identify angle BAC as a right angle."),
       ], "shape-recognition", 3);
     default:
       break;
@@ -199,9 +223,8 @@ export function getBook1PlayableProfile(number: number, type: EuclidProposition[
 
   if (number === 43) {
     return profile("trace", "Draw the internal pieces and select the equal complements.", ["complement-highlights", "equal-area-conclusion"], [
-      requiredAction("trace-diagonal", "trace-auxiliary-line", "Trace the diagonal or internal parallelogram pieces."),
-      requiredAction("select-complements", "select-area", "Select the two complement regions."),
-    ], "area-equivalence", 1);
+      requiredAction("prop43-select-complements", "select-area", "Select complements BK and KD as the target equal regions."),
+    ], "area-equivalence", 0);
   }
 
   return profile(type === "construction" ? "construct" : "derive", "Complete the required Euclidean interaction before Logic Replay.", ["final-conclusion"], [
@@ -217,8 +240,8 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     playerGoal: "At a point sitting on a line, construct a perpendicular.",
     type: "construction",
     dependencies: deps(10, ["I.3", "I.8"]),
-    unlocks: ["unlock-I.11-perpendicular-on-line"],
-    allowedTools: [...primitives, "theorem-bisect-segment"],
+    unlocks: [],
+    allowedTools: [...primitives, "theorem-equilateral", "theorem-bisect-segment", "theorem-sss"],
     instruction: "Use equal cut-offs around the point, build the triangle, and join the apex back to the point.",
     constructionGuide: [
       guide("cut-equals", "Cut equal lengths on both sides of the given point.", "compass-transfer"),
@@ -227,11 +250,59 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     ],
     validationGoal: validationGoal("validatePerpendicularFromPointOnLine", "Confirm a constructed line passes through the point and is perpendicular to the given line."),
     replaySteps: [
-      step("given", "Let AB be the given straight-line, and C the given point on it."),
-      step("cut", "Cut off equal segments CD and CE on the line. [Prop. I.3]", ["segmentAB", "pointC"]),
-      step("triangle", "Construct equilateral triangle DFE on DE, and join FC. [Prop. I.1, Post. 1]", ["segmentDE", "pointF"]),
-      step("sss", "FD = FE, DC = CE, and FC is common; I.8 gives angle DCF = FCE.", ["segmentFC", "pointC"]),
-      step("right", "Equal adjacent angles on a straight-line are right angles. So FC is perpendicular to AB."),
+      {
+        id: "given",
+        text: "Let AB be the given straight-line, and C the given point on it. It is required to draw a straight-line from C at right-angles to AB.",
+        highlight: ["segmentAB", "pointC"],
+      },
+      {
+        id: "cut",
+        text: "Take D on AC, make CE equal to CD, construct equilateral triangle FDE on DE, and join FC. [Prop. I.3, Prop. I.1, Post. 1]",
+        highlight: ["segmentCD", "segmentCE", "segmentDE", "segmentDF", "segmentEF", "segmentFC", "pointF"],
+        highlightStyles: [
+          { target: "segmentCD", color: "red" },
+          { target: "segmentCE", color: "red" },
+          { target: "segmentDF", color: "blue" },
+          { target: "segmentEF", color: "blue" },
+          { target: "segmentFC", color: "gold" },
+        ],
+      },
+      {
+        id: "sss",
+        text: "Since DC = CE, CF is common, and DF = FE, angle DCF is equal to angle FCE. [Prop. I.8]",
+        highlight: ["segmentCD", "segmentCE", "segmentDF", "segmentEF", "segmentFC"],
+        highlightStyles: [
+          { target: "segmentCD", color: "red" },
+          { target: "segmentCE", color: "red" },
+          { target: "segmentDF", color: "blue" },
+          { target: "segmentEF", color: "blue" },
+          { target: "segmentFC", color: "gold" },
+        ],
+        angleHighlights: [
+          { points: ["D", "C", "F"], color: "green", amplifyVertex: true },
+          { points: ["F", "C", "E"], color: "green", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "right",
+        text: "The equal angles DCF and FCE are adjacent on the straight-line AB, so each is a right-angle. [Def. I.10]",
+        highlight: ["segmentAB", "segmentFC", "pointC"],
+        highlightStyles: [{ target: "segmentFC", color: "gold" }],
+        angleHighlights: [
+          { points: ["D", "C", "F"], color: "gold", rightAngle: true, amplifyVertex: true },
+          { points: ["F", "C", "E"], color: "gold", rightAngle: true, amplifyVertex: true },
+        ],
+      },
+      {
+        id: "conclude",
+        text: "Thus FC has been drawn at right-angles to the given straight-line AB from the given point C.",
+        highlight: ["segmentAB", "segmentFC", "pointC"],
+        highlightStyles: [{ target: "segmentFC", color: "gold" }],
+        angleHighlights: [
+          { points: ["D", "C", "F"], color: "gold", rightAngle: true },
+          { points: ["F", "C", "E"], color: "gold", rightAngle: true },
+        ],
+      },
     ],
   },
   {
@@ -242,7 +313,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(11, ["I.10"]),
     unlocks: ["unlock-I.12-drop-perpendicular"],
-    allowedTools: [...primitives, "theorem-bisect-segment", "theorem-perpendicular-on-line"],
+    allowedTools: [...primitives, "theorem-bisect-segment", "theorem-sss"],
     instruction: "Let a circle from the external point cut the line twice, bisect that chord, then join to the external point.",
     constructionGuide: [
       guide("circle", "Draw a circle from the external point cutting the line twice.", "compass"),
@@ -251,11 +322,115 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     ],
     validationGoal: validationGoal("validateDroppedPerpendicular", "Confirm the segment from the external point meets the line at a right angle."),
     replaySteps: [
-      step("given", "Let C be the point outside the straight-line AB.", ["segmentAB", "pointC"]),
-      step("circle", "Draw a circle from C cutting AB at D and E. [Post. 3]", ["circleC", "segmentAB"]),
-      step("bisect", "Bisect DE at F. [Prop. I.10]", ["segmentDE", "pointF"]),
-      step("join", "Join CF. The two triangles around CF match by SSS. [Prop. I.8]", ["segmentCF", "pointC", "pointF"]),
-      step("perpendicular", "Thus the adjacent angles at F are equal right angles; CF is perpendicular to AB."),
+      {
+        id: "given",
+        text: "Let AB be the given infinite straight-line, and C the given point not on it.",
+        highlight: ["segmentAB", "pointC"],
+      },
+      {
+        id: "circle",
+        text: "Take D on the other side of AB, draw the circle centered at C through D, let it cut AB at E and F, bisect EF at G, and join CG. [Post. 3, Prop. I.10, Post. 1]",
+        highlight: ["circleC", "segmentEF", "segmentEG", "segmentGF", "segmentCE", "segmentCF", "segmentCG", "pointD", "pointE", "pointF", "pointG"],
+        highlightStyles: [
+          { target: "segmentEG", color: "red" },
+          { target: "segmentGF", color: "red" },
+          { target: "segmentCE", color: "blue" },
+          { target: "segmentCF", color: "blue" },
+          { target: "segmentCG", color: "gold" },
+        ],
+      },
+      {
+        id: "radii",
+        text: "CE equals CF because both are radii of the circle centered at C.",
+        highlight: ["circleC", "segmentCE", "segmentCF"],
+        highlightStyles: [
+          { target: "segmentCE", color: "blue" },
+          { target: "segmentCF", color: "blue" },
+        ],
+      },
+      {
+        id: "midpoint",
+        text: "EG equals GF because G bisects EF.",
+        highlight: ["segmentEF", "segmentEG", "segmentGF", "pointG"],
+        highlightStyles: [
+          { target: "segmentEG", color: "red" },
+          { target: "segmentGF", color: "red" },
+        ],
+      },
+      {
+        id: "common",
+        text: "CG equals CG because it is common to both triangles.",
+        highlight: ["segmentCG"],
+        highlightStyles: [{ target: "segmentCG", color: "gold" }],
+      },
+      {
+        id: "three-sides",
+        text: "Therefore triangles CGE and CGF have three corresponding sides equal.",
+        highlight: ["segmentEG", "segmentGF", "segmentCG", "segmentCE", "segmentCF"],
+        highlightStyles: [
+          { target: "segmentEG", color: "red" },
+          { target: "segmentGF", color: "red" },
+          { target: "segmentCE", color: "blue" },
+          { target: "segmentCF", color: "blue" },
+          { target: "segmentCG", color: "gold" },
+        ],
+      },
+      {
+        id: "sss",
+        text: "By SSS, angle CGE equals angle CGF. [Prop. I.8]",
+        highlight: ["segmentEG", "segmentGF", "segmentCG", "segmentCE", "segmentCF"],
+        highlightStyles: [
+          { target: "segmentEG", color: "red" },
+          { target: "segmentGF", color: "red" },
+          { target: "segmentCE", color: "blue" },
+          { target: "segmentCF", color: "blue" },
+          { target: "segmentCG", color: "gold" },
+        ],
+        angleHighlights: [
+          { points: ["C", "G", "E"], color: "green", amplifyVertex: true },
+          { points: ["C", "G", "F"], color: "green", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "adjacent",
+        text: "Since E, G, and F lie on straight-line AB, angles CGE and CGF are adjacent angles on a straight line.",
+        highlight: ["segmentAB", "segmentCG", "pointE", "pointG", "pointF"],
+        highlightStyles: [{ target: "segmentCG", color: "gold" }],
+        angleHighlights: [
+          { points: ["C", "G", "E"], color: "green", amplifyVertex: true },
+          { points: ["C", "G", "F"], color: "green", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "right",
+        text: "Equal adjacent angles on a straight line are right angles.",
+        highlight: ["segmentAB", "segmentCG", "pointG"],
+        highlightStyles: [{ target: "segmentCG", color: "gold" }],
+        angleHighlights: [
+          { points: ["C", "G", "E"], color: "gold", rightAngle: true, amplifyVertex: true },
+          { points: ["C", "G", "F"], color: "gold", rightAngle: true, amplifyVertex: true },
+        ],
+      },
+      {
+        id: "perpendicular",
+        text: "Thus CG is perpendicular to AB.",
+        highlight: ["segmentAB", "segmentCG", "pointC", "pointG"],
+        highlightStyles: [{ target: "segmentCG", color: "gold" }],
+        angleHighlights: [
+          { points: ["C", "G", "E"], color: "gold", rightAngle: true },
+          { points: ["C", "G", "F"], color: "gold", rightAngle: true },
+        ],
+      },
+      {
+        id: "conclude",
+        text: "Therefore a perpendicular has been drawn from external point C to line AB.",
+        highlight: ["segmentAB", "segmentCG", "pointC", "pointG"],
+        highlightStyles: [{ target: "segmentCG", color: "gold" }],
+        angleHighlights: [
+          { points: ["C", "G", "E"], color: "gold", rightAngle: true },
+          { points: ["C", "G", "F"], color: "gold", rightAngle: true },
+        ],
+      },
     ],
   },
   {
@@ -266,16 +441,70 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(12),
     unlocks: ["unlock-I.13-straight-angle-sum"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives],
     instruction: "Inspect the adjacent angles; Logic Replay shows why they make two right angles.",
     constructionGuide: [guide("inspect", "Identify the two adjacent angles formed on the straight-line.", "logic-replay")],
     validationGoal: validationGoal("adjacentAnglesOnStraightLineSumTwoRightAngles", "Infer that adjacent angles on a straight-line sum to two right angles."),
     replaySteps: [
-      step("stand", "Let a straight-line stand on another straight-line.", ["segmentAB", "segmentCD"]),
-      step("equal-case", "If the adjacent angles are equal, they are right angles by definition."),
-      step("perpendicular-case", "If they are unequal, draw a perpendicular at the point. [Prop. I.11]", ["segmentCE"]),
-      step("add", "The parts add back to the two original adjacent angles. [C.N. 2]"),
-      step("conclude", "Therefore the adjacent angles equal two right angles."),
+      {
+        id: "stand",
+        text: "Let AB stand on the straight-line CD at B, making the adjacent angles CBA and ABD.",
+        highlight: ["segmentAB", "segmentCD", "pointB"],
+        angleHighlights: [
+          { points: ["C", "B", "A"], color: "blue", amplifyVertex: true },
+          { points: ["A", "B", "D"], color: "rose", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "equal-case",
+        text: "If CBA is equal to ABD, then the two adjacent equal angles are right-angles. [Def. I.10]",
+        highlight: ["segmentAB", "segmentCD", "pointB"],
+        angleHighlights: [
+          { points: ["C", "B", "A"], color: "gold", rightAngle: true, amplifyVertex: true },
+          { points: ["A", "B", "D"], color: "gold", rightAngle: true, amplifyVertex: true },
+        ],
+      },
+      {
+        id: "perpendicular-case",
+        text: "If they are not equal, draw BE from B at right-angles to CD. Then CBE and EBD are two right-angles. [Prop. I.11]",
+        highlight: ["segmentBE", "segmentCD", "pointB"],
+        highlightStyles: [{ target: "segmentBE", color: "gold" }],
+        angleHighlights: [
+          { points: ["C", "B", "E"], color: "gold", rightAngle: true, amplifyVertex: true },
+          { points: ["E", "B", "D"], color: "gold", rightAngle: true, amplifyVertex: true },
+        ],
+      },
+      {
+        id: "add-one",
+        text: "CBE equals the two angles CBA and ABE; add EBD to both. [C.N. 2]",
+        highlight: ["segmentAB", "segmentBE", "segmentCD"],
+        angleHighlights: [
+          { points: ["C", "B", "E"], color: "green", radius: 54, amplifyVertex: true },
+          { points: ["C", "B", "A"], color: "blue", radius: 34 },
+          { points: ["A", "B", "E"], color: "rose", radius: 42 },
+          { points: ["E", "B", "D"], color: "violet", radius: 34 },
+        ],
+      },
+      {
+        id: "add-two",
+        text: "Likewise DBA equals DBE and EBA; add ABC to both. The two sums equal the same three angles. [C.N. 1, C.N. 2]",
+        highlight: ["segmentAB", "segmentBE", "segmentCD"],
+        angleHighlights: [
+          { points: ["D", "B", "A"], color: "green", radius: 54, amplifyVertex: true },
+          { points: ["D", "B", "E"], color: "violet", radius: 34 },
+          { points: ["E", "B", "A"], color: "rose", radius: 42 },
+          { points: ["A", "B", "C"], color: "blue", radius: 34 },
+        ],
+      },
+      {
+        id: "conclude",
+        text: "Since CBE and EBD are two right-angles, the original angles ABD and ABC are also equal to two right-angles.",
+        highlight: ["segmentAB", "segmentCD", "pointB"],
+        angleHighlights: [
+          { points: ["C", "B", "A"], color: "blue", amplifyVertex: true },
+          { points: ["A", "B", "D"], color: "blue", amplifyVertex: true, radius: 34 },
+        ],
+      },
     ],
   },
   {
@@ -291,11 +520,48 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     constructionGuide: [guide("inspect", "Inspect the two adjacent angles at the point.", "logic-replay")],
     validationGoal: validationGoal("anglesSumTwoRightAnglesImplyStraightLine", "Infer collinearity from adjacent angles equal to two right angles."),
     replaySteps: [
-      step("given", "Let two adjacent angles at C equal two right angles.", ["pointC", "segmentAB", "segmentCD"]),
-      step("suppose", "Suppose the two outer rays do not form one straight-line."),
-      step("i13", "A different straight-line through the point would also make two right angles. [Prop. I.13]"),
-      step("subtract", "Subtract the common angle; the remainder would equal the greater, impossible."),
-      step("conclude", "Thus the two rays are in a straight-line with one another."),
+      {
+        id: "given",
+        text: "Let BC and BD, not lying on the same side of AB, make adjacent angles ABC and ABD whose sum is equal to two right-angles.",
+        highlight: ["segmentAB", "segmentCB", "segmentBD", "pointB"],
+        angleHighlights: [
+          { points: ["A", "B", "C"], color: "blue", amplifyVertex: true },
+          { points: ["A", "B", "D"], color: "rose", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "suppose",
+        text: "Suppose BD is not straight-on with respect to BC. Let the true continuation from CB be called BE.",
+        highlight: ["segmentCB", "segmentBD", "segmentCD", "pointB"],
+      },
+      {
+        id: "i13",
+        text: "Since AB stands on the straight-line CBE, angles ABC and ABE are equal to two right-angles. [Prop. I.13]",
+        highlight: ["segmentAB", "segmentCB", "segmentCD", "pointB"],
+        angleHighlights: [
+          { points: ["A", "B", "C"], color: "blue", amplifyVertex: true },
+          { points: ["A", "B", "D"], color: "gold", radius: 44 },
+        ],
+      },
+      {
+        id: "subtract",
+        text: "But ABC and ABD were also equal to two right-angles. Subtract the common angle CBA; then ABE would equal ABD, the lesser to the greater. [C.N. 1, C.N. 3]",
+        highlight: ["segmentAB", "segmentCB", "segmentBD", "pointB"],
+        angleHighlights: [
+          { points: ["C", "B", "A"], color: "blue", radius: 34 },
+          { points: ["A", "B", "D"], color: "rose", amplifyVertex: true },
+        ],
+      },
+      {
+        id: "conclude",
+        text: "That is impossible. Thus no straight-line except BD can be straight-on with CB, so CB is straight-on with BD.",
+        highlight: ["segmentCB", "segmentBD", "segmentCD", "pointB"],
+        highlightStyles: [
+          { target: "segmentCB", color: "green" },
+          { target: "segmentBD", color: "green" },
+          { target: "segmentCD", color: "green" },
+        ],
+      },
     ],
   },
   {
@@ -306,16 +572,48 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(14),
     unlocks: ["unlock-I.15-vertical-angles"],
-    allowedTools: [...primitives, "theorem-square"],
-    instruction: "Watch the crossing lines: adjacent angle sums make opposite angles equal.",
-    constructionGuide: [guide("inspect", "Inspect the four angles at the crossing.", "logic-replay")],
+    allowedTools: theoremOnly,
+    instruction: "Select the target vertical angle pair; the proof will use linear-pair sums and subtraction.",
+    constructionGuide: [guide("inspect", "Select the vertical opposite angles CEA and BED.", "logic-replay")],
     validationGoal: validationGoal("verticalAnglesEqual", "Infer equality of vertically opposite angles."),
     replaySteps: [
-      step("cross", "Let two straight-lines cut one another at C.", ["segmentAB", "segmentDE", "pointC"]),
-      step("sum-one", "One adjacent pair equals two right angles. [Prop. I.13]"),
-      step("sum-two", "The other adjacent pair also equals two right angles. [Prop. I.13]"),
-      step("subtract", "Subtract the common angle from equal sums. [C.N. 3]"),
-      step("conclude", "The vertically opposite angles are equal."),
+      {
+        id: "cross",
+        text: "Let straight-lines AB and CD cut one another at E. The target vertical angles are CEA and BED.",
+        highlight: ["segmentAB", "segmentCD", "pointE"],
+        angleHighlights: [
+          { points: ["C", "E", "A"], color: "blue", amplifyVertex: true },
+          { points: ["B", "E", "D"], color: "blue", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "sum-one",
+        text: "Since CE stands on straight-line AB, angles CEA and CEB equal two right angles. [Prop. I.13]",
+        highlight: ["segmentAB", "segmentCD", "pointE"],
+        angleHighlights: [
+          { points: ["C", "E", "A"], color: "gold", amplifyVertex: true },
+          { points: ["C", "E", "B"], color: "gold", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "sum-two",
+        text: "Since BE stands on straight-line CD, angles CEB and BED equal two right angles. [Prop. I.13]",
+        highlight: ["segmentAB", "segmentCD", "pointE"],
+        angleHighlights: [
+          { points: ["C", "E", "B"], color: "gold", amplifyVertex: true },
+          { points: ["B", "E", "D"], color: "gold", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      step("subtract", "Subtract the common angle CEB from both equal sums. [C.N. 3]", ["segmentAB", "segmentCD", "pointE"]),
+      {
+        id: "conclude",
+        text: "Therefore angle CEA equals angle BED, and similarly angle CEB equals angle DEA.",
+        highlight: ["segmentAB", "segmentCD", "pointE"],
+        angleHighlights: [
+          { points: ["C", "E", "A"], color: "green", amplifyVertex: true },
+          { points: ["B", "E", "D"], color: "green", amplifyVertex: true, radius: 34 },
+        ],
+      },
     ],
   },
   {
@@ -326,16 +624,65 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(15, ["I.10"]),
     unlocks: ["unlock-I.16-exterior-angle-greater"],
-    allowedTools: [...primitives, "theorem-perpendicular-on-line", "compass-transfer"],
-    instruction: "Follow Euclid's auxiliary midpoint and extension argument.",
-    constructionGuide: [guide("extend", "Produce one side of the triangle.", "extend"), guide("replay", "Use Logic Replay for the comparison.", "logic-replay")],
+    allowedTools: [...primitives, "extend", "theorem-bisect-segment", "theorem-sas"],
+    instruction: "Bisect AC, extend BE, copy BE onto the extension, join FC, and use SAS.",
+    constructionGuide: [
+      guide("midpoint", "Bisect AC to create E.", "theorem-bisect-segment"),
+      guide("join", "Join B to E and extend BE past E.", "straightedge"),
+      guide("copy", "Copy BE from E onto the extension, then join F to C.", "compass-transfer"),
+      guide("sas", "Use SAS on triangles ABE and CFE.", "theorem-sas"),
+    ],
     validationGoal: validationGoal("exteriorAngleGreaterThanOppositeInterior", "Infer that an exterior angle is greater than the two remote interior angles."),
     replaySteps: [
-      step("triangle", "Let one side of triangle ABC be produced to D.", ["segmentAB", "segmentBC", "segmentAC"]),
-      step("midpoint", "Bisect AC, join the midpoint to B, and extend it. [Prop. I.10, Post. 2]"),
-      step("match", "Use equal halves and vertical angles to match the small triangles. [Prop. I.15, I.4]"),
-      step("whole", "The exterior angle contains a copy of the remote interior angle plus more."),
-      step("conclude", "Therefore the exterior angle is greater than either opposite interior angle."),
+      {
+        id: "triangle",
+        text: "Let triangle ABC have side BC produced to D. It is required to prove exterior angle ACD greater than BAC and ABC.",
+        highlight: ["segmentAB", "segmentBC", "segmentAC", "segmentCD"],
+        angleHighlights: [{ points: ["A", "C", "D"], color: "gold", amplifyVertex: true }],
+      },
+      {
+        id: "midpoint",
+        text: "Bisect AC at E, join BE, extend BE to F, make EF equal to BE, and join FC. [Prop. I.10, Post. 1, Post. 2, Prop. I.3]",
+        highlight: ["segmentAC", "segmentBE", "segmentEF", "segmentFC", "pointE", "pointF"],
+        highlightStyles: [
+          { target: "segmentBE", color: "blue" },
+          { target: "segmentEF", color: "blue" },
+          { target: "segmentFC", color: "gold" },
+        ],
+      },
+      {
+        id: "match",
+        text: "AE = EC, BE = EF, and angles AEB and CEF are vertical angles. Thus triangles ABE and CFE match by SAS. [Prop. I.15, I.4]",
+        highlight: ["segmentAC", "segmentBE", "segmentEF", "segmentFC"],
+        highlightStyles: [
+          { target: "segmentBE", color: "blue" },
+          { target: "segmentEF", color: "blue" },
+        ],
+        angleHighlights: [
+          { points: ["A", "E", "B"], color: "green", amplifyVertex: true },
+          { points: ["C", "E", "F"], color: "green", amplifyVertex: true, radius: 34 },
+        ],
+      },
+      {
+        id: "whole",
+        text: "SAS gives angle BAE equal to ECF. Since E lies on AC, BAE is BAC, and ECF is only part of exterior angle ACD.",
+        highlight: ["segmentAB", "segmentAC", "segmentCD", "segmentFC"],
+        angleHighlights: [
+          { points: ["B", "A", "C"], color: "blue", amplifyVertex: true },
+          { points: ["E", "C", "F"], color: "blue", radius: 34 },
+          { points: ["A", "C", "D"], color: "gold", amplifyVertex: true, radius: 54 },
+        ],
+      },
+      {
+        id: "conclude",
+        text: "Therefore exterior angle ACD is greater than BAC. The same construction proves it greater than ABC.",
+        highlight: ["segmentAB", "segmentBC", "segmentAC", "segmentCD"],
+        angleHighlights: [
+          { points: ["A", "C", "D"], color: "gold", amplifyVertex: true },
+          { points: ["B", "A", "C"], color: "blue", radius: 34 },
+          { points: ["A", "B", "C"], color: "rose", radius: 42 },
+        ],
+      },
     ],
   },
   {
@@ -346,16 +693,17 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(16, ["I.13"]),
     unlocks: ["unlock-I.17-two-angle-limit"],
-    allowedTools: theoremOnly,
-    instruction: "Use the exterior angle and the straight-line angle sum.",
-    constructionGuide: [guide("extend", "Produce one side of the triangle.", "extend")],
+    allowedTools: [...primitives, "extend"],
+    instruction: "Extend BC past C to form exterior angle ACD.",
+    constructionGuide: [guide("extend", "Extend side BC past C and place D on the extension.", "extend")],
     validationGoal: validationGoal("twoTriangleAnglesLessThanTwoRightAngles", "Infer any two angles of a triangle are less than two right angles."),
     replaySteps: [
-      step("extend", "Produce a side of the triangle to form an exterior angle.", ["segmentBC", "segmentBD"]),
-      step("straight", "The exterior angle and its adjacent interior angle equal two right angles. [Prop. I.13]"),
-      step("greater", "The exterior angle is greater than the remote interior angle. [Prop. I.16]"),
-      step("replace", "Replacing the greater exterior angle with the smaller remote angle makes the sum less."),
-      step("conclude", "Thus any two triangle angles are less than two right angles."),
+      step("extend", "BC is extended to D, forming exterior angle ACD.", ["segmentBC", "segmentCD", "pointD"]),
+      step("exterior", "By Prop. I.16, exterior angle ACD is greater than opposite interior angle ABC.", ["segmentAC", "segmentBC", "segmentCD"]),
+      step("add", "Add angle ACB to both sides: ACD + ACB is greater than ABC + ACB."),
+      step("straight", "Since B, C, and D form a straight line, ACD + ACB equals two right angles. [Prop. I.13]", ["segmentBC", "segmentCD"]),
+      step("pair", "Therefore angles ABC and ACB together are less than two right angles."),
+      step("conclude", "The same extension argument works for the other two pairs, so any two triangle angles are less than two right angles."),
     ],
   },
   {
@@ -366,16 +714,20 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(17, ["I.3", "I.5", "I.16"]),
     unlocks: ["unlock-I.18-greater-side-angle"],
-    allowedTools: theoremOnly,
-    instruction: "Replay the cut-off and exterior-angle comparison.",
-    constructionGuide: [guide("cut", "Cut off the shorter side from the longer one.", "compass-transfer")],
+    allowedTools: [...primitives],
+    instruction: "Copy AB onto AC from A, then join the cut-off point to B.",
+    constructionGuide: [
+      guide("copy", "Use Copy Length with source AB, start A, and target AC to place D.", "compass-transfer"),
+      guide("join", "Join B to D.", "straightedge"),
+    ],
     validationGoal: validationGoal("greaterSideImpliesGreaterOppositeAngle", "Infer the greater opposite angle from the greater side."),
     replaySteps: [
-      step("given", "Let one side of a triangle be greater than another.", ["segmentAB", "segmentAC"]),
-      step("cut", "Cut from the greater side a segment equal to the lesser. [Prop. I.3]"),
-      step("isosceles", "The cut-off makes an isosceles triangle, so its base angles are equal. [Prop. I.5]"),
-      step("exterior", "The exterior angle is greater than the opposite interior angle. [Prop. I.16]"),
-      step("conclude", "Therefore the greater side subtends the greater angle."),
+      step("given", "Let triangle ABC have AC greater than AB.", ["segmentAB", "segmentAC"]),
+      step("cut", "Place D on AC so AD equals AB, and join BD. [Prop. I.3, Post. 1]", ["segmentAD", "segmentBD"]),
+      step("exterior", "In triangle BCD, angle ADB is an exterior angle, so ADB is greater than DCB. [Prop. I.16]", ["segmentBD", "segmentBC", "segmentAC"]),
+      step("isosceles", "Since AD equals AB, triangle ABD is isosceles; therefore ADB equals ABD. [Prop. I.5]", ["segmentAD", "segmentAB", "segmentBD"]),
+      step("part", "Thus ABD is greater than DCB, and angle ABC is greater still because ABD is only part of ABC."),
+      step("conclude", "Since D lies on AC, DCB is ACB. Therefore angle ABC is greater than angle ACB."),
     ],
   },
   {
@@ -406,16 +758,21 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(19, ["I.3", "I.5"]),
     unlocks: ["unlock-I.20-triangle-inequality"],
-    allowedTools: theoremOnly,
-    instruction: "Replay the extension and side-angle comparison.",
-    constructionGuide: [guide("extend", "Extend one side and set off another side on it.", "extend")],
+    allowedTools: [...primitives, "extend"],
+    instruction: "Extend BA beyond A, copy AC to the extension, then join the new point to C.",
+    constructionGuide: [
+      guide("extend", "Extend BA beyond A.", "extend"),
+      guide("copy", "Copy AC from A onto the extension to create D.", "compass-transfer"),
+      guide("join", "Join D to C.", "straightedge"),
+    ],
     validationGoal: validationGoal("triangleInequality", "Infer the sum of any two triangle sides is greater than the remaining side."),
     replaySteps: [
-      step("extend", "Extend a side and set off a segment equal to another side. [Prop. I.3]"),
-      step("isosceles", "The auxiliary triangle is isosceles, so its base angles are equal. [Prop. I.5]"),
-      step("greater-angle", "The exterior/whole angle is greater, so its opposite side is greater. [Prop. I.19]"),
-      step("sum", "That opposite side is the sum of two sides of the original triangle."),
-      step("conclude", "Therefore any two sides together exceed the remaining side."),
+      step("extend", "Extend BA beyond A to D, make AD equal to AC, and join DC. [Post. 2, Prop. I.3, Post. 1]", ["segmentAB", "segmentAD", "segmentDC"]),
+      step("isosceles", "Triangle ADC is isosceles, so angle ADC equals angle ACD. [Prop. I.5]", ["segmentAD", "segmentAC", "segmentDC"]),
+      step("whole-angle", "Angle BCD contains ACD, so BCD is greater than ACD, and therefore greater than ADC."),
+      step("greater-side", "In triangle BCD, the greater angle BCD subtends the greater side DB. Thus DB is greater than BC. [Prop. I.19]", ["segmentBD", "segmentBC"]),
+      step("sum", "Since D, A, and B are collinear, DB equals DA plus AB; and DA equals AC."),
+      step("conclude", "Therefore AB plus AC is greater than BC. The same method proves the other two side sums."),
     ],
   },
   {
@@ -426,16 +783,20 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(20, ["I.16"]),
     unlocks: ["unlock-I.21-interior-broken-lines"],
-    allowedTools: theoremOnly,
-    instruction: "Join an interior point to the base endpoints and replay the comparison.",
-    constructionGuide: [guide("join", "Join the interior point to the base endpoints.", "straightedge")],
+    allowedTools: [...primitives, "extend"],
+    instruction: "Extend BD through the interior point D until it meets AC at E.",
+    constructionGuide: [guide("extend", "Extend BD through D and mark the intersection with AC as E.", "extend")],
     validationGoal: validationGoal("interiorBrokenLinesTriangleRule", "Infer interior broken-line and angle comparisons."),
     replaySteps: [
-      step("inside", "Let two lines from the base endpoints meet inside a triangle.", ["segmentAB", "segmentAC", "segmentBC"]),
-      step("triangle-inequality", "Apply the triangle inequality to the smaller triangles. [Prop. I.20]"),
-      step("sum", "Add the inequalities to compare the broken path with the outer sides."),
-      step("angle", "Exterior angle reasoning makes the interior contained angle greater. [Prop. I.16]"),
-      step("conclude", "The inner broken lines are shorter, but contain a greater angle."),
+      step("extend", "Extend BD to meet AC at E.", ["segmentBD", "segmentBE", "segmentAC", "pointE"]),
+      step("outer-sum", "In triangle ABE, BA plus AE is greater than BE. Add EC to both sides. [Prop. I.20]"),
+      step("outer-result", "Since AE plus EC is AC, BA plus AC is greater than BE plus EC."),
+      step("inner-sum", "In triangle CDE, CE plus ED is greater than CD. Add DB to both sides. [Prop. I.20]"),
+      step("inner-result", "Since DB plus DE is BE, BE plus CE is greater than BD plus DC."),
+      step("length-conclude", "Therefore BA plus AC is greater than BD plus DC."),
+      step("angle-one", "In triangle CDE, angle BDC is an exterior angle, so BDC is greater than CED. [Prop. I.16]"),
+      step("angle-two", "In triangle ABE, angle CEB is an exterior angle, so CEB is greater than BAE. [Prop. I.16]"),
+      step("conclude", "Since CED equals CEB and BAE is BAC, angle BDC is greater than BAC; the inner broken lines are shorter but enclose a greater angle."),
     ],
   },
   {
@@ -446,20 +807,21 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(21, ["I.20"]),
     unlocks: ["unlock-I.22-triangle-from-three-segments"],
-    allowedTools: [...primitives, "theorem-triangle-sss"],
-    instruction: "Lay one segment as a base, draw two transferred-radius circles, and choose their intersection as the apex.",
+    allowedTools: [...primitives],
+    instruction: "Lay the three lengths in order, draw the two radius circles, choose their intersection, and join the triangle.",
     constructionGuide: [
-      guide("base", "Lay down one given segment as the base.", "straightedge"),
-      guide("circles", "Draw circles from the endpoints using the other two side lengths.", "compass-transfer"),
+      guide("base", "Use Copy Length to lay the three given lengths in order on one ray.", "compass-transfer"),
+      guide("circles", "Draw the two circles that determine the triangle apex.", "compass"),
       guide("apex", "Select the circle intersection and join it to the base endpoints.", "intersection"),
     ],
     validationGoal: validationGoal("constructTriangleFromThreeSegments", "Confirm the final triangle side lengths match the three given segments."),
     replaySteps: [
       step("given", "Let the three given straight-lines satisfy: any two are greater than the remaining one."),
-      step("base", "Place one length as the base. [Post. 1, Prop. I.2]"),
-      step("circles", "From the endpoints, draw circles using the other two lengths. [Post. 3, Prop. I.2]"),
-      step("meet", "The triangle inequality guarantees the circles can meet. [Prop. I.20]"),
-      step("conclude", "Joining the intersection to the base endpoints constructs the required triangle."),
+      step("lay-out", "Lay the lengths in order on a ray: DF equals the first, FG equals the second, and GH equals the third. [Prop. I.2-I.3]"),
+      step("circles", "Draw the circle centered at F through D, and the circle centered at G through H. [Post. 3]"),
+      step("meet", "Let K be an intersection of the two circles; the triangle inequality guarantees the circles can meet. [Prop. I.20]"),
+      step("join", "Join KF and KG. KF equals FD and KG equals GH because they are radii of their circles."),
+      step("conclude", "Thus triangle KFG has its three sides equal to the three given straight-lines."),
     ],
   },
   {
@@ -470,7 +832,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(22, ["I.8"]),
     unlocks: ["unlock-I.23-copy-angle"],
-    allowedTools: [...primitives, "theorem-triangle-sss", "theorem-copy-angle"],
+    allowedTools: [...primitives, "theorem-triangle-sss", "theorem-sss"],
     instruction: "Represent the source angle with a triangle, then construct a matching triangle on the target line.",
     constructionGuide: [
       guide("source", "Choose points on the sides of the source angle.", "point"),
@@ -479,11 +841,10 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     ],
     validationGoal: validationGoal("copyAngleToLine", "Confirm the constructed angle equals the source angle at the target point."),
     replaySteps: [
-      step("source", "Let the given angle be represented by a triangle around its vertex."),
-      step("target", "Place one side of the angle on the target line at the target point."),
-      step("triangle", "Construct a triangle with the same three side lengths. [Prop. I.22]"),
-      step("sss", "SSS proves the included angle matches the original. [Prop. I.8]"),
-      step("conclude", "Thus the rectilinear angle has been copied onto the given line."),
+      step("source", "Choose points D and E on the two sides of the given angle DCE, and join DE."),
+      step("target", "On the target line at A, construct triangle AFG with sides matching CD, CE, and DE. [Prop. I.22]"),
+      step("sss", "Since the three corresponding sides match, SSS proves angle FAG equals angle DCE. [Prop. I.8]"),
+      step("conclude", "Thus the given rectilinear angle has been copied onto the given line at A."),
     ],
   },
   {
@@ -494,16 +855,23 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(23, ["I.4", "I.19"]),
     unlocks: ["unlock-I.24-sas-inequality"],
-    allowedTools: theoremOnly,
-    instruction: "Replay the comparison of two triangles with matching sides.",
-    constructionGuide: [guide("compare", "Compare two triangles sharing two equal side pairs.", "logic-replay")],
+    allowedTools: [...primitives, "theorem-copy-angle", "theorem-sas"],
+    instruction: "Copy the larger angle at D, copy DF onto the copied ray, join EG and FG, then use SAS.",
+    constructionGuide: [
+      guide("copy-angle", "Copy angle BAC at D on base DE.", "theorem-copy-angle"),
+      guide("copy-length", "Copy DF from D onto the copied ray.", "compass-transfer"),
+      guide("join", "Join E to the copied point and F to the copied point.", "straightedge"),
+      guide("sas", "Use SAS on triangles ABC and DEG.", "theorem-sas"),
+    ],
     validationGoal: validationGoal("SASInequality", "Infer greater base from greater included angle with two equal side pairs."),
     replaySteps: [
-      step("given", "Let two triangles have two pairs of equal sides, but one included angle greater."),
-      step("copy", "Copy the smaller included angle into the larger triangle. [Prop. I.23]"),
-      step("sas", "SAS identifies the comparison base for the copied angle. [Prop. I.4]"),
-      step("compare", "The remaining angle-side comparison uses I.19."),
-      step("conclude", "Therefore the triangle with the greater included angle has the greater base."),
+      step("given", "Let triangles ABC and DEF have AB = DE, AC = DF, and angle BAC greater than angle EDF.", ["segmentAB", "segmentDE", "segmentAC", "segmentDF"]),
+      step("copy-angle", "Construct angle EDG equal to angle BAC. Since BAC is greater than EDF, F lies inside angle EDG. [Prop. I.23]", ["segmentDE", "segmentDG", "segmentDF"]),
+      step("copy-length", "Make DG equal to DF, then join EG and FG. [Prop. I.3, Post. 1]", ["segmentDG", "segmentDF", "segmentEG", "segmentFG"]),
+      step("sas", "AB = DE, AC = DG, and angle BAC = angle EDG, so SAS gives BC equal to EG. [Prop. I.4]", ["segmentAB", "segmentDE", "segmentAC", "segmentDG", "segmentBC", "segmentEG"]),
+      step("isosceles", "Since DG = DF, triangle DFG is isosceles, so angle DGF equals angle DFG. [Prop. I.5]", ["segmentDG", "segmentDF", "segmentFG"]),
+      step("greater", "Angle EFG is greater than angle EGF, so EG is greater than EF. [Prop. I.19]", ["segmentEG", "segmentEF"]),
+      step("conclude", "Since BC = EG, BC is greater than EF. Thus the larger included angle gives the larger base.", ["segmentBC", "segmentEF"]),
     ],
   },
   {
@@ -579,11 +947,11 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     constructionGuide: [guide("inspect", "Identify corresponding or same-side interior angle conditions.", "logic-replay")],
     validationGoal: validationGoal("angleConditionsImplyParallel", "Infer parallel lines from exterior/interior or same-side angle conditions."),
     replaySteps: [
-      step("condition", "Let the transversal make either equal exterior/interior angles or same-side angles equal to two right angles."),
-      step("vertical", "Use vertical angles when needed. [Prop. I.15]"),
-      step("straight", "Use adjacent straight-line sums when needed. [Prop. I.13]"),
-      step("alternate", "The condition reduces to equal alternate interior angles."),
-      step("conclude", "Therefore the two straight-lines are parallel. [Prop. I.27]"),
+      step("condition", "Let EF cut AB at G and CD at H, with either angle EGB equal to GHD or angles BGH and GHD equal to two right angles.", ["segmentAB", "segmentCD", "segmentEF"]),
+      step("case-one", "If angle EGB equals angle GHD, vertical angles give angle EGB equal to angle AGH, so angle AGH equals angle GHD. [Prop. I.15]", ["segmentAB", "segmentCD", "segmentEF"]),
+      step("case-two", "If angles BGH and GHD make two right angles, then angles AGH and BGH also make two right angles. Subtract angle BGH to get angle AGH equal to angle GHD. [Prop. I.13]", ["segmentAB", "segmentCD", "segmentEF"]),
+      step("alternate", "In either case, the alternate interior angles AGH and GHD are equal.", ["segmentAB", "segmentCD", "segmentEF"]),
+      step("conclude", "Therefore AB is parallel to CD. [Prop. I.27]", ["segmentAB", "segmentCD"]),
     ],
   },
   {
@@ -614,16 +982,17 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "parallel-theorem",
     dependencies: deps(29),
     unlocks: ["unlock-I.30-parallel-to-same-line"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives],
     instruction: "Use a transversal to transfer parallel angle equality.",
     constructionGuide: [guide("transversal", "Draw or inspect a transversal through the lines.", "straightedge")],
     validationGoal: validationGoal("parallelToSameLine", "Infer two lines are parallel when both are parallel to a third."),
     replaySteps: [
-      step("given", "Let two straight-lines each be parallel to the same straight-line."),
-      step("transversal", "Let a transversal cut them."),
-      step("first", "The first parallel pair gives one angle equality. [Prop. I.29]"),
-      step("second", "The second parallel pair gives the same angle equality. [Prop. I.29]"),
-      step("conclude", "Equal alternate angles imply the two lines are parallel. [Prop. I.27]"),
+      step("given", "Let AB and CD each be parallel to EF.", ["segmentAB", "segmentEF", "segmentCD"]),
+      step("transversal", "Draw transversal GK cutting AB at G, EF at H, and CD at K.", ["segmentGK", "pointG", "pointH", "pointK"]),
+      step("first", "Because AB is parallel to EF, angle AGK equals angle GHF. [Prop. I.29]", ["segmentAB", "segmentEF", "segmentGK"]),
+      step("second", "Because CD is parallel to EF, angle GHF equals angle GKD. [Prop. I.29]", ["segmentEF", "segmentCD", "segmentGK"]),
+      step("alternate", "Therefore angle AGK equals angle GKD, alternate angles for AB and CD.", ["segmentAB", "segmentCD", "segmentGK"]),
+      step("conclude", "By Prop. I.27, AB is parallel to CD.", ["segmentAB", "segmentCD"]),
     ],
   },
   {
@@ -634,20 +1003,20 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(30, ["I.23", "I.27"]),
     unlocks: ["unlock-I.31-draw-parallel"],
-    allowedTools: [...primitives, "theorem-copy-angle", "theorem-parallel"],
+    allowedTools: [...primitives, "extend", "theorem-copy-angle"],
     instruction: "Join the point to the line, copy the alternate angle at the point, then draw the parallel.",
     constructionGuide: [
       guide("join", "Join the given point to a point on the given line.", "straightedge"),
       guide("copy-angle", "Copy the alternate angle at the given point. [Prop. I.23]", "theorem-copy-angle"),
-      guide("parallel", "Draw through the copied angle; alternate angles prove parallel. [Prop. I.27]", "straightedge"),
+      guide("parallel", "Extend the copied ray into the straight line through A. [Post. 2]", "extend"),
     ],
     validationGoal: validationGoal("drawParallelThroughPoint", "Confirm the constructed line passes through the point and is parallel to the given line."),
     replaySteps: [
       step("given", "Let A be the given point and BC the given straight-line.", ["pointA", "segmentBC"]),
-      step("join", "Join A to a point on BC. [Post. 1]"),
-      step("copy", "Construct at A an angle equal to the alternate angle. [Prop. I.23]"),
-      step("parallel", "Equal alternate angles imply the new line is parallel to BC. [Prop. I.27]"),
-      step("conclude", "A parallel through the given point has been drawn."),
+      step("choose", "Choose D on BC and join AD. [Post. 1]", ["segmentBC", "segmentAD"]),
+      step("copy", "At A, construct angle DAE equal to angle ADC. [Prop. I.23]", ["segmentAD", "segmentAE"]),
+      step("parallel", "Produce AE into the straight line AF. Since AD cuts AF and BC with equal alternate angles, AF is parallel to BC. [Prop. I.27]", ["segmentAF", "segmentBC"]),
+      step("conclude", "A parallel to BC has been drawn through A.", ["segmentAF", "segmentBC"]),
     ],
   },
   {
@@ -658,16 +1027,21 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(31, ["I.29", "I.13"]),
     unlocks: ["unlock-I.32-triangle-angle-sum"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "extend", "theorem-parallel"],
     instruction: "Replay the classic parallel-through-a-vertex proof.",
-    constructionGuide: [guide("parallel", "Draw a parallel through the opposite vertex. [Prop. I.31]", "theorem-parallel")],
+    constructionGuide: [
+      guide("extend", "Extend BC past C to form the exterior angle.", "extend"),
+      guide("parallel", "Draw through C a line parallel to AB. [Prop. I.31]", "theorem-parallel"),
+    ],
     validationGoal: validationGoal("triangleAngleSumAndExterior", "Infer exterior angle equality and triangle angle sum."),
     replaySteps: [
       step("triangle", "Let one side of a triangle be produced.", ["segmentAB", "segmentBC", "segmentAC"]),
-      step("parallel", "Draw through the opposite vertex a line parallel to the base. [Prop. I.31]"),
-      step("angles", "Parallel angle relations identify the remote interior angles. [Prop. I.29]"),
-      step("straight", "The three angles lie on a straight-line and equal two right angles. [Prop. I.13]"),
-      step("conclude", "Thus the exterior angle equals the two opposite interior angles, and the triangle angles sum to two right angles."),
+      step("extend", "Produce BC to D, making exterior angle ACD.", ["segmentBC", "segmentCD"]),
+      step("parallel", "Draw CE through C parallel to AB. [Prop. I.31]", ["segmentCE", "segmentAB"]),
+      step("angles", "Since CE is parallel to AB, angle ACE equals angle CAB and angle ECD equals angle ABC. [Prop. I.29]", ["segmentCE", "segmentAB", "segmentAC", "segmentBD"]),
+      step("exterior", "Thus angle ACD, made of ACE and ECD, equals the two opposite interior angles CAB and ABC.", ["segmentAC", "segmentCD", "segmentCE"]),
+      step("sum", "Because B, C, and D lie on a straight line, angles ACB and ACD make two right angles. Substitute the two remote interior angles for ACD. [Prop. I.13]", ["segmentBC", "segmentCD", "segmentAC"]),
+      step("conclude", "The exterior angle equals the two opposite interior angles, and the three interior angles equal two right angles."),
     ],
   },
   {
@@ -678,16 +1052,21 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "parallel-theorem",
     dependencies: deps(32, ["I.29", "I.4", "I.27"]),
     unlocks: ["unlock-I.33-equal-parallel-connectors"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "theorem-sas"],
     instruction: "Replay the diagonal and alternate-angle argument.",
-    constructionGuide: [guide("join", "Join corresponding endpoints and a diagonal.", "straightedge")],
+    constructionGuide: [
+      guide("join", "Join B to C.", "straightedge"),
+      guide("sas", "Use SAS on triangles ABC and DCB.", "theorem-sas"),
+    ],
     validationGoal: validationGoal("equalParallelConnectors", "Infer connector equality and parallelism from equal parallel segments."),
     replaySteps: [
-      step("given", "Let two equal straight-lines also be parallel and in the same directions."),
-      step("join", "Join corresponding endpoints and draw a diagonal. [Post. 1]"),
-      step("angles", "Parallel angle relations give equal alternate angles. [Prop. I.29]"),
-      step("sas", "SAS matches the triangles. [Prop. I.4]"),
-      step("conclude", "The joining straight-lines are equal and parallel."),
+      step("given", "Let AB and CD be equal and parallel, with AC and BD joining corresponding endpoints on the same side.", ["segmentAB", "segmentCD", "segmentAC", "segmentBD"]),
+      step("join", "Join B to C. [Post. 1]", ["segmentBC"]),
+      step("angles", "Because AB is parallel to CD, angle ABC equals angle BCD. [Prop. I.29]", ["segmentAB", "segmentCD", "segmentBC"]),
+      step("sas", "AB equals CD, BC is common, and the included angles are equal, so triangles ABC and DCB match by SAS. [Prop. I.4]", ["segmentAB", "segmentCD", "segmentBC"]),
+      step("parts", "Therefore AC equals BD and angle ACB equals angle DBC.", ["segmentAC", "segmentBD"]),
+      step("parallel", "Those equal alternate angles make AC parallel to BD. [Prop. I.27]", ["segmentAC", "segmentBD"]),
+      step("conclude", "Thus the joining straight-lines AC and BD are equal and parallel.", ["segmentAC", "segmentBD"]),
     ],
   },
   {
@@ -698,16 +1077,23 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(33, ["I.29", "I.26"]),
     unlocks: ["unlock-I.34-parallelogram-properties"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives],
     instruction: "Draw the diagonal and replay the triangle matching proof.",
-    constructionGuide: [guide("diagonal", "Draw the diagonal of the parallelogram.", "straightedge")],
+    constructionGuide: [
+      guide("diagonal", "Draw diagonal BC.", "straightedge"),
+      guide("asa-aas", "Identify the ASA/AAS match between triangles ABC and DCB.", "logic-replay"),
+    ],
     validationGoal: validationGoal("parallelogramOppositesAndDiagonal", "Infer opposite side/angle equality and diagonal bisection."),
     replaySteps: [
-      step("parallelogram", "Let ABCD be a parallelogram.", ["segmentAB", "segmentBC", "segmentCD", "segmentDA"]),
-      step("diagonal", "Draw diagonal AC. [Post. 1]", ["segmentAC"]),
-      step("angles", "Parallel sides give equal alternate angles. [Prop. I.29]"),
-      step("asa", "The two triangles match by ASA/AAS. [Prop. I.26]"),
-      step("conclude", "Opposite sides and angles are equal, and the diagonal bisects the area."),
+      step("parallelogram", "Let ACDB be a parallelogram: AC is parallel to BD, and AB is parallel to CD.", ["segmentAC", "segmentBD", "segmentAB", "segmentCD"]),
+      step("diagonal", "Join B to C. [Post. 1]", ["segmentBC"]),
+      step("first-angles", "Since AC is parallel to BD and BC cuts them, angle ACB equals angle CBD. [Prop. I.29]", ["segmentAC", "segmentBD", "segmentBC"]),
+      step("second-angles", "Since AB is parallel to CD and BC cuts them, angle ABC equals angle BCD. [Prop. I.29]", ["segmentAB", "segmentCD", "segmentBC"]),
+      step("asa", "With BC common, the two triangles ABC and DCB match by ASA/AAS. [Prop. I.26]", ["segmentBC"]),
+      step("opposites", "Therefore AB equals CD, AC equals BD, and angle BAC equals angle CDB.", ["segmentAB", "segmentCD", "segmentAC", "segmentBD"]),
+      step("whole-angles", "Adding equal angle parts gives the remaining opposite angles equal: angle ABD equals angle ACD.", ["segmentAB", "segmentBD", "segmentAC", "segmentCD"]),
+      step("area", "Using AB = CD, BC common, and the included angles equal, SAS also identifies the two triangles as equal in area. [Prop. I.4]", ["segmentAB", "segmentCD", "segmentBC"]),
+      step("conclude", "Thus opposite sides and angles are equal, and diagonal BC bisects parallelogram ACDB.", ["segmentBC"]),
     ],
   },
   {
@@ -718,16 +1104,24 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "area-theorem",
     dependencies: deps(34),
     unlocks: ["unlock-I.35-same-base-parallelograms"],
-    allowedTools: theoremOnly,
-    instruction: "Replay equal/complementary parts in two parallelograms.",
-    constructionGuide: [guide("compare", "Compare the parallelograms on the same base.", "logic-replay")],
+    allowedTools: [...primitives, "theorem-sas"],
+    instruction: "Mark G where EB meets DC, then use SAS on triangles EAB and FDC.",
+    constructionGuide: [
+      guide("intersection", "Mark G where EB meets DC.", "intersection"),
+      guide("sas", "Use SAS on triangles EAB and FDC.", "theorem-sas"),
+    ],
     validationGoal: validationGoal("parallelogramsSameBaseSameParallelsEqual", "Infer equal areas for parallelograms on the same base and parallels.", ["internalAreaEquality"]),
     replaySteps: [
-      step("same-base", "Let two parallelograms stand on the same base and between the same parallels."),
-      step("opposites", "Use parallelogram opposite sides and angles. [Prop. I.34]"),
-      step("parts", "Equal triangles or complements are added/subtracted."),
-      step("common-notions", "Equals added to or subtracted from equals remain equal. [C.N. 2, 3]"),
-      step("conclude", "The parallelograms are equal in area."),
+      step("given", "Let parallelograms ABCD and EBCF stand on the same base BC and between the same parallels BC and AF.", ["segmentBC", "segmentAF"]),
+      step("opposites", "Since ABCD is a parallelogram, AD = BC; since EBCF is a parallelogram, EF = BC. Therefore AD = EF. [Prop. I.34]", ["segmentAD", "segmentEF", "segmentBC"]),
+      step("add", "Add DE to both equal straight-lines, giving AE = DF.", ["segmentAE", "segmentDF"]),
+      step("sides", "Again by parallelogram properties, AB = DC. [Prop. I.34]", ["segmentAB", "segmentDC"]),
+      step("angle", "Because AF is parallel to BC, angle EAB equals angle FDC.", ["segmentAF", "segmentAB", "segmentDC"]),
+      step("sas", "Thus triangles EAB and FDC have two sides and the included angle equal, so they are equal by SAS. [Prop. I.4]", ["segmentAE", "segmentDF", "segmentAB", "segmentDC"]),
+      step("subtract", "Subtract the common triangle DGE from both equal triangles.", ["segmentDG", "segmentEG"]),
+      step("trapezia", "The remaining trapezium ABGD equals the remaining trapezium EGCF.", ["segmentAB", "segmentBG", "segmentGD", "segmentEG", "segmentGC", "segmentCF"]),
+      step("add-common", "Add the common triangle GBC to both.", ["segmentGB", "segmentGC", "segmentBC"]),
+      step("conclude", "Therefore parallelogram ABCD equals parallelogram EBCF in area.", ["segmentAB", "segmentBC", "segmentDC", "segmentAD", "segmentEB", "segmentFC", "segmentEF"]),
     ],
   },
   {
@@ -738,16 +1132,22 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "area-theorem",
     dependencies: deps(35, ["I.34"]),
     unlocks: ["unlock-I.36-equal-base-parallelograms"],
-    allowedTools: theoremOnly,
-    instruction: "Replay the reduction to same-base parallelograms.",
-    constructionGuide: [guide("join", "Join auxiliary endpoints to compare bases.", "straightedge")],
+    allowedTools: [...primitives],
+    instruction: "Join BE and CH, then recognize EBCH as a parallelogram by Prop. 33.",
+    constructionGuide: [
+      guide("join-be", "Draw BE.", "straightedge"),
+      guide("join-ch", "Draw CH.", "straightedge"),
+      guide("prop33", "Use Prop. 33 to recognize EBCH as a parallelogram.", "logic-replay"),
+    ],
     validationGoal: validationGoal("parallelogramsEqualBasesSameParallelsEqual", "Infer equal areas for parallelograms on equal bases and same parallels.", ["internalAreaEquality"]),
     replaySteps: [
-      step("equal-bases", "Let parallelograms stand on equal bases and between the same parallels."),
-      step("connect", "Join auxiliary lines to make a common comparison parallelogram."),
-      step("same-base", "Apply I.35 to same-base pieces."),
-      step("transfer", "Transfer equality through the equal bases and parallels."),
-      step("conclude", "The parallelograms are equal in area."),
+      step("given", "Let parallelograms ABCD and EFGH stand on equal bases BC and FG between the same parallels AH and BG.", ["segmentBC", "segmentFG", "segmentAH", "segmentBG"]),
+      step("opposites", "Since EFGH is a parallelogram, FG = EH. Since BC = FG, BC = EH. [Prop. I.34]", ["segmentBC", "segmentFG", "segmentEH"]),
+      step("join", "Join BE and CH.", ["segmentBE", "segmentCH"]),
+      step("prop33", "Because BC and EH are equal and parallel, Prop. I.33 makes BE and CH equal and parallel; EBCH is a parallelogram.", ["segmentBC", "segmentEH", "segmentBE", "segmentCH"]),
+      step("same-base-one", "ABCD and EBCH are on the same base BC and between the same parallels, so ABCD = EBCH. [Prop. I.35]", ["segmentAB", "segmentBC", "segmentDC", "segmentAD", "segmentEB", "segmentCH", "segmentEH"]),
+      step("same-base-two", "EFGH and EBCH are on the same base EH and between the same parallels, so EFGH = EBCH. [Prop. I.35]", ["segmentEF", "segmentFG", "segmentGH", "segmentEH", "segmentEB", "segmentBC", "segmentCH"]),
+      step("conclude", "Therefore ABCD equals EFGH in area.", ["segmentAB", "segmentBC", "segmentDC", "segmentAD", "segmentEF", "segmentFG", "segmentGH", "segmentEH"]),
     ],
   },
   {
@@ -758,16 +1158,20 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "area-theorem",
     dependencies: deps(36, ["I.31", "I.35"]),
     unlocks: ["unlock-I.37-same-base-triangles"],
-    allowedTools: theoremOnly,
-    instruction: "Complete each triangle into a parallelogram.",
-    constructionGuide: [guide("complete", "Complete the triangles into parallelograms. [Prop. I.31]", "theorem-parallel")],
+    allowedTools: [...primitives, "extend", "theorem-parallel"],
+    instruction: "Draw parallels through B and C to complete parallelograms EBCA and DBCF.",
+    constructionGuide: [
+      guide("parallel-b", "Draw BE through B parallel to CA.", "theorem-parallel"),
+      guide("parallel-c", "Draw CF through C parallel to BD.", "theorem-parallel"),
+    ],
     validationGoal: validationGoal("trianglesSameBaseSameParallelsEqual", "Infer equal areas for triangles on same base and same parallels.", ["internalAreaEquality"]),
     replaySteps: [
-      step("triangles", "Let two triangles stand on the same base and between the same parallels."),
-      step("complete", "Complete each triangle into a parallelogram. [Prop. I.31]"),
-      step("parallelograms", "The parallelograms are equal by I.35."),
-      step("halves", "Each triangle is half of its parallelogram. [Prop. I.34]"),
-      step("conclude", "Therefore the triangles are equal in area."),
+      step("given", "Triangles ABC and DBC stand on the same base BC and between parallels AD and BC.", ["segmentAB", "segmentAC", "segmentDB", "segmentDC", "segmentBC", "segmentAD"]),
+      step("complete", "Draw BE parallel to CA and CF parallel to BD. [Prop. I.31]", ["segmentBE", "segmentCF"]),
+      step("parallelograms", "Thus EBCA and DBCF are parallelograms on the same base BC and between the same parallels BC and EF.", ["segmentBE", "segmentBC", "segmentCA", "segmentEA", "segmentDB", "segmentCF", "segmentDF"]),
+      step("same-base", "By Prop. I.35, parallelogram EBCA equals parallelogram DBCF.", ["segmentBE", "segmentBC", "segmentCA", "segmentEA", "segmentDB", "segmentCF", "segmentDF"]),
+      step("halves", "Diagonal AB bisects EBCA, and diagonal DC bisects DBCF. [Prop. I.34]", ["segmentAB", "segmentDC"]),
+      step("conclude", "Halves of equal figures are equal, so triangle ABC equals triangle DBC.", ["segmentAB", "segmentAC", "segmentBC", "segmentDB", "segmentDC"]),
     ],
   },
   {
@@ -778,16 +1182,20 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "area-theorem",
     dependencies: deps(37, ["I.36"]),
     unlocks: ["unlock-I.38-equal-base-triangles"],
-    allowedTools: theoremOnly,
+    allowedTools: [...primitives, "theorem-parallel"],
     instruction: "Complete to parallelograms and compare equal bases.",
-    constructionGuide: [guide("complete", "Complete the triangles into parallelograms.", "theorem-parallel")],
+    constructionGuide: [
+      guide("parallel-b", "Draw BG through B parallel to CA.", "theorem-parallel"),
+      guide("parallel-f", "Draw FH through F parallel to DE.", "theorem-parallel"),
+    ],
     validationGoal: validationGoal("trianglesEqualBasesSameParallelsEqual", "Infer equal areas for triangles on equal bases and same parallels.", ["internalAreaEquality"]),
     replaySteps: [
-      step("equal-bases", "Let triangles stand on equal bases and between the same parallels."),
-      step("complete", "Complete them into parallelograms."),
-      step("parallel-areas", "The parallelograms are equal by I.36."),
-      step("halves", "The triangles are halves of equal parallelograms."),
-      step("conclude", "Therefore the triangles are equal in area."),
+      step("given", "Triangles ABC and DEF stand on equal bases BC and EF between the same parallels BF and GH.", ["segmentBC", "segmentEF", "segmentBF", "segmentGH"]),
+      step("complete", "Draw BG parallel to CA and FH parallel to DE, forming parallelograms GBCA and DEFH. [Prop. I.31]", ["segmentBG", "segmentFH"]),
+      step("parallelograms", "The parallelograms GBCA and DEFH are on equal bases BC and EF and between the same parallels.", ["segmentGB", "segmentBC", "segmentCA", "segmentAG", "segmentDE", "segmentEF", "segmentFH", "segmentDH"]),
+      step("equal", "By Prop. I.36, parallelogram GBCA equals parallelogram DEFH.", ["segmentGB", "segmentBC", "segmentCA", "segmentAG", "segmentDE", "segmentEF", "segmentFH", "segmentDH"]),
+      step("halves", "Triangles ABC and DEF are halves of those parallelograms. [Prop. I.34]", ["segmentAB", "segmentDF"]),
+      step("conclude", "Halves of equal figures are equal, so triangle ABC equals triangle DEF.", ["segmentAB", "segmentAC", "segmentBC", "segmentDE", "segmentDF", "segmentEF"]),
     ],
   },
   {
@@ -843,11 +1251,12 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     constructionGuide: [guide("diagonal", "Draw the diagonal of the parallelogram.", "straightedge")],
     validationGoal: validationGoal("parallelogramDoubleTriangle", "Infer a same-base parallelogram is double the triangle.", ["internalAreaEquality"]),
     replaySteps: [
-      step("given", "Let a parallelogram and a triangle share a base and lie between the same parallels."),
-      step("diagonal", "Draw the parallelogram diagonal."),
-      step("half", "The diagonal cuts the parallelogram in half. [Prop. I.34]"),
-      step("triangle", "The given triangle equals one half by I.37."),
-      step("conclude", "Therefore the parallelogram is double the triangle."),
+      step("diagonal", "Draw diagonal AC.", ["segmentAC"]),
+      step("same-base", "Triangles ABC and EBC are on the same base BC and between the same parallels BC and AE.", ["segmentAB", "segmentAC", "segmentEB", "segmentEC", "segmentBC"]),
+      step("equal-triangles", "By Prop. I.37, triangle ABC equals triangle EBC.", ["segmentAB", "segmentAC", "segmentBC", "segmentEB", "segmentEC"]),
+      step("bisect", "Since ABCD is a parallelogram, diagonal AC bisects it. [Prop. I.34]", ["segmentAB", "segmentBC", "segmentCD", "segmentAD", "segmentAC"]),
+      step("double", "Therefore parallelogram ABCD is double triangle ABC.", ["segmentAB", "segmentBC", "segmentCD", "segmentAD"]),
+      step("conclude", "Since triangle ABC equals triangle EBC, parallelogram ABCD is double triangle EBC.", ["segmentEB", "segmentEC", "segmentBC"]),
     ],
   },
   {
@@ -858,7 +1267,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(41, ["I.10", "I.23", "I.31"]),
     unlocks: ["unlock-I.42-parallelogram-equal-triangle"],
-    allowedTools: [...primitives, "theorem-bisect-segment", "theorem-copy-angle", "theorem-parallel", "theorem-parallelogram-triangle"],
+    allowedTools: [...primitives, "theorem-bisect-segment", "theorem-copy-angle", "theorem-parallel"],
     instruction: "Bisect the triangle base, copy the given angle, draw parallels, and use I.41.",
     constructionGuide: [
       guide("bisect", "Bisect the base of the triangle. [Prop. I.10]", "theorem-bisect-segment"),
@@ -867,11 +1276,13 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     ],
     validationGoal: validationGoal("constructParallelogramEqualToTriangle", "Confirm the parallelogram has the given angle and equals the triangle in area.", ["internalAreaEquality"]),
     replaySteps: [
-      step("given", "Let a triangle and a rectilinear angle be given."),
-      step("bisect", "Bisect the triangle base. [Prop. I.10]"),
-      step("angle", "Construct the given angle at the midpoint. [Prop. I.23]"),
-      step("parallels", "Draw parallels to complete a parallelogram. [Prop. I.31]"),
-      step("conclude", "By I.41, the parallelogram equals the given triangle."),
+      step("given", "Let triangle ABC and rectilinear angle D be given.", ["segmentAB", "segmentAC", "segmentBC", "segmentDH", "segmentDK"]),
+      step("bisect", "Bisect BC at E and join AE. [Prop. I.10, Post. 1]", ["segmentBE", "segmentEC", "segmentAE"]),
+      step("angle", "At E on ray EC, construct angle CEF equal to angle D. [Prop. I.23]", ["segmentEC", "segmentEF"]),
+      step("parallels", "Draw AG parallel to EC and CG parallel to EF, forming parallelogram FECG. [Prop. I.31]", ["segmentAG", "segmentCG", "segmentFG", "segmentEC", "segmentEF"]),
+      step("half-triangle", "Since BE equals EC, triangles ABE and AEC are equal; therefore triangle ABC is double triangle AEC. [Prop. I.38]", ["segmentAB", "segmentAE", "segmentBE", "segmentAC", "segmentEC"]),
+      step("double", "Parallelogram FECG is on the same base EC as triangle AEC and between the same parallels, so it is double triangle AEC. [Prop. I.41]", ["segmentFE", "segmentEC", "segmentCG", "segmentFG", "segmentAE", "segmentAC"]),
+      step("conclude", "Therefore FECG equals triangle ABC, and angle CEF equals the given angle D.", ["segmentFE", "segmentEC", "segmentCG", "segmentFG"]),
     ],
   },
   {
@@ -887,11 +1298,13 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     constructionGuide: [guide("diagonal", "Inspect the diagonal and the smaller parallelograms about it.", "logic-replay")],
     validationGoal: validationGoal("parallelogramComplementsEqual", "Infer equal complements around a parallelogram diagonal.", ["internalAreaEquality"]),
     replaySteps: [
-      step("whole", "The diagonal bisects the whole parallelogram. [Prop. I.34]"),
-      step("inner", "The smaller parallelograms about the diagonal are likewise balanced."),
-      step("subtract", "Subtract equal pieces from equal halves. [C.N. 3]"),
-      step("complements", "The remaining complements are equal."),
-      step("conclude", "This complement rule becomes an area engine for applying parallelograms."),
+      step("whole", "Since ABCD is a parallelogram, diagonal AC bisects it; therefore triangle ABC equals triangle ACD. [Prop. I.34]", ["segmentAB", "segmentBC", "segmentCD", "segmentDA", "segmentAC"]),
+      step("first-inner", "Since AEKH is a parallelogram, diagonal AK bisects it; therefore triangle AEK equals triangle AHK. [Prop. I.34]", ["segmentAE", "segmentEK", "segmentKH", "segmentHA"]),
+      step("second-inner", "Since KFCG is a parallelogram, diagonal KC bisects it; therefore triangle KFC equals triangle KGC. [Prop. I.34]", ["segmentKF", "segmentFC", "segmentCG", "segmentGK"]),
+      step("add-small", "Add equal small triangles: AEK plus KGC equals AHK plus KFC. [C.N. 2]"),
+      step("subtract", "Subtract those equal small-triangle sums from the equal large triangles ABC and ACD. [C.N. 3]"),
+      step("complements", "The remaining complement BK equals the remaining complement KD."),
+      step("conclude", "Thus the complements of the parallelograms about the diagonal are equal."),
     ],
   },
   {
@@ -902,7 +1315,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(43, ["I.42", "I.31"]),
     unlocks: ["unlock-I.44-apply-parallelogram-line"],
-    allowedTools: [...primitives, "theorem-parallelogram-triangle", "theorem-parallelogram-line"],
+    allowedTools: [...primitives, "theorem-parallelogram-triangle", "theorem-parallel", "theorem-parallelogram-line"],
     instruction: "Use the I.42 parallelogram and I.43 complements to apply it to the given line.",
     constructionGuide: [
       guide("make", "Construct a parallelogram equal to the given triangle. [Prop. I.42]", "theorem-parallelogram-triangle"),
@@ -910,11 +1323,13 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     ],
     validationGoal: validationGoal("applyParallelogramEqualToTriangleOnLine", "Confirm the applied parallelogram lies on the line, has the given angle, and equals the triangle.", ["internalAreaEquality"]),
     replaySteps: [
-      step("given", "Let a line, a triangle, and an angle be given."),
-      step("construct", "Construct an equal parallelogram in the given angle. [Prop. I.42]"),
-      step("parallels", "Use parallels to position it on the given line. [Prop. I.31]"),
-      step("complements", "Parallelogram complements preserve the area. [Prop. I.43]"),
-      step("conclude", "A parallelogram equal to the triangle has been applied to the given line."),
+      step("helper", "Construct auxiliary parallelogram GBEF equal to the given triangle, with angle GBE equal to the given angle. [Prop. I.42]"),
+      step("parallels", "Draw AH parallel to BG and FH parallel to BE, meeting at H; join HB and construct parallelogram HLKF about diagonal HK. [Prop. I.31]"),
+      step("extend", "Extend HA to L and GB to M; the final applied parallelogram is LABM on AB."),
+      step("complements", "Parallelograms AG and ME lie about diagonal HK, so the complements LABM and GBEF are equal. [Prop. I.43]"),
+      step("area", "Since GBEF equals the given triangle, LABM also equals the given triangle."),
+      step("angle", "Because E, B, A are collinear and G, B, M are collinear, angle ABM equals angle GBE by vertical angles. [Prop. I.15]"),
+      step("conclude", "Therefore LABM is applied to AB, equals the given triangle, and has the required angle."),
     ],
   },
   {
@@ -934,11 +1349,14 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     ],
     validationGoal: validationGoal("constructParallelogramEqualToRectilinearFigure", "Confirm the final parallelogram has the given angle and equals the figure.", ["internalAreaEquality"]),
     replaySteps: [
-      step("figure", "Let a rectilinear figure and angle be given."),
-      step("triangles", "Divide the figure into triangles."),
-      step("apply", "Apply to a line parallelograms equal to each triangle. [Prop. I.44]"),
-      step("combine", "Parallel rules combine them into one parallelogram. [Prop. I.30, I.34]"),
-      step("conclude", "The final parallelogram equals the whole rectilinear figure."),
+      step("diagonal", "Draw DB, splitting rectilinear figure ABCD into triangles ABD and DBC."),
+      step("first", "Construct parallelogram FKHG equal to triangle ABD in the given angle E. [Prop. I.42]"),
+      step("second", "Apply parallelogram GMLH to side GH, equal to triangle DBC and in the same angle E. [Prop. I.44]"),
+      step("straight", "Angle equalities with the common angle KHG force K, H, and M into one straight line. [Prop. I.14]"),
+      step("other-straight", "Parallel angle relations likewise force F, G, and L into one straight line. [Prop. I.14, I.29]"),
+      step("parallelogram", "The outside connectors are equal and parallel, so KFLM is one parallelogram. [Prop. I.33]"),
+      step("area", "Since its two parts equal triangles ABD and DBC, the whole parallelogram KFLM equals rectilinear figure ABCD."),
+      step("conclude", "And since angle FKM equals the given angle E, the required parallelogram has been constructed."),
     ],
   },
   {
@@ -949,21 +1367,22 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "construction",
     dependencies: deps(45, ["I.11", "I.31", "I.34"]),
     unlocks: ["unlock-I.46-build-square"],
-    allowedTools: [...primitives, "theorem-perpendicular-on-line", "theorem-parallel", "theorem-square"],
+    allowedTools: [...primitives, "theorem-drop-perpendicular", "theorem-parallel"],
     instruction: "Erect a perpendicular, transfer the side length, and draw parallels to close the square.",
     constructionGuide: [
-      guide("perpendicular", "Erect a perpendicular at one endpoint. [Prop. I.11]", "theorem-perpendicular-on-line"),
-      guide("length", "Set the compass width to the base and mark the adjacent side. [Prop. I.2]", "compass-transfer"),
+      guide("perpendicular", "Use the Perpendicular Tool at one endpoint.", "theorem-drop-perpendicular"),
+      guide("length", "Copy the base length onto the adjacent side. [Prop. I.2]", "compass-transfer"),
       guide("parallel", "Draw parallels to close the square. [Prop. I.31]", "theorem-parallel"),
     ],
     validationGoal: validationGoal("constructSquareOnSegment", "Confirm four equal sides and right angles on the given side.", ["isSquare", "rightAngles"]),
     replaySteps: [
       step("given", "Let AB be the given straight-line.", ["segmentAB"]),
-      step("perpendicular", "Draw a perpendicular at A. [Prop. I.11]"),
-      step("equal-side", "Set off AD equal to AB. [Prop. I.2]"),
-      step("parallels", "Draw parallels through B and D. [Prop. I.31]"),
-      step("parallelogram", "Parallelogram properties make opposite sides equal and angles right. [Prop. I.34]"),
-      step("conclude", "Thus a square has been described on AB."),
+      step("perpendicular", "Draw AC perpendicular to AB at A. [Prop. I.11]", ["segmentAB", "pointA"]),
+      step("equal-side", "Copy AB onto ray AC to place D, so AD equals AB. [Prop. I.2-I.3]"),
+      step("parallels", "Draw DE parallel to AB and BE parallel to AD; let them meet at E. [Prop. I.31]"),
+      step("parallelogram", "ADEB is a parallelogram, so opposite sides are equal. [Prop. I.34]"),
+      step("right", "The angle at A is right, and the parallel angle sums make the remaining angles right."),
+      step("conclude", "All four sides are equal and all angles are right; therefore ADEB is a square on AB."),
     ],
   },
   {
@@ -974,18 +1393,19 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "pythagorean-theorem",
     dependencies: deps(46, ["I.14", "I.31", "I.41"]),
     unlocks: ["unlock-I.47-pythagorean"],
-    allowedTools: [...primitives, "theorem-square"],
+    allowedTools: [...primitives, "theorem-square", "theorem-parallel", "theorem-sas"],
     instruction: "Build the three squares and replay Euclid's area decomposition.",
     constructionGuide: [guide("squares", "Construct squares on all three sides. [Prop. I.46]", "theorem-square")],
     validationGoal: validationGoal("pythagoreanTheorem", "Infer the hypotenuse square equals the sum of the two leg squares.", ["internalAreaEquality"]),
     replaySteps: [
-      step("right-triangle", "Let ABC be a right-angled triangle.", ["segmentAB", "segmentAC", "segmentBC"]),
-      step("squares", "Construct squares on all three sides. [Prop. I.46]"),
-      step("auxiliary", "Draw the auxiliary lines used by Euclid's diagram."),
-      step("first-area", "One rectangle in the hypotenuse square equals one leg square. [Prop. I.41]"),
-      step("second-area", "The other rectangle equals the other leg square. [Prop. I.41]"),
-      step("add", "Add the equal areas. [C.N. 2]"),
-      step("conclude", "The square on the hypotenuse equals the squares on the legs."),
+      step("squares", "Construct square BDEC on hypotenuse BC, square GBHF on leg BA, and square ACKH on leg AC. [Prop. I.46]"),
+      step("auxiliary", "Draw AL parallel to BD and CE, then draw AD, FC, AE, and BK."),
+      step("first-sas", "FB equals BA, BC equals BD, and angle FBC equals ABD; therefore triangles FBC and ABD match by SAS. [Prop. I.4]"),
+      step("first-area", "The square on BA is double triangle FBC, and parallelogram BL is double triangle ABD; doubles of equal triangles are equal."),
+      step("second-sas", "Similarly, triangles ACE and BCK match by SAS."),
+      step("second-area", "Therefore the square on AC equals parallelogram CL."),
+      step("add", "Parallelograms BL and CL together make the whole square BDEC on BC."),
+      step("conclude", "Thus the square on BC equals the squares on BA and AC."),
     ],
   },
   {
@@ -996,24 +1416,25 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "converse-theorem",
     dependencies: deps(47, ["I.8", "I.11"]),
     unlocks: ["unlock-I.48-converse-pythagorean"],
-    allowedTools: [...primitives, "theorem-perpendicular-on-line", "compass-transfer"],
+    allowedTools: [...primitives, "theorem-drop-perpendicular", "compass-transfer", "theorem-sss"],
     instruction: "Replay the comparison with a constructed right triangle.",
-    constructionGuide: [guide("right", "Construct a comparison right triangle with matching legs. [Prop. I.11, I.3]", "theorem-perpendicular-on-line")],
+    constructionGuide: [guide("right", "Construct a comparison right triangle with matching legs.", "theorem-drop-perpendicular")],
     validationGoal: validationGoal("conversePythagoreanTheorem", "Infer a right angle from the square-area relation.", ["internalAreaEquality", "rightAngle"]),
     replaySteps: [
-      step("given", "Let the square on one side equal the squares on the other two sides."),
-      step("construct-right", "Construct a right triangle with the two smaller sides. [Prop. I.11, I.3]"),
-      step("pythagorean", "By I.47, its hypotenuse square equals the same sum."),
-      step("equal-hypotenuse", "Thus the two hypotenuse squares, and therefore the sides, are equal."),
-      step("sss", "SSS matches the original triangle to the right triangle. [Prop. I.8]"),
-      step("conclude", "Therefore the original contained angle is right. Book I is complete."),
+      step("construct-right", "Construct AD perpendicular to AC at A, copy BA onto AD, and join DC. [Prop. I.11, I.3, Post. 1]"),
+      step("right", "Angle DAC is a right angle, and AD equals BA by construction."),
+      step("pythagorean", "Since triangle DAC is right-angled, square DC equals square DA plus square AC. [Prop. I.47]"),
+      step("given-sum", "But square BC is given equal to square BA plus square AC, and square DA equals square BA."),
+      step("equal-hypotenuse", "Therefore square DC equals square BC, so DC equals BC."),
+      step("sss", "With AD equal BA, AC common, and DC equal BC, triangles DAC and BAC match by SSS. [Prop. I.8]"),
+      step("conclude", "Thus angle DAC equals angle BAC; since DAC is right, BAC is right too."),
     ],
   },
 ];
 
 export const book1Unlocks11To48: Unlock[] = [
-  { id: "unlock-I.11-perpendicular-on-line", propositionId: "I.11", unlockType: "theorem-action", name: "Draw Perpendicular on Line", functionName: "drawPerpendicularFromPointOnLine", visibleToPlayer: true, dependsOn: ["I.11"], description: "Construct a perpendicular to a line from a point on it.", futureUses: ["I.12", "I.46", "I.47"], source: "Euclid I.11" },
-  { id: "unlock-I.12-drop-perpendicular", propositionId: "I.12", unlockType: "theorem-action", name: "Drop Perpendicular", functionName: "dropPerpendicularFromPointToLine", visibleToPlayer: true, dependsOn: ["I.12"], description: "Construct a perpendicular from an external point to a line.", futureUses: ["I.46", "I.47"], source: "Euclid I.12" },
+  { id: "unlock-I.11-perpendicular-on-line", propositionId: "I.11", unlockType: "theorem-action", name: "Perpendicular from Point on Line", functionName: "drawPerpendicularFromPointOnLine", visibleToPlayer: false, dependsOn: ["I.11"], description: "Prop. I.11 is a completed level, not a separate player-facing tool.", futureUses: [], source: "Euclid I.11" },
+  { id: "unlock-I.12-drop-perpendicular", propositionId: "I.12", unlockType: "theorem-action", name: "Perpendicular Tool", functionName: "dropPerpendicularFromPointToLine", visibleToPlayer: true, dependsOn: ["I.12"], description: "Construct a perpendicular from a point to a line.", futureUses: ["I.46", "I.47"], source: "Euclid I.12" },
   { id: "unlock-I.13-straight-angle-sum", propositionId: "I.13", unlockType: "logic-rule", name: "Straight-Line Angle Sum", functionName: "adjacentAnglesOnStraightLineSumTwoRightAngles", visibleToPlayer: true, dependsOn: ["I.13"], description: "Adjacent angles on a straight-line equal two right angles.", futureUses: ["I.14", "I.17", "I.29", "I.32"], source: "Euclid I.13" },
   { id: "unlock-I.14-recognize-straight-line", propositionId: "I.14", unlockType: "logic-rule", name: "Recognize Straight Line", functionName: "anglesSumTwoRightAnglesImplyStraightLine", visibleToPlayer: true, dependsOn: ["I.14"], description: "Recognize when adjacent angles force two rays into one straight-line.", futureUses: ["I.15", "I.29", "I.47"], source: "Euclid I.14" },
   { id: "unlock-I.15-vertical-angles", propositionId: "I.15", unlockType: "logic-rule", name: "Vertical Angles Equal", functionName: "verticalAnglesEqual", visibleToPlayer: true, dependsOn: ["I.15"], description: "Opposite angles made by crossing lines are equal.", futureUses: ["I.16", "I.28"], source: "Euclid I.15" },

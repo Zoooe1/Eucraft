@@ -16,13 +16,13 @@ export function LogicReplayPanel() {
   const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
-    if (phase === "logicReplay") {
+    if (phase === "readingReplay" || phase === "logicReplay") {
       setIsPlaying(true);
     }
   }, [phase, currentPropositionId]);
 
   useEffect(() => {
-    if (phase !== "logicReplay" || !isPlaying) {
+    if ((phase !== "readingReplay" && phase !== "logicReplay") || !isPlaying) {
       return;
     }
 
@@ -38,20 +38,7 @@ export function LogicReplayPanel() {
     return () => window.clearTimeout(timeout);
   }, [phase, currentReplayStep, isPlaying, isLastStep, nextReplayStep, finishReplay]);
 
-  if (phase === "success") {
-    return (
-      <section className="logic-panel logic-ready">
-        <p className="panel-label">Logic Replay unlocked</p>
-        <h2>You built it. Now watch why it must be true.</h2>
-        <p>The proof will use the actual objects in your construction.</p>
-        <button className="primary-button" type="button" onClick={startLogicReplay}>
-          Reveal Logic
-        </button>
-      </section>
-    );
-  }
-
-  if (phase !== "logicReplay") {
+  if (phase !== "readingReplay" && phase !== "logicReplay") {
     return null;
   }
 
@@ -77,9 +64,7 @@ export function LogicReplayPanel() {
     <section className="logic-panel">
       <div className="proof-meta">
         <span>Logic Replay</span>
-        <span>
-          {isPlaying ? "Auto-play" : "Paused"} · {currentReplayStep + 1} / {proposition.replaySteps.length}
-        </span>
+        <span>{currentReplayStep + 1} / {proposition.replaySteps.length}</span>
       </div>
       <p className="proof-text">{step.text}</p>
       <div className="proof-progress" aria-hidden="true">

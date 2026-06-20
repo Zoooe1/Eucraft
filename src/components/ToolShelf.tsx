@@ -1,9 +1,12 @@
 import { useMemo } from "react";
+import {
+  historicalUnlockIdsForProposition,
+  theoremActionUnlocksForProposition,
+} from "../euclid/gameplayRegistry";
 import { unlocks } from "../euclid/unlocks";
 import type { GeometryTool, Unlock } from "../geometry/types";
 import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
-import { useUnlockStore } from "../state/useUnlockStore";
 import { ToolIcon } from "./tools/ToolIcon";
 
 const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHint: string }> = {
@@ -12,15 +15,20 @@ const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHin
     mark: "•",
     fallbackHint: "Create a point, or select an existing nearby point.",
   },
+  "primitive-arrange-triangle": {
+    tool: "arrange-triangle",
+    mark: "△",
+    fallbackHint: "Move or rotate a rigid triangle until it coincides with another triangle.",
+  },
   "primitive-straightedge": {
     tool: "straightedge",
     mark: "╱",
-    fallbackHint: "Draw a straight-line segment between points.",
+    fallbackHint: "Draw a full straight line through two points.",
   },
   "primitive-extend-line": {
     tool: "extend",
     mark: "↗",
-    fallbackHint: "Produce an existing segment in a straight line.",
+    fallbackHint: "Produce a straight line continuously through a point.",
   },
   "primitive-compass": {
     tool: "compass",
@@ -37,9 +45,11 @@ const toolConfig: Record<string, { tool: GeometryTool; mark: string; fallbackHin
 const theoremActionTools: Record<string, GeometryTool> = {
   constructEquilateralTriangleOnSegment: "theorem-equilateral",
   createCircleWithTransferredRadius: "compass-transfer",
+  cutOffEqualSegment: "compass-transfer",
+  applySASCongruence: "theorem-sas",
+  applySSSCongruence: "theorem-sss",
   bisectAngle: "theorem-bisect-angle",
   bisectSegment: "theorem-bisect-segment",
-  drawPerpendicularFromPointOnLine: "theorem-perpendicular-on-line",
   dropPerpendicularFromPointToLine: "theorem-drop-perpendicular",
   constructTriangleFromThreeSegments: "theorem-triangle-sss",
   copyAngleToLine: "theorem-copy-angle",
@@ -50,77 +60,73 @@ const theoremActionTools: Record<string, GeometryTool> = {
   constructSquareOnSegment: "theorem-square",
 };
 
-function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTransferSource: boolean) {
+function toolBrief(tool: GeometryTool, propositionId: string) {
   if (tool === "point") {
-    return "Click anywhere to place a point; nearby points and intersections snap first.";
+    return "Point: create or select a point.";
   }
 
-  if (tool === "compass" && selectedCount === 1) {
-    return "Choose a radius point, or click freely to create one.";
+  if (tool === "straightedge") {
+    return "Straightedge: draw a straight line through two points.";
   }
 
-  if (tool === "straightedge" && selectedCount === 1) {
-    return "Choose another point, or click freely to create one.";
+  if (tool === "extend") {
+    return "Extend: produce a line beyond a chosen point.";
   }
 
-  if (tool === "extend" && selectedCount === 1) {
-    return "Choose the point the extension passes through.";
+  if (tool === "compass") {
+    return "Compass: draw a circle from a center and radius.";
   }
 
   if (tool === "intersection") {
-    return "Move near a crossing, then click when the gold snap dot appears.";
+    return "Intersection: mark where constructed objects meet.";
+  }
+
+  if (tool === "arrange-triangle") {
+    return "Arrange: move or rotate a rigid triangle.";
   }
 
   if (tool === "compass-transfer") {
-    if (hasCompassTransferSource) {
-      return "Choose the center point for the transferred-width circle.";
-    }
-
-    if (selectedCount === 1) {
-      return "Choose the second point of the source length.";
-    }
-
-    return "Choose a source segment, or choose two points for the compass width.";
+    return "Copy Length: choose a source length, a start point, then a target line or ray.";
   }
 
   if (tool === "theorem-equilateral") {
-    return "Choose a segment. The earned I.1 action will build an equilateral triangle on it.";
+    return "Equilateral: click a segment, or drag endpoint to endpoint and pull to a side.";
+  }
+
+  if (tool === "theorem-sas") {
+    return "SAS: click side, included vertex, side, then the matching parts.";
+  }
+
+  if (tool === "theorem-sss") {
+    return "SSS: click three sides, then the matching three sides.";
   }
 
   if (tool === "theorem-bisect-angle") {
-    if (selectedCount === 0) {
-      return "Choose the angle vertex.";
-    }
-
-    if (selectedCount === 1) {
-      return "Choose a point on one side of the angle.";
-    }
-
-    return "Choose a point on the other side to draw the bisector.";
+    return "Bisect Angle: divide an angle into two equal angles.";
   }
 
   if (tool === "theorem-bisect-segment") {
-    return "Choose a segment. The earned I.10 action will mark its midpoint.";
-  }
-
-  if (tool === "theorem-perpendicular-on-line") {
-    return "Click a point on a segment to raise a perpendicular from that point.";
+    return "Bisect Segment: mark the midpoint of a segment.";
   }
 
   if (tool === "theorem-drop-perpendicular") {
-    return selectedCount === 0 ? "Choose the external point." : "Choose the line to receive the perpendicular.";
+    if (propositionId === "I.13") {
+      return "Perpendicular: click B on CD, then another point on CD.";
+    }
+
+    return "Perpendicular: click the outside point, then a point on the line.";
   }
 
   if (tool === "theorem-triangle-sss") {
-    return "Choose a base segment. The I.22 action previews a triangle from available side lengths.";
+    return "Triangle SSS: build a triangle from three lengths.";
   }
 
   if (tool === "theorem-copy-angle") {
-    return "Choose a target point; the I.23 action previews a copied angle ray.";
+    return "Copy Angle: place an equal angle on a new line.";
   }
 
   if (tool === "theorem-parallel") {
-    return selectedCount === 0 ? "Choose the point the parallel should pass through." : "Choose the line to copy.";
+    return "Parallel: draw a line parallel to a given line.";
   }
 
   if (
@@ -128,14 +134,14 @@ function toolInstruction(tool: GeometryTool, selectedCount: number, hasCompassTr
     tool === "theorem-parallelogram-line" ||
     tool === "theorem-parallelogram-figure"
   ) {
-    return "Choose a base segment to preview the earned parallelogram construction.";
+    return "Area: construct an equal parallelogram.";
   }
 
   if (tool === "theorem-square") {
-    return "Choose a segment. The I.46 action will construct a square on it.";
+    return "Square: construct a square on a segment.";
   }
 
-  return "Euclid begins from given points, constructed points, and intersections.";
+  return "Select a tool.";
 }
 
 function TheoremActionButton({
@@ -159,14 +165,14 @@ function TheoremActionButton({
         title={unlock.description}
       >
         <ToolIcon tool={tool} />
-        <span className="sr-only">{unlock.source} {unlock.name}</span>
+        <span className="sr-only">{unlock.name}</span>
       </button>
     );
   }
 
   return (
     <button className="theorem-action-button" aria-label={unlock.name} type="button" title={unlock.description}>
-      <span className="sr-only">{unlock.source} {unlock.name}</span>
+      <span className="sr-only">{unlock.name}</span>
     </button>
   );
 }
@@ -174,71 +180,43 @@ function TheoremActionButton({
 export function ToolShelf() {
   const selectedTool = useGeometryStore((state) => state.selectedTool);
   const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
-  const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
-  const compassTransferSource = useGeometryStore((state) => state.compassTransferSource);
   const setTool = useGeometryStore((state) => state.setTool);
-  const checkConstruction = useGeometryStore((state) => state.checkConstruction);
   const undo = useGeometryStore((state) => state.undo);
   const resetProposition = useGeometryStore((state) => state.resetProposition);
   const history = useGeometryStore((state) => state.history);
-  const unlockedIds = useUnlockStore((state) => state.unlockedIds);
   const allowedTools = getProposition(currentPropositionId).allowedTools;
+  const historicalUnlockIds = useMemo(() => historicalUnlockIdsForProposition(currentPropositionId), [currentPropositionId]);
   const visibleTools = useMemo(
     () =>
       unlocks.filter(
         (unlock) => {
           const config = toolConfig[unlock.id];
           return (
-            Boolean(config && allowedTools.includes(config.tool)) &&
+            Boolean(config && (historicalUnlockIds.has(unlock.id) || allowedTools.includes(config.tool))) &&
             unlock.unlockType === "primitive-tool" &&
-            unlock.visibleToPlayer &&
-            unlockedIds.includes(unlock.id)
+            unlock.visibleToPlayer
           );
         },
       ),
-    [allowedTools, unlockedIds],
+    [allowedTools, historicalUnlockIds],
   );
   const theoremActions = useMemo(
     () =>
-      unlocks.filter(
-        (unlock) => {
+      [
+        ...theoremActionUnlocksForProposition(currentPropositionId),
+        ...unlocks.filter((unlock) => {
           const tool = theoremActionTools[unlock.functionName];
-          return (
-            Boolean(tool && allowedTools.includes(tool)) &&
-            unlock.unlockType === "theorem-action" &&
-            unlock.visibleToPlayer &&
-            unlockedIds.includes(unlock.id)
-          );
-        },
-      ),
-    [allowedTools, unlockedIds],
+          return Boolean(tool && allowedTools.includes(tool) && unlock.unlockType === "theorem-action" && unlock.visibleToPlayer);
+        }),
+      ].filter((unlock, index, list) => {
+        const tool = theoremActionTools[unlock.functionName];
+        return (
+          list.findIndex((candidate) => candidate.id === unlock.id) === index &&
+          (!tool || list.findIndex((candidate) => theoremActionTools[candidate.functionName] === tool) === index)
+        );
+      }),
+    [allowedTools, currentPropositionId],
   );
-  const logicRules = useMemo(
-    () =>
-      unlocks.filter(
-        (unlock) =>
-          unlock.unlockType === "logic-rule" &&
-          unlock.propositionId &&
-          unlock.visibleToPlayer &&
-          unlockedIds.includes(unlock.id),
-      ),
-    [unlockedIds],
-  );
-  const reasoningRules = useMemo(
-    () =>
-      unlocks.filter(
-        (unlock) =>
-          (unlock.unlockType === "logic-rule" ||
-            unlock.unlockType === "parallel-rule" ||
-            unlock.unlockType === "area-rule" ||
-            unlock.unlockType === "constraint-rule") &&
-          unlock.propositionId &&
-          unlock.visibleToPlayer &&
-          unlockedIds.includes(unlock.id),
-      ),
-    [unlockedIds],
-  );
-
   return (
     <section className="tool-panel" aria-label="Construction tools">
       <div>
@@ -268,8 +246,6 @@ export function ToolShelf() {
         </div>
       </div>
 
-      <p className="tool-instruction">{toolInstruction(selectedTool, selectedPointIds.length, Boolean(compassTransferSource))}</p>
-
       {theoremActions.length > 0 && (
         <div className="theorem-action-shelf">
           <div className="unlock-button-list">
@@ -280,19 +256,7 @@ export function ToolShelf() {
         </div>
       )}
 
-      {(logicRules.length > 0 || reasoningRules.length > 0) && (
-        <div className="reasoning-library">
-          <p className="panel-label">Reasoning Library</p>
-          <ul>
-            {[...logicRules, ...reasoningRules.filter((unlock) => !logicRules.some((rule) => rule.id === unlock.id))].map((unlock) => (
-              <li key={unlock.id}>
-                <strong>{unlock.name}</strong>
-                <span>{unlock.source}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <p className="tool-instruction">{toolBrief(selectedTool, currentPropositionId)}</p>
 
       <div className="action-row">
         <button className="quiet-button" type="button" onClick={undo} disabled={history.length === 0}>
@@ -303,9 +267,6 @@ export function ToolShelf() {
         </button>
       </div>
 
-      <button className="primary-button check-button" type="button" onClick={checkConstruction}>
-        Check Construction
-      </button>
     </section>
   );
 }

@@ -53,7 +53,7 @@ export const book1Prop2: Proposition = {
       source: "given",
     },
   ],
-  allowedTools: ["point", "straightedge", "extend", "compass", "intersection"],
+  allowedTools: ["point", "straightedge", "compass", "intersection"],
   pointLabelSequence: ["D", "G", "L", "E", "F", "H", "K", "M", "N", "O", "P", "Q", "R", "S", "T"],
   nextPropositionId: "I.3",
   lawSections: book1Prop1.lawSections,

@@ -10,7 +10,7 @@ export const book1Prop3: Proposition = {
   subtitle: "Build the Elements",
   playerGoal: "Cut off from the greater straight-line AB a part equal to the lesser straight-line CD.",
   originalStatement: "For two given unequal straight-lines, to cut off from the greater a straight-line equal to the lesser.",
-  instruction: "Set the compass width to CD, draw from center A, then cut that length from AB.",
+  instruction: "Use Copy Length: take CD as the source length, start at A, and place E on AB so AE = CD.",
   initialObjects: [
     {
       id: "A",
@@ -73,7 +73,7 @@ export const book1Prop3: Proposition = {
       source: "given",
     },
   ],
-  allowedTools: ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"],
+  allowedTools: ["point", "straightedge", "compass", "compass-transfer", "intersection"],
   pointLabelSequence: ["P", "E", "F", "G", "H", "K", "L", "M", "N", "O", "Q", "R", "S", "T"],
   nextPropositionId: "I.4",
   lawSections: book1Prop1.lawSections,
@@ -86,22 +86,22 @@ export const book1Prop3: Proposition = {
     {
       id: "place-copy",
       highlight: ["segmentCD", "pointA"],
-      text: "Set the compass width to CD; this transfer is justified by Proposition I.2.",
+      text: "Use Copy Length with CD as the source length and A as the target start point.",
     },
     {
       id: "circle",
-      highlight: ["circleA", "segmentCD", "pointA"],
-      text: "Draw a circle with center A using that same width. [Post. 3]",
+      highlight: ["segmentAB", "segmentCD", "pointA"],
+      text: "Choose AB as the target line for the copied length.",
     },
     {
       id: "cut",
-      highlight: ["circleA", "segmentAB", "pointE"],
-      text: "Let E be where the circle cuts the greater straight-line AB.",
+      highlight: ["segmentAB", "pointE"],
+      text: "Let E be the point placed on the greater straight-line AB.",
     },
     {
       id: "radius",
-      highlight: ["circleA", "segmentAE", "segmentCD", "pointA", "pointE"],
-      text: "Every point on this circle is distance CD from A; hence AE = CD. [Def. 1.15, I.2]",
+      highlight: ["segmentAE", "segmentCD", "pointA", "pointE"],
+      text: "Copy Length places E so that AE = CD. [Prop. I.2-I.3]",
     },
     {
       id: "common-notion",

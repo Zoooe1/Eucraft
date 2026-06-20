@@ -10,14 +10,14 @@ export function EucraftLanding() {
       <FootprintTrail />
 
       <div className="landing-title-block">
-        <h1>Eucraft</h1>
-        <p>The First Game of Euclid&apos;s Elements of Geometry</p>
+        <h1 className="landing-title">Eucraft</h1>
+        <p className="landing-subtitle">The First Game of Euclid&apos;s Elements of Geometry</p>
         <div className="landing-actions" aria-label="Landing actions">
-          <button type="button" onClick={startApp}>
+          <button className="landing-button" type="button" onClick={startApp}>
             Begin
           </button>
-          <button type="button" onClick={startTutorial}>
-            Tutorial
+          <button className="landing-button" type="button" onClick={startTutorial}>
+            Laws of the World
           </button>
         </div>
       </div>

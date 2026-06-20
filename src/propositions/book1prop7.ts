@@ -8,29 +8,56 @@ export const book1Prop7: Proposition = {
   number: 7,
   title: "Unique Point from Two Distances",
   subtitle: "Build the Elements",
-  playerGoal: "Join the two supposed apex points and watch Euclid rule out the duplicate configuration.",
+  playerGoal: "Build the hypothetical duplicate-vertex structure and watch Euclid rule it out.",
   originalStatement:
     "On the same straight-line, two other straight-lines equal, respectively, to two given straight-lines cannot be constructed meeting at a different point on the same side, but having the same ends.",
-  instruction: "Use the straightedge to join C and D. The replay tests this impossible same-side assumption.",
+  instruction: "Place C and D on the same side of AB, join both to A and B, then join CD.",
+  type: "theorem",
+  challengeType: "derive",
+  userTask:
+    "Freely build the impossible same-side duplicate, then name the contradiction.",
   initialObjects: [
     { id: "A", type: "point", x: 260, y: 430, label: "A", fixed: true, createdBy: "given", color: "red" },
     { id: "B", type: "point", x: 620, y: 430, label: "B", fixed: true, createdBy: "given", color: "blue" },
-    { id: "C", type: "point", x: 420, y: 190, label: "C", fixed: true, createdBy: "given", color: "gold" },
-    { id: "D", type: "point", x: 500, y: 250, label: "D", fixed: true, createdBy: "given", color: "gold" },
-    { id: "AC", type: "segment", p1: "A", p2: "C", label: "AC", color: "red", given: true, source: "given" },
-    { id: "BC", type: "segment", p1: "B", p2: "C", label: "BC", color: "blue", given: true, source: "given" },
-    { id: "AD", type: "segment", p1: "A", p2: "D", label: "AD", color: "red", given: true, source: "given" },
-    { id: "BD", type: "segment", p1: "B", p2: "D", label: "BD", color: "blue", given: true, source: "given" },
+    { id: "AB-line", type: "segment", p1: "A", p2: "B", label: "AB", color: "black", source: "given", createdBy: "given" },
   ],
-  allowedTools: ["point", "straightedge"],
-  pointLabelSequence: ["E", "F", "G", "H", "K", "L"],
+  allowedTools: [
+    "point",
+    "straightedge",
+    "extend",
+    "compass",
+    "compass-transfer",
+    "intersection",
+    "theorem-equilateral",
+    "theorem-sas",
+  ],
+  requiredUserActions: [
+    {
+      id: "prop7-no-such-d",
+      actionType: "compare-objects",
+      description: "State that no second same-side point D can have AC = AD and BC = BD.",
+    },
+  ],
+  validationGoal: {
+    id: "validateDuplicateVertexContradiction",
+    description: "Build C and D on the same side of AB, connect all required segments, and state that the duplicate point cannot exist.",
+    minimumUserActions: ["prop7-no-such-d"],
+    hiddenConstraints: ["sameSideOfAB", "hypotheticalDuplicate", "notMetricEquality"],
+  },
+  pointLabelSequence: ["C", "D", "E", "F", "G", "H", "K", "L"],
   nextPropositionId: "I.8",
   lawSections: book1Prop1.lawSections,
   replaySteps: [
     {
       id: "assumption",
       highlight: ["segmentAC", "segmentAD", "segmentBC", "segmentBD", "pointC", "pointD"],
-      text: "Assume C and D are two different same-side points with AC = AD and BC = BD.",
+      highlightStyles: [
+        { target: "segmentAC", color: "red" },
+        { target: "segmentAD", color: "red" },
+        { target: "segmentBC", color: "blue" },
+        { target: "segmentBD", color: "blue" },
+      ],
+      text: "If possible, let C and D be different points on the same side of AB, with AC = AD and BC = BD.",
     },
     {
       id: "join",
@@ -40,22 +67,55 @@ export const book1Prop7: Proposition = {
     {
       id: "first-isosceles",
       highlight: ["segmentAC", "segmentAD", "segmentCD"],
-      text: "Since AC = AD, I.5 gives equal angles in triangle ACD.",
+      highlightStyles: [
+        { target: "segmentAC", color: "red" },
+        { target: "segmentAD", color: "red" },
+        { target: "segmentCD", color: "gold" },
+      ],
+      angleHighlights: [
+        { points: ["A", "C", "D"], color: "gold", amplifyVertex: true },
+        { points: ["C", "D", "A"], color: "gold", amplifyVertex: true },
+      ],
+      text: "Since AC = AD, angle ACD is equal to angle ADC. [Prop. I.5]",
     },
     {
       id: "greater-angle",
       highlight: ["segmentBC", "segmentBD", "segmentCD"],
-      text: "The angle at D is then greater than the angle at C.",
+      highlightStyles: [
+        { target: "segmentBC", color: "blue" },
+        { target: "segmentBD", color: "blue" },
+        { target: "segmentCD", color: "gold" },
+      ],
+      angleHighlights: [
+        { points: ["C", "D", "B"], color: "rose", amplifyVertex: true, radius: 52 },
+        { points: ["D", "C", "B"], color: "violet", amplifyVertex: true, radius: 34 },
+      ],
+      text: "But angle ADC is a whole angle, so it is greater than the part angle DCB. Hence CDB is much greater than DCB. [C.N. 5]",
     },
     {
       id: "second-isosceles",
       highlight: ["segmentBC", "segmentBD", "segmentCD"],
-      text: "But BC = BD also makes those same angles equal by I.5.",
+      highlightStyles: [
+        { target: "segmentBC", color: "blue" },
+        { target: "segmentBD", color: "blue" },
+        { target: "segmentCD", color: "gold" },
+      ],
+      angleHighlights: [
+        { points: ["B", "C", "D"], color: "green", amplifyVertex: true },
+        { points: ["C", "D", "B"], color: "green", amplifyVertex: true },
+      ],
+      text: "Again, since BC = BD, angle BCD is equal to angle CDB. [Prop. I.5]",
     },
     {
       id: "conclusion",
       highlight: ["segmentAC", "segmentAD", "segmentBC", "segmentBD"],
-      text: "The same angle cannot be both greater and equal. So the second same-side point cannot exist.",
+      highlightStyles: [
+        { target: "segmentAC", color: "red" },
+        { target: "segmentAD", color: "red" },
+        { target: "segmentBC", color: "blue" },
+        { target: "segmentBD", color: "blue" },
+      ],
+      text: "The same angle was shown both much greater than and equal to the other. That is impossible, so the second same-side point cannot exist.",
     },
   ],
 };

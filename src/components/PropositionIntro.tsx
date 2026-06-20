@@ -8,11 +8,10 @@ export function PropositionIntro() {
 
   return (
     <section className="intro-panel">
-      <p className="prop-label">Prop {proposition.id}</p>
-      <h1>{proposition.title}</h1>
-      <p className="sidebar-prompt">Prompt: {proposition.playerGoal}</p>
+      <p className="prop-label proposition-label">Prop {proposition.id}</p>
+      <h1 className="proposition-title">{proposition.title}</h1>
+      <p className="sidebar-prompt">{proposition.originalStatement.replace(/^To\s+/i, "")}</p>
       <blockquote>{proposition.originalStatement}</blockquote>
-      <p>{proposition.instruction}</p>
       <button className="primary-button large-command" type="button" onClick={startConstruction}>
         Start Construction
       </button>

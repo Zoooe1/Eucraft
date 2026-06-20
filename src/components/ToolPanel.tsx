@@ -10,12 +10,7 @@ const toolLabels: Partial<Record<GeometryTool, { label: string; mark: string; hi
   straightedge: {
     label: "Straightedge",
     mark: "╱",
-    hint: "Drag between points, or drag through a point to produce a straight-line.",
-  },
-  extend: {
-    label: "Extend",
-    mark: "↗",
-    hint: "Produce an existing finite straight-line.",
+    hint: "Draw a full straight line through two points.",
   },
   compass: {
     label: "Compass",
@@ -23,9 +18,9 @@ const toolLabels: Partial<Record<GeometryTool, { label: string; mark: string; hi
     hint: "Draw a circle from a center to a radius point.",
   },
   "compass-transfer": {
-    label: "Set Width",
+    label: "Copy Length",
     mark: "◌",
-    hint: "Choose a source segment or two points, then choose a center.",
+    hint: "Choose a source length, a start point, then a target line or ray.",
   },
   intersection: {
     label: "Intersection",
@@ -35,7 +30,7 @@ const toolLabels: Partial<Record<GeometryTool, { label: string; mark: string; hi
   "theorem-equilateral": {
     label: "Equilateral",
     mark: "△",
-    hint: "Choose a segment to build an equilateral triangle on it.",
+    hint: "Choose a segment, or drag endpoint to endpoint and pull to a side.",
   },
   "theorem-bisect-angle": {
     label: "Bisect Angle",
@@ -55,7 +50,7 @@ const fallbackToolLabel = {
   hint: "Use the active theorem-action on the construction page.",
 };
 
-const toolOrder: GeometryTool[] = ["point", "straightedge", "extend", "compass", "compass-transfer", "intersection"];
+const toolOrder: GeometryTool[] = ["point", "straightedge", "compass", "compass-transfer", "intersection"];
 
 function toolInstruction(tool: GeometryTool, selectedCount: number) {
   if (tool === "compass" && selectedCount === 1) {
@@ -63,15 +58,11 @@ function toolInstruction(tool: GeometryTool, selectedCount: number) {
   }
 
   if (tool === "compass-transfer") {
-    return selectedCount === 1 ? "Choose the second point of the source length." : toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
+    return selectedCount === 1 ? "Choose the next point for Copy Length." : toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
   }
 
   if (tool === "straightedge" && selectedCount === 1) {
-    return "Choose another point, or drag through a point to produce the line.";
-  }
-
-  if (tool === "extend" && selectedCount === 1) {
-    return "Choose the point the extension passes through.";
+    return "Choose another point; the line continues both ways.";
   }
 
   return toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
@@ -81,7 +72,6 @@ export function ToolPanel() {
   const selectedTool = useGeometryStore((state) => state.selectedTool);
   const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
   const setTool = useGeometryStore((state) => state.setTool);
-  const checkConstruction = useGeometryStore((state) => state.checkConstruction);
   const undo = useGeometryStore((state) => state.undo);
   const resetProposition = useGeometryStore((state) => state.resetProposition);
   const history = useGeometryStore((state) => state.history);
@@ -117,9 +107,6 @@ export function ToolPanel() {
         </button>
       </div>
 
-      <button className="primary-button check-button" type="button" onClick={checkConstruction}>
-        Check Construction
-      </button>
     </section>
   );
 }

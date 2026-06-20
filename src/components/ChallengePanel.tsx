@@ -48,7 +48,7 @@ export function ChallengePanel() {
   const markChallengeAction = useGeometryStore((state) => state.markChallengeAction);
   const proposition = getProposition(propositionId);
 
-  if (!proposition.userTask || !proposition.requiredUserActions?.length) {
+  if (!proposition.userTask) {
     return null;
   }
 
@@ -68,23 +68,25 @@ export function ChallengePanel() {
       <p className="panel-label">Challenge</p>
       <p className="user-task">{proposition.userTask}</p>
 
-      <div className="challenge-actions">
-        {proposition.requiredUserActions.map((action) => {
-          const completed = completedActionIds.includes(action.id);
+      {proposition.requiredUserActions && proposition.requiredUserActions.length > 0 && (
+        <div className="challenge-actions">
+          {proposition.requiredUserActions.map((action) => {
+            const completed = completedActionIds.includes(action.id);
 
-          return (
-            <button
-              className={completed ? "challenge-action complete" : "challenge-action"}
-              key={action.id}
-              type="button"
-              onClick={() => markChallengeAction(action.id)}
-            >
-              <span>{completed ? "Done" : actionVerb(action)}</span>
-              {action.description}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                className={completed ? "challenge-action complete" : "challenge-action"}
+                key={action.id}
+                type="button"
+                onClick={() => markChallengeAction(action.id)}
+              >
+                <span>{completed ? "Done" : actionVerb(action)}</span>
+                {action.description}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

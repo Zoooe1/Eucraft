@@ -16,7 +16,10 @@
   --aqua: #50f2d8;
   --hairline: rgba(75, 31, 14, 0.28);
   --shadow: rgba(43, 15, 4, 0.28);
-  --font-display: Georgia, "Times New Roman", serif;
+  /* Permanent Eucraft title/display font.
+     Do not change unless explicitly requested. */
+  --font-eucraft-title: "IM Fell English SC", Georgia, serif;
+  --font-display: "IM Fell English SC", Luminari, "Apple Chancery", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
   --font-ui: "Avenir Next", "Trebuchet MS", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--ink);
   background: var(--paper);
@@ -612,8 +615,227 @@ blockquote {
   font-weight: 760;
 }
 
+.reasoning-rule-button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reasoning-rule-button.active strong {
+  color: #a33a32;
+}
+
+.reasoning-guide {
+  display: grid;
+  gap: 5px;
+  margin: 2px 0 8px;
+  padding-left: 1.1rem;
+  color: #4f473d;
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.reasoning-guide li {
+  display: list-item;
+  padding: 0;
+  border: 0;
+}
+
 .tool-instruction {
   min-height: 48px;
+}
+
+.tool-selection-progress {
+  margin: 0;
+  color: #7e1b15;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tool-walkthrough {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(45, 36, 24, 0.12);
+  border-bottom: 1px solid rgba(45, 36, 24, 0.12);
+  color: #4f473d;
+  font-family: var(--font-eucraft-title);
+  font-size: 0.82rem;
+  line-height: 1.38;
+}
+
+.tool-walkthrough-diagram {
+  width: 100%;
+  max-width: 230px;
+  justify-self: center;
+  color: #7e1b15;
+}
+
+.tool-walkthrough-diagram text {
+  fill: #4f3318;
+  font-family: var(--font-eucraft-title);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.coachmark-line,
+.coachmark-circle,
+.coachmark-angle {
+  fill: none;
+  stroke: rgba(79, 71, 61, 0.42);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.coachmark-line {
+  stroke-width: 4;
+}
+
+.coachmark-line.source {
+  stroke: rgba(126, 27, 21, 0.48);
+}
+
+.coachmark-line.target {
+  stroke: rgba(21, 84, 154, 0.48);
+}
+
+.coachmark-circle {
+  stroke-width: 3;
+  stroke-dasharray: 6 5;
+}
+
+.coachmark-angle {
+  stroke-width: 5;
+}
+
+.coachmark-line.active,
+.coachmark-circle.active,
+.coachmark-angle.active {
+  stroke-width: 7;
+  filter: drop-shadow(0 0 5px rgba(185, 138, 45, 0.45));
+}
+
+.coachmark-tick {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.tool-walkthrough-diagram .sas-side-one {
+  color: #8e1410;
+  fill: #8e1410;
+  stroke: #8e1410;
+}
+
+.tool-walkthrough-diagram .sas-side-two {
+  color: #15549a;
+  fill: #15549a;
+  stroke: #15549a;
+}
+
+.tool-walkthrough-diagram .sas-angle {
+  color: #b98a2d;
+  fill: #b98a2d;
+  stroke: #b98a2d;
+}
+
+.tool-walkthrough-diagram .sas-base {
+  stroke: rgba(79, 71, 61, 0.38);
+}
+
+.coachmark-side-label {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.coachmark-caption {
+  fill: #4f3318;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.coachmark-side-label.active {
+  filter: drop-shadow(0 0 4px rgba(185, 138, 45, 0.48));
+  font-weight: 900;
+}
+
+.coachmark-point {
+  fill: #4f3318;
+  stroke: #f6ead6;
+  stroke-width: 1.5;
+}
+
+.coachmark-point.active {
+  fill: #b98a2d;
+  stroke: #7e1b15;
+  stroke-width: 3;
+}
+
+.tool-walkthrough-step {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.tool-walkthrough-step span {
+  color: #7e1b15;
+  font-family: var(--font-eucraft-title);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tool-walkthrough-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tool-walkthrough-heading strong {
+  color: #7e1b15;
+  font-family: var(--font-eucraft-title);
+  font-size: 0.98rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tool-walkthrough p {
+  margin: 0;
+}
+
+.tool-walkthrough-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-walkthrough-actions button {
+  padding: 0.32rem 0.55rem;
+  border: 1px solid rgba(126, 27, 21, 0.35);
+  border-radius: 0;
+  background: transparent;
+  color: #7e1b15;
+  cursor: pointer;
+  font-family: var(--font-eucraft-title);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tool-walkthrough-actions button:disabled {
+  opacity: 0.38;
+  cursor: default;
 }
 
 .action-row {
@@ -767,15 +989,15 @@ blockquote {
 .completion-seal circle,
 .completion-seal line,
 .completion-seal path {
-  stroke-dasharray: 260;
-  stroke-dashoffset: 260;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
   animation: ornamentDraw 1450ms ease forwards;
 }
 
 .completion-title {
   margin-top: 2px;
   color: #9d3f32;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-eucraft-title);
   font-size: 1.55rem;
   line-height: 1.1;
   text-align: center;
@@ -900,6 +1122,7 @@ blockquote {
 }
 
 .canvas-shell {
+  position: relative;
   display: grid;
   min-height: calc(100vh - 48px);
   overflow: hidden;
@@ -921,11 +1144,328 @@ blockquote {
   cursor: default;
 }
 
+.workspace-guide-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  background: rgba(54, 8, 2, 0.18);
+  pointer-events: auto;
+}
+
+.workspace-guide-card {
+  display: grid;
+  width: min(820px, 92%);
+  max-height: min(94%, 780px);
+  gap: clamp(0.75rem, 1.4vw, 1.1rem);
+  padding: clamp(1rem, 2.2vw, 1.55rem);
+  overflow: auto;
+  border: 1px solid rgba(126, 27, 21, 0.26);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 42% 20%, rgba(255, 252, 236, 0.72), transparent 18rem),
+    linear-gradient(108deg, rgba(255, 246, 218, 0.98), rgba(228, 198, 142, 0.96));
+  box-shadow:
+    inset 0 0 34px rgba(83, 37, 17, 0.1),
+    0 18px 42px rgba(44, 0, 0, 0.28);
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+}
+
+.workspace-guide-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(126, 27, 21, 0.2);
+  padding-bottom: 0.55rem;
+  font-family: var(--font-eucraft-title);
+}
+
+.workspace-guide-header p,
+.workspace-guide-header strong,
+.workspace-guide-step,
+.workspace-guide-actions button {
+  font-family: var(--font-eucraft-title);
+}
+
+.workspace-guide-header p {
+  margin: 0;
+  color: rgba(126, 27, 21, 0.72);
+  font-size: clamp(0.78rem, 1vw, 0.92rem);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.workspace-guide-header strong {
+  color: var(--eucraft-ink-red);
+  font-size: clamp(1.25rem, 2.3vw, 2rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workspace-guide-stage {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+}
+
+.workspace-guide-diagram {
+  width: min(100%, 760px);
+  height: auto;
+  color: var(--eucraft-ink-red);
+  overflow: visible;
+}
+
+.workspace-guide-diagram text {
+  fill: #4f3318;
+  font-family: var(--font-eucraft-title);
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-anchor: middle;
+}
+
+.workspace-guide-caption {
+  fill: var(--eucraft-ink-red);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspace-coach-line,
+.workspace-coach-circle,
+.workspace-coach-angle {
+  fill: none;
+  stroke: rgba(79, 71, 61, 0.42);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.workspace-coach-line {
+  stroke-width: 7;
+}
+
+.workspace-coach-circle {
+  stroke-width: 5;
+  stroke-dasharray: 12 10;
+}
+
+.workspace-coach-angle {
+  stroke-width: 9;
+}
+
+.workspace-coach-line.is-active,
+.workspace-coach-circle.is-active,
+.workspace-coach-angle.is-active,
+.workspace-guide-side-label.is-active,
+.workspace-coach-point.is-active,
+.workspace-coach-point-ring.is-active {
+  filter: drop-shadow(0 0 8px rgba(185, 138, 45, 0.58));
+}
+
+.workspace-coach-line.is-active,
+.workspace-coach-circle.is-active,
+.workspace-coach-angle.is-active {
+  stroke-width: 12;
+}
+
+.workspace-coach-point {
+  fill: #4f3318;
+  stroke: #f6ead6;
+  stroke-width: 3;
+}
+
+.workspace-coach-point-ring {
+  fill: rgba(184, 138, 45, 0.16);
+  stroke: rgba(185, 138, 45, 0.42);
+  stroke-width: 4;
+  opacity: 0.16;
+}
+
+.workspace-coach-point.is-active {
+  fill: #b98a2d;
+  stroke: var(--eucraft-ink-red);
+  stroke-width: 4;
+}
+
+.workspace-coach-point-ring.is-active {
+  opacity: 1;
+  stroke: #b98a2d;
+  stroke-width: 7;
+}
+
+.workspace-coach-tick {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.workspace-guide-side-label {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.workspace-guide-diagram .copy-source,
+.workspace-guide-diagram .sas-side-one {
+  color: #8e1410;
+  fill: #8e1410;
+  stroke: #8e1410;
+}
+
+.workspace-guide-diagram .copy-target,
+.workspace-guide-diagram .sas-side-two {
+  color: #15549a;
+  fill: #15549a;
+  stroke: #15549a;
+}
+
+.workspace-guide-diagram .sas-angle {
+  color: #b98a2d;
+  fill: #b98a2d;
+  stroke: #b98a2d;
+}
+
+.workspace-guide-diagram .sas-base,
+.workspace-guide-diagram .copy-base {
+  stroke: rgba(79, 71, 61, 0.38);
+}
+
+.workspace-guide-hotspot,
+.workspace-guide-hotspot-circle,
+.workspace-guide-hotspot-point {
+  fill: transparent;
+  stroke: transparent;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.workspace-guide-hotspot {
+  stroke-width: 42;
+}
+
+.workspace-guide-step {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  color: #5f2f18;
+  font-size: clamp(0.9rem, 1.25vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.42;
+}
+
+.workspace-guide-step span {
+  color: var(--eucraft-ink-red);
+  font-size: clamp(0.76rem, 0.96vw, 0.9rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workspace-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.workspace-guide-actions button {
+  min-height: 2.15rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid rgba(126, 27, 21, 0.42);
+  border-radius: 0;
+  background: rgba(255, 246, 218, 0.24);
+  color: var(--eucraft-ink-red);
+  cursor: pointer;
+  font-size: clamp(0.76rem, 0.96vw, 0.9rem);
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.workspace-guide-actions button:hover:not(:disabled),
+.workspace-guide-actions button:focus-visible {
+  background: rgba(126, 27, 21, 0.09);
+}
+
+.workspace-guide-actions button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.congruence-tool-guide {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(0.65rem, 1.6vw, 1.1rem);
+  z-index: 6;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: clamp(0.65rem, 1.2vw, 1rem);
+  width: min(42rem, calc(100% - 1.6rem));
+  padding: 0.58rem 0.68rem;
+  border: 1px solid rgba(126, 27, 21, 0.34);
+  background: rgba(255, 246, 218, 0.88);
+  box-shadow: 0 12px 28px rgba(44, 0, 0, 0.14);
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+
+.congruence-tool-guide p,
+.congruence-tool-guide strong {
+  margin: 0;
+}
+
+.congruence-tool-guide p,
+.congruence-tool-guide span,
+.congruence-tool-guide button {
+  font-size: clamp(0.62rem, 0.76vw, 0.72rem);
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.congruence-tool-guide strong {
+  display: block;
+  margin-top: 0.16rem;
+  font-size: clamp(0.76rem, 0.94vw, 0.9rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.24;
+  text-transform: uppercase;
+}
+
+.congruence-tool-guide button {
+  min-height: 2rem;
+  padding: 0.25rem 0.58rem;
+  border: 1px solid rgba(126, 27, 21, 0.42);
+  border-radius: 0;
+  background: rgba(255, 246, 218, 0.34);
+  color: var(--eucraft-ink-red);
+  cursor: pointer;
+}
+
+.congruence-tool-guide.error {
+  border-color: rgba(126, 27, 21, 0.58);
+  background: rgba(255, 237, 218, 0.94);
+}
+
+.congruence-tool-guide.success {
+  border-color: rgba(47, 115, 80, 0.5);
+}
+
 .svg-circle {
   opacity: 0.58;
 }
 
 .svg-segment,
+.svg-segment-extension,
 .svg-circle,
 .svg-extended-line {
   vector-effect: non-scaling-stroke;
@@ -936,6 +1476,7 @@ blockquote {
 }
 
 .svg-segment.draw-in,
+.svg-segment-extension.draw-in,
 .svg-circle.draw-in,
 .svg-extended-line.draw-in {
   stroke-dasharray: var(--draw-length) var(--draw-length);
@@ -944,26 +1485,30 @@ blockquote {
 }
 
 .svg-segment.replay-draw,
+.svg-segment-extension.replay-draw,
 .svg-circle.replay-draw,
 .svg-extended-line.replay-draw {
   stroke-dasharray: var(--draw-length) var(--draw-length);
   stroke-dashoffset: var(--draw-length);
-  animation:
-    drawStroke 760ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards,
-    proofGlow 1500ms ease-in-out forwards;
+  animation: drawStroke 760ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
 }
 
 .svg-segment.highlighted,
 .svg-circle.highlighted,
 .svg-extended-line.highlighted,
 .svg-point.highlighted {
-  filter: url("#soft-glow");
   opacity: 1;
 }
 
 .svg-extended-line {
   opacity: 0.7;
   stroke-dasharray: 12 8;
+}
+
+.svg-segment-extension {
+  stroke: rgba(69, 63, 55, 0.38);
+  stroke-width: 2.2;
+  opacity: 0.55;
 }
 
 .svg-segment-label {
@@ -975,7 +1520,8 @@ blockquote {
   text-anchor: middle;
 }
 
-.svg-point text {
+.svg-point text,
+.svg-point-label {
   fill: #2d2418;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 22px;
@@ -994,6 +1540,195 @@ blockquote {
   opacity: 0.46;
 }
 
+.triangle-arrangement-guide {
+  pointer-events: none;
+}
+
+.reasoning-relation-highlights {
+  pointer-events: none;
+}
+
+.congruence-selection-highlights {
+  pointer-events: none;
+}
+
+.given-equal-angle-marks {
+  pointer-events: none;
+}
+
+.given-equal-angle-mark {
+  fill: none;
+  stroke: rgba(185, 138, 45, 0.88);
+  stroke-linecap: round;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.replay-angle-highlights {
+  pointer-events: none;
+}
+
+.replay-angle-sector {
+  fill: color-mix(in srgb, var(--replay-angle-color) 18%, transparent);
+  stroke: none;
+}
+
+.replay-angle-arc,
+.replay-right-angle-square {
+  fill: none;
+  stroke: var(--replay-angle-color);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.replay-angle-arc {
+  animation: replayAngleTrace 520ms ease-out both;
+}
+
+.replay-right-angle-square {
+  animation: replayAngleTrace 520ms ease-out both;
+}
+
+.replay-angle-vertex {
+  fill: color-mix(in srgb, var(--replay-angle-color) 20%, #fff8e8);
+  stroke: var(--replay-angle-color);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.reasoning-triangle-highlight {
+  fill: rgba(185, 138, 45, 0.12);
+  stroke: rgba(126, 27, 21, 0.58);
+  stroke-dasharray: 11 8;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.reasoning-triangle-highlight.two {
+  fill: rgba(21, 84, 154, 0.1);
+  stroke: rgba(21, 84, 154, 0.5);
+}
+
+.congruence-selection-highlight {
+  fill: rgba(185, 138, 45, 0.16);
+  stroke: rgba(126, 27, 21, 0.7);
+  stroke-linejoin: round;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.congruence-selection-highlight.two {
+  fill: rgba(21, 84, 154, 0.13);
+  stroke: rgba(21, 84, 154, 0.64);
+}
+
+.reasoning-relation-log {
+  position: absolute;
+  left: clamp(0.5rem, 1.2vw, 0.9rem);
+  bottom: clamp(0.5rem, 1.2vw, 0.9rem);
+  z-index: 4;
+  display: grid;
+  gap: 0.35rem;
+  max-width: min(28rem, 72%);
+  pointer-events: none;
+}
+
+.reasoning-relation-badge {
+  width: fit-content;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid rgba(126, 27, 21, 0.3);
+  background: rgba(255, 246, 218, 0.74);
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(0.62rem, 0.8vw, 0.76rem);
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1.22;
+  text-transform: uppercase;
+  box-shadow: 0 6px 16px rgba(44, 0, 0, 0.12);
+}
+
+.workspace-action-button {
+  position: absolute;
+  right: clamp(0.75rem, 1.5vw, 1.1rem);
+  bottom: clamp(0.75rem, 1.5vw, 1.1rem);
+  z-index: 5;
+  max-width: min(23rem, 58%);
+  padding: 0.6rem 0.8rem;
+  border: 2px solid var(--eucraft-ink-red);
+  border-radius: 0;
+  background: rgba(255, 246, 218, 0.86);
+  color: var(--eucraft-ink-red);
+  cursor: pointer;
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(0.76rem, 1vw, 0.92rem);
+  font-weight: 850;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-align: left;
+  text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(44, 0, 0, 0.14);
+}
+
+.workspace-action-button:hover,
+.workspace-action-button:focus-visible {
+  outline: none;
+  background: rgba(255, 246, 218, 0.96);
+  box-shadow:
+    0 0 0 2px rgba(184, 138, 45, 0.32),
+    0 8px 18px rgba(44, 0, 0, 0.16);
+}
+
+.contradiction-mode-label,
+.whole-part-labels text {
+  fill: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.contradiction-mode-label {
+  opacity: 0.82;
+}
+
+.whole-part-labels text {
+  fill: var(--eucraft-gold);
+  opacity: 0.9;
+}
+
+.triangle-arrangement-guide polygon,
+.svg-segment.target-guide {
+  vector-effect: non-scaling-stroke;
+}
+
+.target-triangle-wash {
+  fill: rgba(40, 95, 159, 0.07);
+  stroke: rgba(40, 95, 159, 0.42);
+  stroke-width: 3;
+  stroke-dasharray: 12 8;
+}
+
+.source-triangle-wash {
+  fill: rgba(184, 138, 45, 0.16);
+  stroke: rgba(163, 58, 50, 0.24);
+  stroke-width: 2;
+}
+
+.svg-segment.target-guide {
+  opacity: 0.66;
+  stroke-dasharray: 10 8;
+}
+
+.svg-point.target-guide circle {
+  fill: #fff8e8;
+  stroke: #285f9f;
+}
+
 .svg-point.point-pop circle {
   transform-origin: center;
   animation: pointPop 420ms ease-out both;
@@ -1005,6 +1740,7 @@ blockquote {
 
 .preview-circle,
 .preview-segment,
+.preview-line-extension,
 .preview-radius {
   fill: none;
   stroke: #8f5616;
@@ -1012,11 +1748,21 @@ blockquote {
   vector-effect: non-scaling-stroke;
 }
 
-.preview-circle,
-.preview-segment {
+.preview-circle {
   stroke-width: 3;
   stroke-dasharray: 8 8;
   opacity: 0.64;
+}
+
+.preview-segment {
+  stroke-width: 3;
+  opacity: 0.78;
+}
+
+.preview-line-extension {
+  stroke: rgba(50, 45, 38, 0.3);
+  stroke-width: 2;
+  opacity: 0.5;
 }
 
 .preview-guide {
@@ -1109,15 +1855,6 @@ blockquote {
   }
 }
 
-@keyframes proofGlow {
-  0% {
-    filter: url("#soft-glow");
-  }
-  100% {
-    filter: url("#soft-glow");
-  }
-}
-
 @keyframes pointPop {
   0% {
     opacity: 0;
@@ -1129,6 +1866,17 @@ blockquote {
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes replayAngleTrace {
+  from {
+    opacity: 0;
+    stroke-dasharray: 1 12;
+  }
+  to {
+    opacity: 1;
+    stroke-dasharray: 1000 0;
   }
 }
 
@@ -1353,7 +2101,7 @@ button {
 
 .title-copy .app-kicker {
   color: var(--oxblood);
-  font-family: var(--font-display);
+  font-family: var(--font-eucraft-title);
   font-size: 1rem;
   font-weight: 700;
   text-transform: none;
@@ -1361,7 +2109,7 @@ button {
 
 .title-copy h1 {
   color: var(--oxblood);
-  font-family: var(--font-display);
+  font-family: var(--font-eucraft-title);
   font-size: clamp(4.7rem, 9vw, 8rem);
   font-variant: small-caps;
   font-weight: 700;
@@ -1462,7 +2210,7 @@ button {
 
 .title-screen .proposition-card-button span {
   color: var(--oxblood);
-  font-family: var(--font-display);
+  font-family: var(--font-eucraft-title);
   font-size: clamp(1rem, 1.4vw, 1.34rem);
   font-variant: small-caps;
   font-weight: 800;
@@ -1495,6 +2243,7 @@ button {
 
 .screen-heading h1 {
   color: var(--oxblood);
+  font-family: var(--font-eucraft-title);
   font-size: clamp(2.7rem, 4.2vw, 4.4rem);
   font-variant: small-caps;
 }
@@ -1516,6 +2265,7 @@ button {
 .law-card:nth-child(1) h2,
 .law-card:nth-child(2) h2 {
   color: var(--oxblood);
+  font-family: var(--font-eucraft-title);
   font-variant: small-caps;
 }
 
@@ -1775,16 +2525,28 @@ button {
   opacity: 0.58;
 }
 
+.svg-segment-extension {
+  stroke: rgba(50, 45, 38, 0.32);
+  stroke-width: 2;
+  opacity: 0.56;
+}
+
 .svg-segment-label,
-.svg-point text {
+.svg-point text,
+.svg-point-label {
   fill: var(--ink);
   font-family: var(--font-display);
 }
 
 .preview-circle,
 .preview-segment,
+.preview-line-extension,
 .preview-radius {
   stroke: var(--muted-red);
+}
+
+.preview-line-extension {
+  stroke: rgba(50, 45, 38, 0.3);
 }
 
 .preview-guide,
@@ -1999,7 +2761,7 @@ button {
 
 .landing-title-block h1 {
   color: var(--eucraft-ink-red);
-  font-family: var(--eucraft-font-medieval);
+  font-family: var(--font-eucraft-title);
   font-size: clamp(5.5rem, 8.4vw, 10rem);
   font-variant: small-caps;
   font-weight: 800;
@@ -2037,11 +2799,16 @@ button {
   font-variant: small-caps;
   font-weight: 760;
   line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background 220ms ease,
     box-shadow 220ms ease,
     transform 220ms ease;
+}
+
+.landing-actions button:last-child {
+  font-size: clamp(1.65rem, 2.35vw, 3rem);
 }
 
 .landing-actions button:hover,
@@ -2090,6 +2857,696 @@ button {
   background: linear-gradient(#510000, var(--eucraft-book-red-dark));
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
   opacity: 0.92;
+}
+
+.converse-page {
+  --converse-paper: #f3e4bd;
+  --converse-paper-light: #fff0c9;
+  --converse-ink: #4b1f16;
+  --converse-red: #6f0000;
+  --converse-blue: #2f5f8f;
+  --converse-gold: #b88a2d;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: clamp(0.7rem, 1.8vh, 1.25rem);
+  min-height: 100vh;
+  padding: clamp(1rem, 2vw, 2rem);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 248, 220, 0.42), transparent 18rem),
+    radial-gradient(circle at 76% 14%, rgba(92, 47, 20, 0.16), transparent 22rem),
+    radial-gradient(circle at 52% 82%, rgba(92, 47, 20, 0.1), transparent 28rem),
+    linear-gradient(105deg, rgba(255, 246, 219, 0.96), rgba(223, 194, 140, 0.82)),
+    var(--eucraft-paper);
+  color: var(--converse-ink);
+}
+
+.converse-page::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(74, 35, 16, 0.12), transparent 24rem),
+    radial-gradient(circle at 84% 10%, rgba(255, 255, 255, 0.24), transparent 20rem);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  content: "";
+}
+
+.converse-header,
+.converse-progress,
+.euclid-comic-bubble,
+.converse-controls {
+  position: relative;
+  z-index: 1;
+}
+
+.converse-header {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) auto minmax(7rem, 1fr);
+  align-items: center;
+  gap: 1rem;
+  color: var(--converse-red);
+  font-family: var(--font-eucraft-title);
+  text-align: center;
+}
+
+.converse-header p,
+.converse-header h1 {
+  margin: 0;
+}
+
+.converse-header p {
+  font-size: clamp(0.95rem, 1.2vw, 1.25rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.converse-header h1 {
+  font-size: clamp(2.1rem, 4vw, 4.4rem);
+  line-height: 0.9;
+}
+
+.converse-home-link,
+.converse-sound-toggle,
+.converse-controls button {
+  border: 2px solid var(--converse-red);
+  background: rgba(255, 246, 218, 0.42);
+  color: var(--converse-red);
+  font-family: var(--eucraft-font-medieval);
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.converse-home-link,
+.converse-sound-toggle {
+  justify-self: start;
+  min-height: 2.4rem;
+  padding: 0.25rem 0.9rem;
+  font-size: 1rem;
+}
+
+.converse-sound-toggle {
+  justify-self: end;
+}
+
+.converse-home-link:hover,
+.converse-home-link:focus-visible,
+.converse-sound-toggle:hover,
+.converse-sound-toggle:focus-visible,
+.converse-controls button:hover:not(:disabled),
+.converse-controls button:focus-visible {
+  background: rgba(111, 0, 0, 0.07);
+  outline: 2px solid rgba(184, 138, 45, 0.45);
+  outline-offset: 3px;
+}
+
+.converse-progress {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  color: var(--converse-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.converse-progress div {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.converse-progress i {
+  width: 1.55rem;
+  height: 0.18rem;
+  background: rgba(75, 31, 22, 0.24);
+}
+
+.converse-progress i.lit {
+  background: var(--converse-gold);
+}
+
+.euclid-comic-bubble {
+  place-self: center;
+  width: min(1120px, 94vw);
+  min-height: min(660px, 68vh);
+  isolation: isolate;
+}
+
+.cloud-bubble-outline {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 18px 24px rgba(72, 31, 17, 0.2));
+}
+
+.cloud-bubble-outline path {
+  fill: rgba(255, 244, 212, 0.95);
+  stroke: var(--converse-ink);
+  stroke-width: 10;
+  stroke-linejoin: round;
+}
+
+.cloud-bubble-outline .cloud-tail {
+  fill: rgba(255, 244, 212, 0.95);
+  stroke-width: 8;
+}
+
+.euclid-bubble-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto auto minmax(230px, 1fr) auto auto;
+  gap: clamp(0.5rem, 1.35vh, 1rem);
+  width: min(800px, 72%);
+  min-height: min(560px, 58vh);
+  margin: 4.8% auto 0;
+  color: var(--converse-ink);
+  text-align: center;
+}
+
+.euclid-speaker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(75, 31, 22, 0.18);
+  padding-bottom: 0.35rem;
+}
+
+.euclid-speaker {
+  color: var(--converse-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: clamp(1.25rem, 1.7vw, 1.9rem);
+  font-weight: 800;
+}
+
+.euclid-step-count {
+  color: rgba(75, 31, 22, 0.7);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.euclid-line {
+  margin: 0;
+  color: var(--converse-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.18rem, 1.8vw, 2rem);
+  font-weight: 700;
+  line-height: 1.18;
+}
+
+.converse-animation-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: clamp(220px, 34vh, 360px);
+  overflow: hidden;
+}
+
+.definition-svg {
+  width: min(100%, 760px);
+  height: 100%;
+  min-height: 230px;
+  overflow: visible;
+}
+
+.definition-svg text {
+  fill: var(--converse-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.definition-svg line,
+.definition-svg path,
+.definition-svg circle,
+.definition-svg rect {
+  vector-effect: non-scaling-stroke;
+}
+
+.svg-hotspot {
+  fill: transparent;
+  stroke: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.definition-source {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  margin: 0 auto;
+  max-width: 42rem;
+  color: var(--converse-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.9rem, 1.1vw, 1.08rem);
+  line-height: 1.32;
+}
+
+.definition-source strong {
+  color: var(--converse-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: 1.05rem;
+}
+
+.interaction-prompt {
+  margin: 0;
+  color: var(--converse-blue);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.86rem;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.interaction-prompt.completed {
+  color: var(--converse-gold);
+}
+
+.converse-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.6rem, 1.2vw, 1rem);
+}
+
+.converse-controls button {
+  min-width: 7.5rem;
+  min-height: 2.8rem;
+  padding: 0.35rem 1rem;
+  font-size: clamp(1rem, 1.25vw, 1.25rem);
+}
+
+.converse-controls button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.ink-chunk path,
+.ink-parts path,
+.chosen-part path {
+  fill: var(--converse-red);
+}
+
+.ink-chunk {
+  opacity: 0;
+  transform-origin: 320px 150px;
+  animation: inkChunk 3800ms ease forwards;
+}
+
+.ink-parts {
+  opacity: 0;
+  animation: inkParts 3800ms ease forwards;
+}
+
+.chosen-part {
+  opacity: 0;
+  transform-origin: 320px 150px;
+  animation: chosenPart 3800ms ease forwards;
+}
+
+.pure-position {
+  opacity: 0;
+  animation: purePosition 3800ms ease forwards;
+}
+
+.pure-position circle {
+  fill: var(--converse-ink);
+}
+
+.pure-position path {
+  fill: none;
+  stroke: var(--converse-gold);
+  stroke-width: 2;
+}
+
+.seed-point {
+  fill: var(--converse-ink);
+  opacity: 0;
+  animation: seedPoint 3200ms ease forwards;
+}
+
+.aligned-points circle {
+  fill: var(--converse-red);
+  opacity: 0;
+  animation: alignedDots 3200ms ease forwards;
+}
+
+.born-line,
+.quiet-line,
+.settled-line,
+.sweep-line,
+.plane-line,
+.angle-ray {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.born-line {
+  stroke: var(--converse-ink);
+  stroke-width: 3;
+  stroke-dasharray: 360;
+  stroke-dashoffset: 360;
+  animation: drawConverseLine 3200ms ease forwards;
+}
+
+.quiet-line {
+  stroke: var(--converse-ink);
+  stroke-width: 4;
+}
+
+.endpoint {
+  fill: var(--converse-red);
+  opacity: 0;
+  animation: endpointGlow 2400ms ease forwards;
+}
+
+.endpoint.discovered {
+  fill: var(--converse-gold);
+  filter: drop-shadow(0 0 8px rgba(184, 138, 45, 0.55));
+}
+
+.mini-confirmation {
+  fill: var(--converse-blue);
+  font-size: 22px;
+}
+
+.wandering-line {
+  fill: none;
+  stroke: rgba(111, 0, 0, 0.5);
+  stroke-width: 4;
+  stroke-linecap: round;
+  animation: fadeWander 3200ms ease forwards;
+}
+
+.line-points circle {
+  fill: var(--converse-blue);
+  opacity: 0;
+  animation: linePointAlign 3200ms ease forwards;
+}
+
+.settled-line {
+  stroke: var(--converse-ink);
+  stroke-width: 4;
+  stroke-dasharray: 380;
+  stroke-dashoffset: 380;
+  animation: drawSettledLine 3200ms ease forwards;
+}
+
+.sweep-line {
+  stroke: var(--converse-red);
+  stroke-width: 4;
+}
+
+.sweep-line.original {
+  animation: lineBrighten 3600ms ease forwards;
+}
+
+.sweep-line.ghost {
+  opacity: 0;
+  animation: ghostLinePull 3600ms ease forwards;
+}
+
+.surface-fill {
+  fill: rgba(184, 138, 45, 0.2);
+  opacity: 0;
+  animation: surfaceFill 3600ms ease forwards;
+}
+
+.surface-edge,
+.boundary-lines {
+  fill: none;
+  stroke: var(--converse-ink);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.surface-edge {
+  stroke-dasharray: 812;
+  stroke-dashoffset: 812;
+  animation: drawSurfaceEdge 3600ms ease forwards;
+}
+
+.surface-muted {
+  fill: rgba(184, 138, 45, 0.18);
+  stroke: none;
+  opacity: 0.7;
+}
+
+.boundary-lines {
+  stroke: var(--converse-red);
+  stroke-dasharray: 828;
+  stroke-dashoffset: 828;
+  animation: drawSurfaceEdge 2600ms ease forwards;
+}
+
+.boundary-lines.traced {
+  stroke: var(--converse-gold);
+  filter: drop-shadow(0 0 9px rgba(184, 138, 45, 0.42));
+}
+
+.warped-surface {
+  fill: rgba(47, 95, 143, 0.1);
+  stroke: rgba(75, 31, 22, 0.34);
+  stroke-width: 3;
+  animation: warpedFade 3600ms ease forwards;
+}
+
+.plane-surface-shape {
+  fill: rgba(184, 138, 45, 0.16);
+  stroke: var(--converse-ink);
+  stroke-width: 3;
+  opacity: 0;
+  animation: planeSettle 3600ms ease forwards;
+}
+
+.plane-line {
+  stroke: var(--converse-blue);
+  stroke-width: 2.5;
+  opacity: 0;
+  animation: planeLines 3600ms ease forwards;
+}
+
+.plane-backdrop {
+  fill: rgba(75, 31, 22, 0.08);
+  stroke: rgba(75, 31, 22, 0.22);
+  stroke-width: 3;
+}
+
+.angle-ray.fixed {
+  stroke: var(--converse-blue);
+  stroke-width: 5;
+}
+
+.angle-ray.moving {
+  stroke: var(--converse-red);
+  stroke-width: 5;
+  animation: angleRayIn 1900ms ease both;
+}
+
+.angle-vertex {
+  fill: var(--converse-gold);
+  stroke: var(--converse-ink);
+  stroke-width: 2;
+}
+
+.angle-arc {
+  fill: none;
+  stroke: var(--converse-gold);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.angle-wash {
+  fill: rgba(184, 138, 45, 0.18);
+  stroke: none;
+}
+
+@keyframes inkChunk {
+  0% { opacity: 0; transform: scale(0.86); }
+  12%, 36% { opacity: 0.9; transform: scale(1); }
+  46%, 100% { opacity: 0; transform: scale(1.18); }
+}
+
+@keyframes inkParts {
+  0%, 28% { opacity: 0; transform: translate(0, 0); }
+  42%, 58% { opacity: 0.72; transform: translate(0, 0); }
+  72%, 100% { opacity: 0; transform: scale(0.36); }
+}
+
+@keyframes chosenPart {
+  0%, 46% { opacity: 0; transform: scale(0.9); }
+  60% { opacity: 0.9; transform: scale(1.16); }
+  78%, 100% { opacity: 0; transform: scale(0.22); }
+}
+
+@keyframes purePosition {
+  0%, 70% { opacity: 0; transform: scale(0.5); }
+  86%, 100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes seedPoint {
+  0% { opacity: 1; transform: scale(1); }
+  35% { opacity: 0.9; transform: scale(0.78); }
+  55%, 100% { opacity: 0; transform: scale(0.42); }
+}
+
+@keyframes alignedDots {
+  0%, 24% { opacity: 0; transform: translateY(16px); }
+  42%, 68% { opacity: 0.62; transform: translateY(0); }
+  82%, 100% { opacity: 0; transform: translateY(0); }
+}
+
+@keyframes drawConverseLine {
+  0%, 58% { opacity: 0; stroke-dashoffset: 360; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes endpointGlow {
+  0%, 35% { opacity: 0; transform: scale(0.4); }
+  60%, 100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeWander {
+  0%, 36% { opacity: 0.75; }
+  76%, 100% { opacity: 0; }
+}
+
+@keyframes linePointAlign {
+  0%, 20% { opacity: 0; transform: translateY(-22px); }
+  48%, 72% { opacity: 0.7; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+
+@keyframes drawSettledLine {
+  0%, 62% { opacity: 0; stroke-dashoffset: 380; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+
+@keyframes lineBrighten {
+  0% { opacity: 0.44; }
+  40%, 100% { opacity: 1; }
+}
+
+@keyframes ghostLinePull {
+  0%, 24% { opacity: 0; transform: translateY(-98px); }
+  62%, 100% { opacity: 0.72; transform: translateY(0); }
+}
+
+@keyframes surfaceFill {
+  0%, 34% { opacity: 0; transform: scaleY(0); transform-origin: 50% 92px; }
+  70%, 100% { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes drawSurfaceEdge {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes warpedFade {
+  0%, 48% { opacity: 0.9; }
+  82%, 100% { opacity: 0; }
+}
+
+@keyframes planeSettle {
+  0%, 46% { opacity: 0; transform: scaleY(0.78); }
+  80%, 100% { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes planeLines {
+  0%, 64% { opacity: 0; }
+  100% { opacity: 0.78; }
+}
+
+@keyframes angleRayIn {
+  from { opacity: 0; transform: rotate(-10deg); transform-origin: 320px 160px; }
+  to { opacity: 1; transform: rotate(0); transform-origin: 320px 160px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .converse-page *,
+  .converse-page *::before,
+  .converse-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  .ink-chunk,
+  .ink-parts,
+  .chosen-part,
+  .seed-point,
+  .aligned-points,
+  .wandering-line,
+  .warped-surface {
+    opacity: 0 !important;
+  }
+
+  .pure-position,
+  .born-line,
+  .endpoint,
+  .settled-line,
+  .surface-fill,
+  .sweep-line.ghost,
+  .plane-surface-shape,
+  .plane-line {
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .converse-page {
+    overflow: auto;
+  }
+
+  .converse-header {
+    grid-template-columns: 1fr;
+  }
+
+  .converse-home-link,
+  .converse-sound-toggle {
+    justify-self: center;
+  }
+
+  .euclid-comic-bubble {
+    width: min(98vw, 720px);
+    min-height: 680px;
+  }
+
+  .euclid-bubble-content {
+    grid-template-rows: auto auto minmax(220px, 1fr) auto auto;
+    width: 76%;
+    min-height: 570px;
+    margin-top: 7%;
+  }
+}
+
+@media (max-width: 620px) {
+  .euclid-comic-bubble {
+    min-height: 720px;
+  }
+
+  .euclid-bubble-content {
+    width: 80%;
+    margin-top: 11%;
+  }
+
+  .euclid-speaker-row {
+    display: grid;
+    justify-items: center;
+  }
+
+  .converse-controls button {
+    min-width: 8.4rem;
+  }
 }
 
 .faint-geometry-sketches {
@@ -2204,10 +3661,16 @@ button {
   align-items: center;
   min-height: 100vh;
   padding: clamp(62px, 11vh, 118px) clamp(50px, 6vw, 112px) clamp(56px, 9vh, 92px) clamp(310px, 25vw, 440px);
+  background-color: var(--eucraft-paper);
+  background-image:
+    radial-gradient(circle at 18% 14%, rgba(255, 252, 232, 0.52), transparent 25rem),
+    radial-gradient(circle at 82% 20%, rgba(92, 47, 20, 0.12), transparent 27rem),
+    radial-gradient(circle at 42% 84%, rgba(83, 37, 17, 0.09), transparent 31rem),
+    linear-gradient(105deg, rgba(255, 245, 214, 0.96), rgba(224, 194, 139, 0.86));
 }
 
-.book-one-map .faint-geometry-sketches {
-  opacity: 0.35;
+.book-one-map::before {
+  display: none;
 }
 
 .book-map-sidebar {
@@ -2227,27 +3690,77 @@ button {
   z-index: 5;
   display: grid;
   grid-template-columns: repeat(4, minmax(126px, 1fr));
-  column-gap: clamp(2.2rem, 5vw, 6.4rem);
-  row-gap: clamp(1rem, 2.7vh, 2rem);
+  column-gap: clamp(1.4rem, 3vw, 3.2rem);
+  row-gap: clamp(0.9rem, 2.1vh, 1.6rem);
   width: min(100%, 1120px);
   justify-self: center;
 }
 
-.book-map-proposition {
+.book-map-content {
   position: relative;
-  min-height: 34px;
-  padding: 0.25rem 0;
+  z-index: 5;
+  display: grid;
+  gap: clamp(1.4rem, 3vh, 2.4rem);
+}
+
+.book-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: min(100%, 1120px);
+  justify-self: center;
+  color: var(--eucraft-ink-red);
+}
+
+.book-map-header button {
   border: 0;
   background: transparent;
   color: var(--eucraft-ink-red);
   font-family: var(--eucraft-font-medieval);
-  font-size: clamp(1rem, 1.65vw, 1.55rem);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.book-map-proposition {
+  position: relative;
+  display: grid;
+  gap: 0.18rem;
+  min-height: 92px;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(116, 0, 0, 0.16);
+  background: rgba(255, 245, 214, 0.18);
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(0.95rem, 1.28vw, 1.25rem);
   font-variant: small-caps;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.book-map-proposition small,
+.book-map-proposition em {
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  opacity: 0.82;
+  text-transform: uppercase;
+}
+
+.book-map-proposition small {
+  font-family: var(--font-eucraft-title);
+}
+
+.book-map-proposition em {
+  color: var(--eucraft-gold);
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 .book-map-proposition:hover:not(:disabled),
@@ -2262,8 +3775,13 @@ button {
 
 .book-map-proposition.locked {
   color: var(--eucraft-locked-grey);
+  background: transparent;
   cursor: not-allowed;
   text-shadow: none;
+}
+
+.book-map-proposition.locked em {
+  color: var(--eucraft-locked-grey);
 }
 
 .book-map-proposition.current::after {
@@ -2289,14 +3807,14 @@ button {
   box-shadow: 0 0 0 1px rgba(118, 0, 0, 0.18);
 }
 
-.proposition-page {
+.app-shell.proposition-page {
   display: grid;
   grid-template-columns: minmax(260px, 24vw) 1fr;
-  gap: clamp(1.5rem, 2.2vw, 2.5rem);
+  gap: clamp(1.85rem, 2.7vw, 3.25rem);
   width: 100vw;
   min-height: 100vh;
   height: 100vh;
-  padding: clamp(1rem, 1.55vw, 1.8rem);
+  padding: clamp(1.45rem, 2.2vw, 2.5rem);
   overflow: hidden;
   background:
     radial-gradient(circle at 20% 28%, rgba(115, 0, 0, 0.4), transparent 18rem),
@@ -2315,12 +3833,11 @@ button {
   gap: clamp(1rem, 1.6vh, 1.5rem);
   padding: clamp(3rem, 6.5vh, 4.8rem) clamp(1.6rem, 3vw, 3.2rem) clamp(3rem, 5vh, 4.2rem);
   border: 0;
-  border-radius: 8rem;
+  border-radius: clamp(1.6rem, 2.5vw, 2.75rem);
   background-color: var(--eucraft-paper);
   background-image:
     radial-gradient(circle at 55% 2%, rgba(255, 253, 231, 0.56), transparent 13rem),
     radial-gradient(circle at 24% 82%, rgba(90, 43, 19, 0.12), transparent 17rem),
-    repeating-linear-gradient(13deg, rgba(70, 36, 18, 0.043) 0 1px, transparent 1px 21px),
     linear-gradient(105deg, rgba(255, 245, 214, 0.97), rgba(225, 194, 139, 0.86));
   box-shadow:
     inset 0 0 64px rgba(83, 37, 17, 0.16),
@@ -2335,13 +3852,53 @@ button {
 .proposition-page .prop-label,
 .proposition-page .app-kicker {
   color: var(--eucraft-ink-red);
-  font-family: var(--eucraft-font-medieval);
+  font-family: var(--font-eucraft-title);
   font-size: clamp(1.55rem, 2vw, 2.25rem);
   font-variant: small-caps;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
+}
+
+.proposition-nav {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.25rem;
+}
+
+.proposition-nav div {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.proposition-nav button,
+.quiet-link {
+  border: 0;
+  background: transparent;
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-size: 0.88rem;
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.proposition-nav button:hover:not(:disabled),
+.proposition-nav button:focus-visible,
+.quiet-link:hover,
+.quiet-link:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.proposition-nav button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
 }
 
 .proposition-page .proposition-header,
@@ -2354,7 +3911,7 @@ button {
   display: none;
   margin: 0;
   color: var(--eucraft-ink-red);
-  font-family: var(--eucraft-font-medieval);
+  font-family: var(--font-eucraft-title);
   font-size: clamp(1.05rem, 1.45vw, 1.45rem);
   font-variant: small-caps;
   font-weight: 800;
@@ -2384,6 +3941,25 @@ button {
   text-transform: uppercase;
 }
 
+.proposition-page.phase-constructionComplete .sidebar-prompt {
+  overflow: hidden;
+  pointer-events: none;
+  animation: sidebarPromptFade 1800ms ease forwards;
+}
+
+@keyframes sidebarPromptFade {
+  from {
+    max-height: 12rem;
+    margin-block: 0;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    margin-block: -0.35rem;
+    opacity: 0;
+  }
+}
+
 .proposition-page blockquote {
   display: none;
 }
@@ -2392,6 +3968,9 @@ button {
 .proposition-page .tool-panel,
 .proposition-page .marginalia,
 .proposition-page .logic-panel,
+.proposition-page .choice-panel,
+.proposition-page .proof-challenge-panel,
+.proposition-page .proof-complete-panel,
 .proposition-page .completion-card,
 .proposition-page .validation,
 .proposition-page .completion-overlay {
@@ -2474,18 +4053,18 @@ button {
 .proposition-page .theorem-action-button.actionable:hover,
 .proposition-page .theorem-action-button.actionable:focus-visible {
   outline: none;
-  background: rgba(116, 0, 0, 0.055);
-  box-shadow: 0 0 0 2px rgba(116, 0, 0, 0.16);
+  background: transparent;
+  color: var(--eucraft-ink-red-dark);
+  box-shadow: none;
   transform: none;
 }
 
 .proposition-page .tool-button.active,
 .proposition-page .theorem-action-button.active {
-  background: rgba(116, 0, 0, 0.08);
+  background: transparent;
   color: var(--eucraft-ink-red-dark);
-  box-shadow:
-    0 0 0 2px rgba(116, 0, 0, 0.42),
-    inset 0 0 0 1px rgba(255, 245, 214, 0.44);
+  box-shadow: none;
+  filter: saturate(1.2) contrast(1.22);
 }
 
 .proposition-page .tool-icon-mark,
@@ -2528,23 +4107,274 @@ button {
 
 .proposition-page .tool-instruction,
 .proposition-page .marginalia {
-  margin-top: 0.4rem;
-  font-size: clamp(0.72rem, 0.95vw, 0.9rem);
+  margin: 0.1rem 0 -0.15rem;
+  min-height: 2.25rem;
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(0.62rem, 0.78vw, 0.74rem);
   font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 1.58;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 
-.proposition-page .marginalia .panel-label,
-.proposition-page .reasoning-library {
+.proposition-page .tool-selection-progress {
+  margin-top: -0.2rem;
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(0.66rem, 0.82vw, 0.76rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.proposition-page .tool-walkthrough {
+  gap: 0.45rem;
+  padding: 0.65rem 0;
+  border-color: rgba(126, 27, 21, 0.2);
+  color: #4f3318;
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(0.64rem, 0.8vw, 0.74rem);
+  font-weight: 720;
+  letter-spacing: 0;
+  line-height: 1.34;
+  text-transform: none;
+}
+
+.proposition-page .tool-walkthrough *,
+.proposition-page .tool-walkthrough-actions button,
+.proposition-page .tool-walkthrough-diagram text {
+  font-family: var(--font-eucraft-title);
+}
+
+.proposition-page .tool-walkthrough .panel-label {
+  margin: 0;
+  color: rgba(126, 27, 21, 0.72);
+  font-size: clamp(0.58rem, 0.7vw, 0.66rem);
+}
+
+.proposition-page .tool-walkthrough-heading strong {
+  color: var(--eucraft-ink-red);
+  font-size: clamp(0.74rem, 0.92vw, 0.86rem);
+  letter-spacing: 0.05em;
+}
+
+.proposition-page .tool-walkthrough-actions button {
+  padding: 0.26rem 0.5rem;
+  color: var(--eucraft-ink-red);
+  font-size: clamp(0.58rem, 0.72vw, 0.66rem);
+}
+
+.proposition-page .marginalia .panel-label {
   display: none;
+}
+
+.proposition-page .reasoning-library {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.2rem;
+}
+
+.proposition-page .reasoning-library ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proposition-page .reasoning-library li {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0;
+  border: 0;
+}
+
+.proposition-page .reasoning-rule-button {
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(78, 45, 20, 0.18);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.74rem, 0.95vw, 0.88rem);
+}
+
+.proposition-page .reasoning-rule-button span {
+  color: var(--eucraft-ink-red);
+  font-family: var(--eucraft-font-medieval);
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.proposition-page .reasoning-guide {
+  gap: 0.28rem;
+  margin: 0.1rem 0 0.45rem;
+  padding-left: 1rem;
+  color: #4f3318;
+  font-size: clamp(0.62rem, 0.78vw, 0.72rem);
+  font-weight: 720;
+  letter-spacing: 0;
+  line-height: 1.32;
+  text-transform: none;
+}
+
+.proposition-page .reasoning-guide li {
+  display: list-item;
+  color: #4f3318;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-transform: inherit;
 }
 
 .proposition-page .action-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem;
+}
+
+.choice-panel,
+.proof-challenge-panel,
+.proof-complete-panel {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: auto;
+}
+
+.choice-footprint-trail {
+  position: relative;
+  width: min(9rem, 72%);
+  height: clamp(13rem, 28vh, 20rem);
+  margin: 0 auto -0.1rem;
+  pointer-events: none;
+}
+
+.choice-footprint-step {
+  position: absolute;
+  left: var(--choice-footprint-x);
+  top: var(--choice-footprint-y);
+  width: clamp(2rem, 2.9vw, 2.8rem);
+  aspect-ratio: 142 / 108;
+  color: var(--choice-footprint-color);
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--choice-footprint-tilt)) scale(var(--choice-footprint-scale));
+  transform-origin: center;
+  animation: choiceFootprintReveal 720ms ease-out var(--choice-footprint-delay) forwards;
+}
+
+.choice-footprint-mark {
+  position: absolute;
+  width: 38%;
+  height: 76%;
+  overflow: visible;
+  fill: currentColor;
+}
+
+.choice-footprint-mark.left {
+  left: 10%;
+  top: 18%;
+  transform: rotate(-9deg);
+}
+
+.choice-footprint-mark.right {
+  left: 52%;
+  top: 2%;
+  transform: rotate(8deg);
+}
+
+@keyframes choiceFootprintReveal {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: var(--choice-footprint-opacity);
+    filter: blur(0);
+  }
+}
+
+.choice-panel h2,
+.proof-challenge-panel h2,
+.proof-complete-panel h2 {
+  margin: 0;
+  color: var(--eucraft-ink-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(1.1rem, 1.35vw, 1.35rem);
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proposition-page.phase-constructionComplete .sidebar-prompt,
+  .choice-footprint-step {
+    animation: none;
+  }
+
+  .proposition-page.phase-constructionComplete .sidebar-prompt {
+    max-height: 0;
+    margin-block: -0.35rem;
+    opacity: 0;
+  }
+
+  .choice-footprint-step {
+    opacity: var(--choice-footprint-opacity);
+    filter: none;
+  }
+}
+
+.choice-actions,
+.logic-controls {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.proof-slots {
+  display: grid;
+  gap: 0.4rem;
+  min-height: 2rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--eucraft-ink-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.83rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.claim-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.claim-button {
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgba(116, 0, 0, 0.34);
+  background: rgba(255, 245, 214, 0.24);
+  color: var(--eucraft-ink-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.28;
+  text-align: left;
+  cursor: pointer;
+}
+
+.claim-button:hover,
+.claim-button:focus-visible {
+  outline: none;
+  background: rgba(116, 0, 0, 0.08);
+  box-shadow: 0 0 0 2px rgba(184, 138, 45, 0.24);
+}
+
+.proof-challenge-message {
+  margin: 0;
+  color: var(--eucraft-ink-red-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .proposition-page .primary-button,
@@ -2578,7 +4408,21 @@ button {
 }
 
 .proposition-page .validation-success {
-  color: #35572d;
+  color: var(--eucraft-ink-red);
+  /* Eucraft title-like success messages must use IM Fell English SC. */
+  font-family: var(--font-eucraft-title);
+}
+
+.proposition-page.phase-constructionComplete .validation-success {
+  padding-top: clamp(1.2rem, 2.4vh, 2rem);
+  color: var(--eucraft-ink-red);
+  /* Eucraft titles and title-like status messages must use IM Fell English SC. */
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(1.2rem, 1.6vw, 1.65rem);
+  font-weight: 900;
+  letter-spacing: 0.045em;
+  line-height: 1.24;
+  text-wrap: balance;
 }
 
 .proposition-page .validation-hint {
@@ -2604,17 +4448,21 @@ button {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border-radius: 6.4rem;
+  border-radius: clamp(1.8rem, 3vw, 3.25rem);
   background-color: var(--eucraft-paper);
   background-image:
     radial-gradient(circle at 44% 45%, rgba(255, 252, 236, 0.62), transparent 22rem),
     radial-gradient(circle at 85% 16%, rgba(90, 43, 19, 0.1), transparent 18rem),
-    repeating-linear-gradient(13deg, rgba(70, 36, 18, 0.038) 0 1px, transparent 1px 22px),
     linear-gradient(105deg, rgba(255, 246, 218, 0.97), rgba(224, 194, 139, 0.84));
   box-shadow:
     inset 0 0 72px rgba(83, 37, 17, 0.13),
     0 15px 46px rgba(44, 0, 0, 0.22);
   isolation: isolate;
+}
+
+.proposition-page .proposition-sidebar::before,
+.proposition-page .proposition-canvas-panel::before {
+  display: none;
 }
 
 .proposition-canvas-panel .canvas-shell {
@@ -2648,6 +4496,16 @@ button {
   border-color: rgba(116, 0, 0, 0.36);
 }
 
+.proposition-page .completion-animation-card,
+.proposition-page .completion-animation-card .completion-title,
+.proposition-page .completion-animation-card .completion-subtitle,
+.proposition-page .completion-animation-card .completion-message,
+.proposition-page .completion-animation-card .unlock-badge,
+.proposition-page .completion-animation-card .quiet-button,
+.proposition-page .completion-animation-card .primary-button {
+  color: var(--eucraft-ink-red);
+}
+
 @media (max-width: 1100px) {
   .landing-title-block {
     left: 6%;
@@ -2666,7 +4524,7 @@ button {
     min-width: 170px;
   }
 
-  .proposition-page {
+  .app-shell.proposition-page {
     grid-template-columns: minmax(230px, 27vw) 1fr;
   }
 
@@ -2714,7 +4572,7 @@ button {
     column-gap: 1.4rem;
   }
 
-  .proposition-page {
+  .app-shell.proposition-page {
     grid-template-columns: 1fr;
     height: auto;
     min-height: 100vh;
@@ -2724,7 +4582,7 @@ button {
   .proposition-page .left-pane,
   .proposition-sidebar {
     min-height: auto;
-    border-radius: 3.8rem;
+    border-radius: 1.6rem;
   }
 
   .proposition-page .tool-grid,
@@ -2734,7 +4592,7 @@ button {
 
   .proposition-canvas-panel {
     min-height: 62vh;
-    border-radius: 3.8rem;
+    border-radius: 1.6rem;
   }
 
   .proposition-canvas-panel .canvas-shell {
@@ -2767,14 +4625,15 @@ button {
     font-size: 0.95rem;
   }
 
-  .proposition-page {
-    padding: 0.85rem;
+  .app-shell.proposition-page {
+    padding: 1rem;
+    gap: 1rem;
   }
 
   .proposition-page .left-pane,
   .proposition-sidebar,
   .proposition-canvas-panel {
-    border-radius: 2.6rem;
+    border-radius: 1.25rem;
   }
 
   .proposition-page .tool-grid,
@@ -2784,5 +4643,2712 @@ button {
 
   .proposition-canvas-panel .canvas-shell {
     inset: 0.9rem;
+  }
+}
+
+/* Eucraft titles, subtitles, and navigation must use IM Fell English SC.
+   Do not override in page-specific patches. */
+.eucraft-title,
+.landing-title,
+.landing-subtitle,
+.landing-button,
+.proposition-title,
+.proposition-label,
+.book-map-title,
+.laws-title,
+.converse-title,
+.subtitle,
+.screen-copy,
+.challenge-goal,
+.completion-subtitle,
+.landing-actions button,
+.landing-title-block p,
+.title-copy .app-kicker,
+.title-copy h1,
+.title-copy .subtitle,
+.title-copy .screen-copy,
+.title-copy .large-command,
+.large-command,
+.primary-button.large-command,
+.title-screen .proposition-card-button span,
+.screen-heading,
+.screen-heading .app-kicker,
+.screen-heading h1,
+.screen-heading .screen-copy,
+.law-card h2,
+.landing-title-block h1,
+.book-map-header button,
+.book-map-proposition,
+.book-map-proposition small,
+.book-map-proposition .proposition-label,
+.book-map-proposition .proposition-title,
+.app-kicker,
+.prop-label,
+.panel-label,
+.left-pane .prop-label,
+.left-pane h1,
+.left-pane h2,
+.left-pane h3,
+.left-pane .app-kicker,
+.left-pane .subtitle,
+.left-pane .screen-copy,
+.left-pane .primary-button,
+.left-pane .quiet-button,
+.proposition-page .app-kicker,
+.proposition-page .proposition-header .prop-label,
+.proposition-page .intro-panel .prop-label,
+.proposition-page .proposition-header h1,
+.proposition-page .intro-panel h1,
+.proposition-page .proposition-label,
+.proposition-page .proposition-title,
+.proposition-page .primary-button,
+.proposition-page .quiet-button,
+.laws-screen .primary-button,
+.completion-actions .primary-button,
+.logic-controls .primary-button,
+.proposition-nav button,
+.quiet-link,
+.choice-panel h2,
+.proof-challenge-panel h2,
+.proof-complete-panel h2,
+.converse-home-link,
+.converse-sound-toggle,
+.converse-header,
+.converse-header p,
+.converse-header h1,
+.converse-controls button,
+.completion-title {
+  font-family: var(--font-eucraft-title);
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 400;
+  text-transform: none;
+}
+
+/* Laws of the World comic onboarding. */
+.laws-world-page {
+  --laws-paper: #efe0b9;
+  --laws-paper-glow: rgba(255, 249, 224, 0.66);
+  --laws-red: #750000;
+  --laws-red-dark: #3c0000;
+  --laws-red-deep: #250000;
+  --laws-aqua: #52f4d8;
+  --laws-animation-duration: 8000ms;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(164px, 16vw, 250px);
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: var(--laws-paper);
+  background-image:
+    radial-gradient(circle at 30% 28%, var(--laws-paper-glow), transparent 34rem),
+    radial-gradient(circle at 70% 72%, rgba(112, 54, 20, 0.12), transparent 32rem),
+    linear-gradient(rgba(245, 230, 190, 0.18), rgba(245, 230, 190, 0.18)),
+    url("/assets/eucraft-home-background.jpg");
+  background-position: center;
+  background-size: cover;
+  color: var(--laws-red);
+  isolation: isolate;
+}
+
+.laws-world-page::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(83, 37, 17, 0.11), transparent 15%, transparent 82%, rgba(83, 37, 17, 0.12)),
+    radial-gradient(circle at 18% 88%, rgba(92, 47, 20, 0.14), transparent 22rem);
+  mix-blend-mode: multiply;
+  content: "";
+}
+
+.laws-world-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  padding: clamp(1.2rem, 2.8vw, 2.6rem) clamp(1.8rem, 4vw, 4.2rem) clamp(2rem, 4vw, 4rem);
+}
+
+.laws-world-section {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.laws-comic-bubble {
+  position: relative;
+  align-self: stretch;
+  min-height: min(76vh, 680px);
+  color: var(--laws-red);
+}
+
+.laws-bubble-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 12px 16px rgba(72, 18, 8, 0.08));
+}
+
+.laws-bubble-outline path {
+  fill: rgba(255, 244, 212, 0.09);
+  stroke: var(--laws-red);
+  stroke-width: 4.2;
+  stroke-linejoin: round;
+}
+
+.laws-bubble-content {
+  position: absolute;
+  inset: clamp(4.1rem, 8.4vh, 5.8rem) clamp(2rem, 5vw, 5.2rem) clamp(3.6rem, 7vh, 6rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(0.8rem, 1.8vh, 1.4rem);
+}
+
+.laws-source-text {
+  max-width: 100%;
+  margin: 0;
+  color: var(--laws-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(1.25rem, 2.45vw, 3rem);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+.laws-source-text span {
+  display: inline-block;
+  margin-right: 0.55em;
+}
+
+.laws-source-list {
+  display: grid;
+  gap: 0.12em;
+  font-size: clamp(1.05rem, 1.9vw, 2.25rem);
+  line-height: 1.08;
+  text-wrap: pretty;
+}
+
+.laws-source-line {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 0.9em;
+  margin: 0;
+}
+
+.laws-source-line span {
+  margin-right: 0;
+}
+
+.laws-animation-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.laws-animation-svg {
+  width: min(100%, 880px);
+  height: 100%;
+  min-height: 260px;
+  overflow: visible;
+}
+
+.laws-euclid-signature {
+  position: absolute;
+  left: clamp(1.2rem, 2.6vw, 2.8rem);
+  bottom: -2.25rem;
+  margin: 0;
+  color: var(--laws-red);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(1.8rem, 3.4vw, 3.7rem);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.laws-world-rail {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.8rem) clamp(3rem, 6vh, 5rem);
+  background:
+    linear-gradient(90deg, rgba(44, 0, 0, 0.28), transparent 28%),
+    linear-gradient(var(--laws-red), #690000);
+}
+
+.laws-world-ribbon {
+  justify-self: center;
+  width: min(72%, 116px);
+  height: clamp(170px, 32vh, 290px);
+  background: linear-gradient(var(--laws-red-deep), var(--laws-red-dark));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  opacity: 0.96;
+}
+
+.laws-world-progress {
+  align-self: end;
+  margin: 0 0 1.25rem;
+  color: rgba(255, 230, 190, 0.56);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(1rem, 1.5vw, 1.45rem);
+  font-weight: 400;
+  text-align: center;
+}
+
+.laws-world-controls {
+  display: grid;
+  gap: clamp(0.75rem, 1.7vh, 1.2rem);
+  align-self: end;
+}
+
+.laws-world-controls button {
+  border: 0;
+  background: transparent;
+  color: var(--laws-aqua);
+  font-family: var(--font-eucraft-title);
+  font-size: clamp(1.35rem, 2.2vw, 2.35rem);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  text-align: left;
+  cursor: pointer;
+}
+
+.laws-world-controls button:hover:not(:disabled),
+.laws-world-controls button:focus-visible {
+  outline: none;
+  color: #cffff4;
+  text-shadow: 0 0 12px rgba(82, 244, 216, 0.45);
+}
+
+.laws-world-controls button:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.laws-animation-svg line,
+.laws-animation-svg path,
+.laws-animation-svg circle,
+.laws-animation-svg rect,
+.laws-animation-svg polygon {
+  vector-effect: non-scaling-stroke;
+}
+
+.laws-center-point,
+.laws-radius-point,
+.laws-endpoint,
+.laws-meeting-point {
+  fill: #b94d59;
+  stroke: none;
+}
+
+.laws-center-point {
+  animation: lawsPointPulse 2800ms ease infinite;
+}
+
+.laws-no-part-point {
+  transform-origin: 450px 210px;
+  animation: lawsNoPartPoint 4200ms ease-in-out infinite;
+}
+
+.laws-point-halo {
+  fill: rgba(185, 77, 89, 0.1);
+  stroke: rgba(117, 0, 0, 0.28);
+  stroke-width: 2;
+  opacity: 0;
+  transform-origin: 450px 210px;
+  animation: lawsPointHalo 4200ms ease-in-out infinite;
+}
+
+.laws-cut-attempt {
+  stroke: var(--laws-red-dark);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1 13;
+  stroke-dashoffset: 0;
+  opacity: 0;
+  transform-origin: 450px 210px;
+  animation: lawsCutAttempt 4200ms ease-in-out infinite;
+}
+
+.laws-cut-attempt.two {
+  animation-delay: 160ms;
+}
+
+.laws-cut-attempt.three {
+  animation-delay: 320ms;
+}
+
+.laws-cut-attempt.four {
+  animation-delay: 480ms;
+}
+
+.laws-definition-point {
+  --laws-animation-duration: 11000ms;
+}
+
+.laws-point-cut-shape,
+.laws-point-cut-piece {
+  fill: rgba(184, 72, 82, 0.12);
+  stroke: var(--laws-red);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.laws-point-cut-shape {
+  animation: lawsPointCutStage var(--stage-duration, 780ms) ease var(--stage-delay, 0ms) forwards;
+}
+
+.laws-point-cut-shape.stage-one {
+  animation: lawsPointCutShapeOne var(--laws-animation-duration) ease forwards;
+}
+
+.laws-point-cut-shape.stage-two {
+  animation: lawsPointCutShapeTwo var(--laws-animation-duration) ease forwards;
+}
+
+.laws-point-cut-shape.stage-three {
+  animation: lawsPointCutShapeThree var(--laws-animation-duration) ease forwards;
+}
+
+.laws-point-cut-shape.stage-four {
+  animation: lawsPointCutShapeFour var(--laws-animation-duration) ease forwards;
+}
+
+.laws-point-cut-shape.stage-five {
+  animation: lawsPointCutShapeFive var(--laws-animation-duration) ease forwards;
+}
+
+.laws-point-cut-piece {
+  fill: rgba(184, 138, 45, 0.18);
+  stroke: #b88a2d;
+  transform-box: view-box;
+  transform-origin: center;
+  animation: lawsPointCutPiece 980ms ease var(--cut-delay, 0ms) forwards;
+}
+
+.laws-point-cut-piece.one { animation: lawsPointCutPieceOne var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-piece.two { animation: lawsPointCutPieceTwo var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-piece.three { animation: lawsPointCutPieceThree var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-piece.four { animation: lawsPointCutPieceFour var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-piece.five { animation: lawsPointCutPieceFive var(--laws-animation-duration) ease forwards; }
+
+.laws-point-cut-guide {
+  fill: none;
+  stroke: var(--laws-red-dark);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 12;
+  opacity: 0;
+  animation: lawsPointCutGuide 760ms ease var(--cut-delay, 0ms) forwards;
+}
+
+.laws-point-cut-guide.one { animation: lawsPointCutGuideOne var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-guide.two { animation: lawsPointCutGuideTwo var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-guide.three { animation: lawsPointCutGuideThree var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-guide.four { animation: lawsPointCutGuideFour var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-guide.five { animation: lawsPointCutGuideFive var(--laws-animation-duration) ease forwards; }
+
+.laws-point-cut-boundary-dots {
+  fill: var(--laws-red-dark);
+  stroke: rgba(255, 244, 212, 0.8);
+  stroke-width: 2;
+  opacity: 0;
+  animation: lawsPointCutGuide 760ms ease var(--cut-delay, 0ms) forwards;
+}
+
+.laws-point-cut-boundary-dots.one { animation: lawsPointCutGuideOne var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-boundary-dots.two { animation: lawsPointCutGuideTwo var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-boundary-dots.three { animation: lawsPointCutGuideThree var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-boundary-dots.four { animation: lawsPointCutGuideFour var(--laws-animation-duration) ease forwards; }
+.laws-point-cut-boundary-dots.five { animation: lawsPointCutGuideFive var(--laws-animation-duration) ease forwards; }
+
+.laws-final-cut-point {
+  opacity: 0;
+  transform-origin: 450px 220px;
+  animation: lawsFinalCutPoint var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-line {
+  --laws-animation-duration: 8400ms;
+}
+
+.laws-line-seed-point,
+.laws-line-dot-layer circle,
+.laws-endpoint {
+  fill: #b94d59;
+}
+
+.laws-line-seed-point {
+  transform-origin: 450px 220px;
+  animation: lawsLineSeedHold var(--laws-animation-duration) ease-in-out forwards;
+}
+
+.laws-line-dot-layer circle {
+  opacity: 0;
+  transform-origin: center;
+  animation-delay: var(--dot-delay, 0ms);
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-in-out;
+}
+
+.laws-line-dot-layer.coarse circle {
+  animation-name: lawsLineCoarseDot;
+}
+
+.laws-line-dot-layer.gap circle {
+  animation-name: lawsLineGapDot;
+}
+
+.laws-line-dot-layer.fine circle {
+  animation-name: lawsLineFineDot;
+}
+
+.laws-line-dot-layer.dense circle {
+  animation-name: lawsLineDenseDot;
+}
+
+.laws-line-continuous-stroke {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 540;
+  stroke-dashoffset: 540;
+  opacity: 0;
+  animation: lawsContinuousLineFromDots var(--laws-animation-duration) ease-in-out forwards;
+}
+
+.laws-born-line,
+.laws-postulate-drawn-line,
+.laws-finite-line,
+.laws-produced-line,
+.laws-sweep-source,
+.laws-surface-ghost-line,
+.laws-angle-ray,
+.laws-postulate-right-angle line,
+.laws-cross-line,
+.laws-transversal,
+.laws-produced-meeting,
+.laws-notion-segment {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.laws-born-line,
+.laws-postulate-drawn-line,
+.laws-produced-line,
+.laws-radius,
+.laws-diameter,
+.laws-parallel-line,
+.laws-produced-meeting {
+  stroke-dasharray: 520;
+  stroke-dashoffset: 520;
+  animation: lawsDraw 1800ms ease forwards;
+}
+
+.laws-finite-line {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: lawsDraw 950ms ease forwards;
+}
+
+.laws-produced-line {
+  animation-delay: 600ms;
+}
+
+.laws-postulate-infinite-baseline {
+  fill: none;
+  stroke: rgba(117, 0, 0, 0.46);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+  animation: lawsPostulateInfiniteLine var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-finite-highlight {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-dasharray: 230;
+  stroke-dashoffset: 230;
+  opacity: 0;
+  animation: lawsPostulateFiniteHighlight var(--laws-animation-duration) ease forwards;
+}
+
+.laws-surface-fill,
+.laws-plane-fill,
+.laws-plane-backdrop {
+  fill: rgba(184, 72, 82, 0.16);
+  stroke: none;
+  opacity: 0;
+  animation: lawsFadeIn 1200ms ease 600ms forwards;
+}
+
+.laws-figure-boundary,
+.laws-straight-figure,
+.laws-triangle,
+.laws-quad,
+.laws-coincide-triangle {
+  fill: rgba(184, 72, 82, 0.08);
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: lawsDraw 1600ms ease forwards;
+}
+
+.laws-surface-fill {
+  fill: rgba(184, 72, 82, 0.2);
+  opacity: 0;
+  animation: lawsSurfaceFill 4200ms ease forwards;
+}
+
+.laws-surface-boundary {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-linejoin: round;
+  stroke-dasharray: 1260;
+  stroke-dashoffset: 1260;
+  opacity: 0;
+  animation: lawsSurfaceBoundary 4200ms ease forwards;
+}
+
+.laws-surface-ghost-line {
+  opacity: 0;
+  animation: lawsSurfaceGuideLine 4200ms ease var(--line-delay) forwards;
+}
+
+.laws-plane-line,
+.laws-parallel-line,
+.laws-infinity-stretch {
+  fill: none;
+  stroke: #2f668d;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 620;
+  stroke-dashoffset: 620;
+  animation: lawsDraw 1500ms ease forwards;
+}
+
+.laws-plane-line.two,
+.laws-plane-line.three,
+.laws-plane-line.four {
+  animation-delay: 180ms;
+}
+
+.laws-angle-arc,
+.laws-internal-angle {
+  fill: none;
+  stroke: #b88a2d;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: lawsDraw 1100ms ease 700ms forwards;
+}
+
+.laws-angle-wash,
+.laws-equal-angle {
+  fill: rgba(184, 138, 45, 0.18);
+  stroke: none;
+  opacity: 0;
+  animation: lawsFadeIn 800ms ease 900ms forwards;
+}
+
+.laws-angle-vertex {
+  fill: var(--laws-red);
+}
+
+.laws-angle-ray.moving {
+  stroke: #2f668d;
+}
+
+.laws-angle-ray.standing {
+  stroke: #2f668d;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: lawsDraw 900ms ease 450ms forwards;
+}
+
+.laws-definition-angle .laws-plane-angle-plane {
+  opacity: 0;
+  animation: lawsPlaneAnglePlane var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-angle .laws-angle-horizontal {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  opacity: 0;
+  animation: lawsPlaneAngleHorizontal var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-angle .laws-angle-side {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  opacity: 0;
+  animation: lawsPlaneAngleSide var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-angle .laws-angle-sector-line {
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  opacity: 0;
+  animation: lawsPlaneAngleSectorLine var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-angle .laws-angle-sector-fill {
+  opacity: 0;
+  animation: lawsPlaneAngleSectorFill var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-angle .laws-angle-vertex-staged {
+  opacity: 0;
+  animation: lawsPlaneAngleVertex var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-square,
+.laws-postulate-right-angle path {
+  fill: none;
+  stroke: #b88a2d;
+  stroke-width: 5;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation: lawsFadeIn 900ms ease 900ms forwards;
+}
+
+.laws-moving-angle {
+  transform-origin: 450px 260px;
+  animation: lawsAngleSweep 3600ms ease infinite;
+}
+
+.laws-changing-arc {
+  animation: lawsArcPulse 3600ms ease infinite;
+}
+
+.laws-angle-transition-source {
+  animation: lawsAngleTransitionSource var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-transition-base,
+.laws-angle-transition-left,
+.laws-angle-transition-standing {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.laws-angle-transition-left {
+  transform-box: view-box;
+  transform-origin: 450px 265px;
+  animation: lawsAngleLeftCutAway var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-transition-standing {
+  stroke: #2f668d;
+}
+
+.laws-angle-transition-square {
+  fill: none;
+  stroke: #b88a2d;
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+
+.laws-angle-transition-cut {
+  fill: none;
+  stroke: #5b0006;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 8 10;
+  opacity: 0;
+  animation: lawsAngleTransitionCut var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-comparison-row {
+  opacity: 0;
+}
+
+.laws-angle-comparison-row.obtuse {
+  animation: lawsAngleRowTop var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-comparison-row.right {
+  animation: lawsAngleRowCenter var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-comparison-row.acute {
+  animation: lawsAngleRowBottom var(--laws-animation-duration) ease forwards;
+}
+
+.laws-obtuse-moving-side,
+.laws-acute-moving-side {
+  transform-box: view-box;
+  stroke: #2f668d;
+}
+
+.laws-obtuse-moving-side {
+  transform-origin: 360px 112px;
+  animation: lawsObtuseSideOpen var(--laws-animation-duration) ease forwards;
+}
+
+.laws-acute-moving-side {
+  transform-origin: 360px 340px;
+  animation: lawsAcuteSideClose var(--laws-animation-duration) ease forwards;
+}
+
+.laws-transforming-angle-square {
+  opacity: 1;
+  animation: lawsTransformingAngleSquare var(--laws-animation-duration) ease forwards;
+}
+
+.laws-obtuse-arc,
+.laws-acute-arc {
+  opacity: 0;
+  animation: lawsAngleComparisonArc var(--laws-animation-duration) ease forwards;
+}
+
+.laws-angle-label {
+  fill: var(--laws-red);
+  font-family: var(--font-eucraft-title);
+  font-size: 1.45rem;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  animation: lawsAngleComparisonLabel var(--laws-animation-duration) ease forwards;
+}
+
+.laws-figure-fill {
+  fill: rgba(184, 72, 82, 0.16);
+  opacity: 0;
+  animation: lawsFadeIn 1200ms ease 900ms forwards;
+}
+
+.laws-circle-outline {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
+  animation: lawsDraw 1600ms ease forwards;
+}
+
+.laws-definition-circle {
+  --laws-animation-duration: 20000ms;
+}
+
+.laws-circle-sequence {
+  transform-box: fill-box;
+}
+
+.laws-circle-plane-static {
+  opacity: 1;
+  animation: none;
+}
+
+.laws-circle-angle-arm {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.laws-circle-angle-arm.moving {
+  stroke: #2f668d;
+}
+
+.laws-circle-tracing-angle,
+.laws-postulate-circle-tracing-angle {
+  opacity: 1;
+  transform-box: view-box;
+  transform-origin: 450px 202px;
+}
+
+.laws-circle-tracing-angle {
+  animation: lawsCircleAngleRotate var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-circle-tracing-angle {
+  transform-origin: 450px 226px;
+  animation: lawsPostulateCircleAngleRotate var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-traced-outline {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-dasharray: 754;
+  stroke-dashoffset: 754;
+  opacity: 1;
+  animation: lawsCircleRotationTrace var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-rotation-radius {
+  fill: none;
+  stroke: #b88a2d;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  opacity: 0;
+  animation: lawsCircleRotationRadius var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-radius-end {
+  fill: #b94d59;
+  stroke: none;
+  opacity: 0;
+  transform-box: view-box;
+  animation: lawsCircleRadiusEndpoint var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-circle-rotation .laws-circle-radius-end {
+  animation: lawsPostulateCircleRadiusEndpoint var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-rotation-definition .laws-circle-center-ring,
+.laws-circle-rotation-definition .laws-circle-center-dot {
+  transform-origin: 450px 202px;
+}
+
+.laws-circle-rotation-definition .laws-circle-center-ring {
+  animation: lawsCircleRotationCenterRing var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-rotation-definition .laws-circle-center-dot {
+  animation: lawsCircleRotationCenterDot var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-rotation-definition .laws-circle-diameter {
+  stroke: #2f668d;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  opacity: 0;
+  animation: lawsCircleRotationDiameter var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-circle-fill {
+  fill: rgba(184, 72, 82, 0.16);
+  stroke: none;
+  opacity: 0;
+  animation: lawsDefinitionCircleFill var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-circle-outline {
+  animation: lawsDefinitionCircleOutline var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-center-ring {
+  fill: none;
+  stroke: var(--laws-red-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 1 12;
+  opacity: 0;
+  transform-origin: 450px 210px;
+  animation: lawsDefinitionCircleCenterRing var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-center-dot {
+  opacity: 0;
+  transform-origin: 450px 210px;
+  animation: lawsDefinitionCircleCenterDot var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-circle .laws-circle-radius {
+  stroke: #b88a2d;
+  stroke-dasharray: 130;
+  stroke-dashoffset: 130;
+  opacity: 0;
+  animation-delay: 0ms;
+  animation: lawsDefinitionCircleRadius var(--laws-animation-duration) ease forwards;
+}
+
+.laws-definition-circle .laws-circle-diameter {
+  stroke: #2f668d;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  opacity: 0;
+  animation-delay: 0ms;
+  animation: lawsDefinitionCircleDiameter var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-rotation-definition .laws-circle-diameter {
+  stroke: #2f668d;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  opacity: 0;
+  animation-delay: 0ms;
+  animation: lawsCircleRotationDiameter var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-final-fill {
+  fill: rgba(184, 72, 82, 0.12);
+  stroke: none;
+  opacity: 0;
+  animation: lawsCircleRotationFinalFill var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-final-arc,
+.laws-circle-final-diameter {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation: lawsCircleRotationFinalOutline var(--laws-animation-duration) ease forwards;
+}
+
+.laws-circle-final-arc {
+  stroke-dasharray: 390;
+  stroke-dashoffset: 390;
+}
+
+.laws-circle-final-diameter {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+}
+
+.laws-radius {
+  stroke: #b88a2d;
+  stroke-width: 5;
+  animation-delay: 650ms;
+}
+
+.laws-radius.two {
+  animation-delay: 950ms;
+}
+
+.laws-diameter {
+  stroke: #2f668d;
+  stroke-width: 5;
+  animation-delay: 1450ms;
+}
+
+.laws-semicircle {
+  fill: rgba(184, 72, 82, 0.12);
+  stroke: var(--laws-red);
+  stroke-width: 7;
+  stroke-dasharray: 380;
+  stroke-dashoffset: 380;
+  animation: lawsDraw 1100ms ease 2100ms forwards;
+}
+
+.laws-postulate-circle-outline {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 6;
+  stroke-dasharray: 860;
+  stroke-dashoffset: 860;
+  animation: lawsPostulateCircleDraw var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-circle-rotation .laws-postulate-circle-outline {
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
+  animation: lawsPostulateCircleRotationTrace var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-center-point {
+  opacity: 0;
+  transform-origin: 450px 220px;
+  animation: lawsPostulateCenterAppear var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-circle-rotation .laws-postulate-center-point {
+  transform-origin: 450px 226px;
+  animation: lawsPostulateCircleCenterAppear var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-radius {
+  fill: none;
+  stroke: #b88a2d;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 145;
+  stroke-dashoffset: 145;
+  opacity: 0;
+  animation: lawsPostulateRadiusDraw var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-circle-rotation .laws-postulate-radius {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: lawsPostulateCircleRadiusDraw var(--laws-animation-duration) ease forwards;
+}
+
+.laws-postulate-radius-point {
+  opacity: 0;
+  transform-origin: 585px 220px;
+  animation: lawsPostulateRadiusPoint var(--laws-animation-duration) ease forwards;
+}
+
+.laws-fading-curve {
+  fill: none;
+  stroke: rgba(47, 102, 141, 0.32);
+  stroke-width: 5;
+  stroke-dasharray: 12 12;
+  animation: lawsFadeOut 2400ms ease forwards;
+}
+
+.laws-rectilinear-good-shape {
+  animation-delay: 0ms;
+}
+
+.laws-nonrectilinear-choice {
+  transform-origin: 660px 246px;
+  animation: lawsWrongRectilinearFade var(--laws-animation-duration) ease forwards;
+}
+
+.laws-nonrectilinear-shape {
+  fill: rgba(47, 102, 141, 0.08);
+  stroke: #2f668d;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 720;
+  stroke-dashoffset: 720;
+  animation: lawsWrongRectilinearShape var(--laws-animation-duration) ease forwards;
+}
+
+.laws-nonrectilinear-cross {
+  opacity: 0;
+  animation: lawsWrongRectilinearCross var(--laws-animation-duration) ease forwards;
+}
+
+.laws-nonrectilinear-cross line {
+  fill: none;
+  stroke: var(--laws-red-dark);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 170;
+  stroke-dashoffset: 170;
+  animation: lawsWrongRectilinearCrossLine var(--laws-animation-duration) ease forwards;
+}
+
+.laws-equality-mark,
+.laws-whole-brace,
+.laws-greater-mark {
+  fill: none;
+  stroke: #b88a2d;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation: lawsFadeIn 900ms ease 1100ms forwards;
+}
+
+.laws-scalene-unequal-mark {
+  fill: none;
+  stroke: #2f668d;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation: lawsFadeIn 900ms ease 1300ms forwards;
+}
+
+.laws-triangle.iso {
+  animation-delay: 200ms;
+}
+
+.laws-triangle.sca {
+  animation-delay: 400ms;
+}
+
+.laws-angle-arc.obtuse,
+.laws-angle-arc.acute-one,
+.laws-angle-arc.acute-two,
+.laws-angle-arc.acute-three {
+  animation-delay: 900ms;
+}
+
+.laws-quad.oblong { animation-delay: 140ms; }
+.laws-quad.rhombus { animation-delay: 280ms; }
+.laws-quad.rhomboid { animation-delay: 420ms; }
+.laws-quad.trapezia { animation-delay: 560ms; }
+
+.laws-parallel-line {
+  stroke: var(--laws-red);
+  animation-duration: 1700ms;
+}
+
+.laws-infinity-stretch {
+  opacity: 0;
+  animation: lawsFadeIn 1000ms ease 1200ms forwards;
+}
+
+.laws-cross-line,
+.laws-transversal {
+  stroke-width: 5;
+}
+
+.laws-produced-meeting {
+  stroke: #2f668d;
+  animation-delay: 1000ms;
+}
+
+.laws-meeting-point {
+  opacity: 0;
+  animation: lawsFadeIn 800ms ease 1800ms forwards;
+}
+
+.laws-postulate-right-angle {
+  opacity: 1;
+}
+
+.laws-postulate-right-angle .laws-right-angle-arm {
+  stroke: var(--laws-red);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.laws-postulate-right-angle .laws-right-angle-marker {
+  fill: rgba(184, 138, 45, 0.16);
+  stroke: #b88a2d;
+  stroke-width: 5;
+  stroke-linejoin: round;
+  opacity: 1;
+  animation: none;
+}
+
+.laws-right-angle-demo {
+  opacity: 1;
+  transform-box: view-box;
+  transform-origin: 450px 252px;
+  animation: lawsPostulateRightDemo var(--laws-animation-duration) ease forwards;
+}
+
+.laws-right-angle-demo-arm {
+  fill: none;
+  stroke: var(--laws-red);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transform-box: view-box;
+  transform-origin: 450px 252px;
+}
+
+.laws-right-angle-demo-arm.horizontal {
+  animation: lawsPostulateRightArmHorizontal var(--laws-animation-duration) ease forwards;
+}
+
+.laws-right-angle-demo-arm.vertical {
+  animation: lawsPostulateRightArmVertical var(--laws-animation-duration) ease forwards;
+}
+
+.laws-right-angle-demo-marker {
+  fill: rgba(184, 138, 45, 0.16);
+  stroke: #b88a2d;
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+
+.laws-right-angle-duplicates {
+  opacity: 0;
+  animation: lawsPostulateRightDuplicates var(--laws-animation-duration) ease forwards;
+}
+
+.laws-right-angle-duplicate .laws-right-angle-arm,
+.laws-right-angle-duplicate .laws-right-angle-marker {
+  animation: lawsRightAngleEqualityPulse var(--laws-animation-duration) ease-in-out infinite;
+}
+
+.laws-notion-segment {
+  stroke-width: 12;
+  stroke-dasharray: 360;
+  stroke-dashoffset: 360;
+  animation: lawsDraw 1000ms ease forwards;
+}
+
+.laws-common-write-text {
+  fill: var(--laws-red);
+  font-family: var(--font-eucraft-title);
+  font-size: 4.2rem;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  clip-path: inset(0 100% 0 0);
+  animation: lawsCommonTextWrite var(--laws-animation-duration) ease forwards;
+}
+
+.laws-common-write-text.two {
+  animation-name: lawsCommonTextWriteSecond;
+}
+
+.laws-common-add .laws-notion-segment.red {
+  animation: lawsCommonAddRedLine var(--laws-animation-duration) ease forwards;
+}
+
+.laws-notion-segment.gold {
+  stroke: #b88a2d;
+}
+
+.laws-notion-segment.blue {
+  stroke: #2f668d;
+}
+
+.laws-added-piece {
+  animation-delay: 0ms;
+  animation: lawsCommonAddGoldLine var(--laws-animation-duration) ease forwards;
+}
+
+.laws-subtract-keep {
+  animation: lawsCommonSubtractKeep var(--laws-animation-duration) ease forwards;
+}
+
+.laws-subtract-cut {
+  stroke: var(--laws-red);
+  animation: lawsCommonSubtractCut var(--laws-animation-duration) ease forwards;
+}
+
+.laws-subtract-cut-guide {
+  fill: none;
+  stroke: var(--laws-red-dark);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 12;
+  opacity: 0;
+  animation: lawsCommonSubtractGuide var(--laws-animation-duration) ease forwards;
+}
+
+.laws-subtract-blue {
+  opacity: 0;
+  animation: lawsCommonSubtractBlue var(--laws-animation-duration) ease forwards;
+}
+
+.laws-remainder {
+  animation-delay: 1200ms;
+}
+
+.laws-equality-thread {
+  fill: none;
+  stroke: rgba(184, 138, 45, 0.7);
+  stroke-width: 4;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: lawsDraw 1400ms ease 800ms forwards;
+}
+
+.laws-coincide-triangle.moving {
+  stroke: #2f668d;
+  fill: rgba(47, 102, 141, 0.09);
+  animation: lawsTriangleCoincide 2400ms ease forwards;
+}
+
+.laws-paper-whole,
+.laws-paper-cut-body,
+.laws-paper-part,
+.laws-paper-missing {
+  stroke: var(--laws-red);
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+
+.laws-paper-whole {
+  fill: rgba(255, 244, 212, 0.58);
+  animation: lawsPaperWholeBeforeCorner var(--laws-animation-duration) ease forwards;
+}
+
+.laws-paper-cut-body {
+  fill: rgba(255, 244, 212, 0.58);
+  opacity: 0;
+  animation: lawsPaperCutBody var(--laws-animation-duration) ease forwards;
+}
+
+.laws-paper-missing {
+  fill: rgba(239, 224, 185, 0.94);
+  animation: lawsFadeIn 900ms ease 600ms both;
+}
+
+.laws-paper-part {
+  fill: rgba(184, 72, 82, 0.12);
+  transform-origin: 640px 188px;
+  animation: lawsPaperPart 1900ms ease forwards;
+}
+
+.laws-paper-corner-cut-line {
+  fill: none;
+  stroke: var(--laws-red-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0;
+  animation: lawsPaperCornerCutLine var(--laws-animation-duration) ease forwards;
+}
+
+.laws-paper-corner-part {
+  transform-origin: 440px 160px;
+  opacity: 0;
+  animation: lawsPaperCornerPart var(--laws-animation-duration) ease forwards;
+}
+
+.laws-whole-greater-mark {
+  stroke-dasharray: 150;
+  stroke-dashoffset: 150;
+  opacity: 0;
+  animation: lawsWholeGreaterMark var(--laws-animation-duration) ease forwards;
+}
+
+.laws-animation-stage *,
+.laws-animation-stage *::before,
+.laws-animation-stage *::after {
+  animation-duration: var(--laws-animation-duration) !important;
+}
+
+.laws-line-dot-layer circle {
+  animation-duration: calc(var(--laws-animation-duration) - var(--dot-delay)) !important;
+}
+
+@keyframes lawsDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsFadeOut {
+  0%, 40% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lawsPointPulse {
+  0%, 100% {
+    transform: scale(1);
+    transform-origin: 450px 210px;
+  }
+  50% {
+    transform: scale(1.08);
+    transform-origin: 450px 210px;
+  }
+}
+
+@keyframes lawsNoPartPoint {
+  0%, 12% {
+    transform: scale(1);
+  }
+  34%, 66% {
+    transform: scale(5);
+  }
+  82%, 100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsPointHalo {
+  0%, 16% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  32%, 66% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  82%, 100% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+}
+
+@keyframes lawsCutAttempt {
+  0%, 28% {
+    opacity: 0;
+    transform: scale(0.24);
+  }
+  42%, 54% {
+    opacity: 0.82;
+    transform: scale(1.05);
+  }
+  62% {
+    opacity: 0.38;
+    transform: scale(1.12);
+  }
+  78%, 100% {
+    opacity: 0;
+    transform: scale(0.34);
+  }
+}
+
+@keyframes lawsLineSeedHold {
+  0%, 18% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  26% {
+    opacity: 1;
+    transform: scale(1.42);
+  }
+  34%, 78% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  92%, 100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes lawsLineCoarseDot {
+  0%, 14% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+  34%, 70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  88%, 100% {
+    opacity: 0;
+    transform: scale(0.46);
+  }
+}
+
+@keyframes lawsLineGapDot {
+  0%, 30% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+  50%, 76% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  92%, 100% {
+    opacity: 0;
+    transform: scale(0.42);
+  }
+}
+
+@keyframes lawsLineFineDot {
+  0%, 46% {
+    opacity: 0;
+    transform: scale(0.16);
+  }
+  56% {
+    opacity: 0.96;
+    transform: scale(1.08);
+  }
+  64%, 82% {
+    opacity: 0.96;
+    transform: scale(1);
+  }
+  96%, 100% {
+    opacity: 0;
+    transform: scale(0.38);
+  }
+}
+
+@keyframes lawsLineDenseDot {
+  0%, 60% {
+    opacity: 0;
+    transform: scale(0.12);
+  }
+  70% {
+    opacity: 0.78;
+    transform: scale(0.94);
+  }
+  80%, 86% {
+    opacity: 0.9;
+    transform: scale(0.82);
+  }
+  98%, 100% {
+    opacity: 0;
+    transform: scale(0.28);
+  }
+}
+
+@keyframes lawsContinuousLineFromDots {
+  0%, 72% {
+    opacity: 0;
+    stroke-dashoffset: 540;
+  }
+  82% {
+    opacity: 1;
+    stroke-dashoffset: 110;
+  }
+  92%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateInfiniteLine {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 700;
+  }
+  46%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateFiniteHighlight {
+  0%, 44% {
+    opacity: 0;
+    stroke-dashoffset: 230;
+  }
+  58% {
+    opacity: 1;
+  }
+  72%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateCircleDraw {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 860;
+  }
+  42%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateCenterAppear {
+  0%, 42% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  54% {
+    opacity: 1;
+    transform: scale(2.4);
+  }
+  66%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsPostulateRadiusDraw {
+  0%, 62% {
+    opacity: 0;
+    stroke-dashoffset: 145;
+  }
+  72% {
+    opacity: 1;
+  }
+  88%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateRadiusPoint {
+  0%, 80% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  92%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsGhostLine {
+  0% {
+    opacity: 0;
+    transform: translateY(-72px);
+  }
+  70%, 100% {
+    opacity: 0.42;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lawsSurfaceGuideLine {
+  0% {
+    opacity: 0;
+    transform: translateY(-62px);
+  }
+  22%, 58% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  82%, 100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lawsSurfaceBoundary {
+  0%, 14% {
+    opacity: 0;
+    stroke-dashoffset: 1260;
+  }
+  36%, 64% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsSurfaceFill {
+  0%, 42% {
+    opacity: 0;
+  }
+  70%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsPlaneAnglePlane {
+  0% {
+    opacity: 0;
+  }
+  14%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsPlaneAngleHorizontal {
+  0%, 24% {
+    opacity: 0;
+    stroke-dashoffset: 220;
+  }
+  34% {
+    opacity: 1;
+  }
+  46%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPlaneAngleSide {
+  0%, 56% {
+    opacity: 0;
+    stroke-dashoffset: 220;
+  }
+  66% {
+    opacity: 1;
+  }
+  78%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPlaneAngleSectorLine {
+  0%, 56% {
+    opacity: 0;
+    stroke-dashoffset: 180;
+  }
+  66% {
+    opacity: 1;
+  }
+  78%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPlaneAngleSectorFill {
+  0%, 58% {
+    opacity: 0;
+  }
+  76%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsPlaneAngleVertex {
+  0%, 24% {
+    opacity: 0;
+  }
+  34%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsDefinitionCircleOutline {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 760;
+  }
+  13%, 78% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsDefinitionCircleFill {
+  0%, 14% {
+    opacity: 0;
+  }
+  22%, 78% {
+    opacity: 1;
+  }
+  88%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lawsDefinitionCircleCenterRing {
+  0%, 22% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  30%, 38% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  48%, 58% {
+    opacity: 0.58;
+    transform: scale(1);
+  }
+  66%, 100% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes lawsDefinitionCircleCenterDot {
+  0%, 22% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  30%, 58% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  66%, 100% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+}
+
+@keyframes lawsDefinitionCircleRadius {
+  0%, 36% {
+    opacity: 0;
+    stroke-dashoffset: 130;
+  }
+  46%, 56% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  64%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsDefinitionCircleDiameter {
+  0%, 58% {
+    opacity: 0;
+    stroke-dashoffset: 260;
+    stroke-width: 5;
+  }
+  70% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    stroke-width: 5;
+  }
+  78% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    stroke-width: 9;
+  }
+  88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+    stroke-width: 5;
+  }
+}
+
+@keyframes lawsDefinitionCircleFinalFill {
+  0%, 80% {
+    opacity: 0;
+  }
+  90%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsDefinitionCircleFinalOutline {
+  0%, 80% {
+    opacity: 0;
+    stroke-dashoffset: 390;
+  }
+  92%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsWrongRectilinearShape {
+  0%, 8% {
+    opacity: 0;
+    stroke-dashoffset: 720;
+  }
+  30%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsWrongRectilinearCross {
+  0%, 34% {
+    opacity: 0;
+  }
+  48%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsWrongRectilinearCrossLine {
+  0%, 36% {
+    stroke-dashoffset: 170;
+  }
+  58%, 100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsWrongRectilinearFade {
+  0%, 64% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  86%, 100% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes lawsAngleSweep {
+  0%, 18% {
+    transform: rotate(0deg);
+  }
+  48% {
+    transform: rotate(-32deg);
+  }
+  78%, 100% {
+    transform: rotate(34deg);
+  }
+}
+
+@keyframes lawsArcPulse {
+  0%, 100% {
+    opacity: 0.42;
+  }
+  48% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsRightAngleHack {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  10%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsRemovePiece {
+  0%, 40% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0.18;
+    stroke-dashoffset: 0;
+    transform: translateX(52px);
+  }
+}
+
+@keyframes lawsTriangleCoincide {
+  0% {
+    opacity: 0.74;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  70%, 100% {
+    opacity: 0.92;
+    transform: translate(250px, -25px) rotate(0deg);
+  }
+}
+
+@keyframes lawsPaperPart {
+  0%, 42% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(40px, 64px) rotate(18deg);
+  }
+}
+
+@keyframes lawsCommonTextWrite {
+  0%, 8% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  22%, 100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes lawsCommonTextWriteSecond {
+  0%, 42% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  60%, 100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes lawsCommonAddRedLine {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 360;
+  }
+  34%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsCommonAddGoldLine {
+  0%, 42% {
+    opacity: 0;
+    stroke-dashoffset: 360;
+  }
+  58% {
+    opacity: 1;
+  }
+  76%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsCommonSubtractKeep {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 360;
+  }
+  24%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsCommonSubtractCut {
+  0% {
+    opacity: 1;
+    stroke: var(--laws-red);
+    stroke-dashoffset: 360;
+  }
+  24% {
+    opacity: 1;
+    stroke: var(--laws-red);
+    stroke-dashoffset: 0;
+  }
+  38%, 64% {
+    opacity: 1;
+    stroke: #b88a2d;
+    stroke-dashoffset: 0;
+  }
+  88%, 100% {
+    opacity: 0;
+    stroke: #b88a2d;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsCommonSubtractGuide {
+  0%, 28% {
+    opacity: 0;
+  }
+  38%, 68% {
+    opacity: 0.92;
+  }
+  88%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lawsCommonSubtractBlue {
+  0%, 48% {
+    opacity: 0;
+    stroke-dashoffset: 360;
+  }
+  62%, 74% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  92%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPaperCornerCutLine {
+  0%, 14% {
+    opacity: 0;
+    stroke-dashoffset: 100;
+  }
+  30%, 48% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  68%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPaperWholeBeforeCorner {
+  0%, 38% {
+    opacity: 1;
+  }
+  52%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lawsPaperCutBody {
+  0%, 38% {
+    opacity: 0;
+  }
+  52%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsPaperCornerPart {
+  0%, 38% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  84%, 100% {
+    opacity: 1;
+    transform: translate(260px, 80px);
+  }
+}
+
+@keyframes lawsWholeGreaterMark {
+  0%, 76% {
+    opacity: 0;
+    stroke-dashoffset: 150;
+  }
+  94%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPointCutStage {
+  0%, 100% {
+    opacity: 0;
+  }
+  8%, 78% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsPointCutPiece {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  18%, 58% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--piece-x, 0), var(--piece-y, 0));
+  }
+}
+
+@keyframes lawsPointCutGuide {
+  0%, 100% {
+    opacity: 0;
+  }
+  18%, 70% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsPointCutShapeOne {
+  0%, 16% { opacity: 1; }
+  24%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutShapeTwo {
+  0%, 18% { opacity: 0; }
+  24%, 32% { opacity: 1; }
+  40%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutShapeThree {
+  0%, 34% { opacity: 0; }
+  42%, 50% { opacity: 1; }
+  58%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutShapeFour {
+  0%, 52% { opacity: 0; }
+  60%, 68% { opacity: 1; }
+  76%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutShapeFive {
+  0%, 70% { opacity: 0; }
+  78%, 86% { opacity: 1; }
+  94%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutPieceOne {
+  0%, 14% { opacity: 0; transform: translate(0, 0); }
+  18% { opacity: 1; transform: translate(0, 0); }
+  30%, 100% { opacity: 0; transform: translate(54px, -38px); }
+}
+
+@keyframes lawsPointCutPieceTwo {
+  0%, 30% { opacity: 0; transform: translate(0, 0); }
+  34% { opacity: 1; transform: translate(0, 0); }
+  46%, 100% { opacity: 0; transform: translate(64px, 28px); }
+}
+
+@keyframes lawsPointCutPieceThree {
+  0%, 46% { opacity: 0; transform: translate(0, 0); }
+  50% { opacity: 1; transform: translate(0, 0); }
+  62%, 100% { opacity: 0; transform: translate(-56px, 38px); }
+}
+
+@keyframes lawsPointCutPieceFour {
+  0%, 62% { opacity: 0; transform: translate(0, 0); }
+  66% { opacity: 1; transform: translate(0, 0); }
+  78%, 100% { opacity: 0; transform: translate(42px, -32px); }
+}
+
+@keyframes lawsPointCutPieceFive {
+  0%, 76% { opacity: 0; transform: translate(0, 0); }
+  80% { opacity: 1; transform: translate(0, 0); }
+  90%, 100% { opacity: 0; transform: translate(34px, 26px); }
+}
+
+@keyframes lawsPointCutGuideOne {
+  0%, 10% { opacity: 0; }
+  14%, 22% { opacity: 1; }
+  30%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutGuideTwo {
+  0%, 26% { opacity: 0; }
+  30%, 38% { opacity: 1; }
+  46%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutGuideThree {
+  0%, 42% { opacity: 0; }
+  46%, 54% { opacity: 1; }
+  62%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutGuideFour {
+  0%, 58% { opacity: 0; }
+  62%, 70% { opacity: 1; }
+  78%, 100% { opacity: 0; }
+}
+
+@keyframes lawsPointCutGuideFive {
+  0%, 72% { opacity: 0; }
+  76%, 84% { opacity: 1; }
+  92%, 100% { opacity: 0; }
+}
+
+@keyframes lawsFinalCutPoint {
+  0%, 86% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  94% {
+    opacity: 1;
+    transform: scale(1.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsAngleTransitionSource {
+  0%, 36% {
+    opacity: 1;
+  }
+  48%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lawsAngleLeftCutAway {
+  0%, 16% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  36%, 100% {
+    opacity: 0;
+    transform: translateX(-54px);
+  }
+}
+
+@keyframes lawsAngleTransitionCut {
+  0%, 10% {
+    opacity: 0;
+  }
+  16%, 32% {
+    opacity: 1;
+  }
+  44%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lawsAngleRowTop {
+  0%, 38% {
+    opacity: 0;
+    transform: translateY(114px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(114px);
+  }
+  62%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lawsAngleRowCenter {
+  0%, 38% {
+    opacity: 0;
+  }
+  46%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsAngleRowBottom {
+  0%, 38% {
+    opacity: 0;
+    transform: translateY(-114px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-114px);
+  }
+  62%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lawsObtuseSideOpen {
+  0%, 62% { transform: rotate(0deg); }
+  88%, 100% { transform: rotate(-42deg); }
+}
+
+@keyframes lawsAcuteSideClose {
+  0%, 62% { transform: rotate(0deg); }
+  88%, 100% { transform: rotate(48deg); }
+}
+
+@keyframes lawsTransformingAngleSquare {
+  0%, 68% { opacity: 1; }
+  82%, 100% { opacity: 0; }
+}
+
+@keyframes lawsAngleComparisonArc {
+  0%, 64% {
+    opacity: 0;
+    stroke-dashoffset: 180;
+  }
+  82%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsAngleComparisonLabel {
+  0%, 70% { opacity: 0; }
+  84%, 100% { opacity: 1; }
+}
+
+@keyframes lawsCircleAngleRotate {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  42% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+  52%, 100% {
+    opacity: 0;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lawsPostulateCircleAngleRotate {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  48% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+  60%, 100% {
+    opacity: 0;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lawsCircleRotationTrace {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 754;
+  }
+  40% {
+    opacity: 1;
+    stroke-dashoffset: 46;
+  }
+  42% {
+    opacity: 1;
+    stroke-dashoffset: 30;
+  }
+  46%, 84% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  92%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateCircleRotationTrace {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 760;
+  }
+  48%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsCircleRotationRadius {
+  0%, 42% {
+    opacity: 0;
+    stroke-dashoffset: 120;
+  }
+  54%, 70% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  80%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateCircleRadiusDraw {
+  0%, 58% {
+    opacity: 0;
+    stroke-dashoffset: 120;
+  }
+  76%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateCircleRadiusEndpoint {
+  0%, 58% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  76%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsCircleRadiusEndpoint {
+  0%, 42% {
+    opacity: 0;
+    transform: scale(0.42);
+  }
+  56%, 84% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  94%, 100% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+}
+
+@keyframes lawsCircleRotationCenterRing {
+  0%, 58% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  76% {
+    opacity: 0.58;
+    transform: scale(1);
+  }
+  86%, 100% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+}
+
+@keyframes lawsCircleRotationCenterDot {
+  0%, 58% {
+    opacity: 0;
+    transform: scale(0.38);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.8);
+  }
+  76%, 82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  90%, 100% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+}
+
+@keyframes lawsPostulateCircleCenterAppear {
+  0%, 48% {
+    opacity: 0;
+    transform: scale(0.38);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.9);
+  }
+  72%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lawsCircleRotationDiameter {
+  0%, 76% {
+    opacity: 0;
+    stroke-dashoffset: 260;
+    stroke-width: 5;
+  }
+  84% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    stroke-width: 5;
+  }
+  90% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    stroke-width: 9;
+  }
+  96%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    stroke-width: 5;
+  }
+}
+
+@keyframes lawsCircleRotationFinalFill {
+  0%, 86% {
+    opacity: 0;
+  }
+  94%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lawsCircleRotationFinalOutline {
+  0%, 86% {
+    opacity: 0;
+    stroke-dashoffset: 390;
+  }
+  96%, 100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lawsPostulateRightDemo {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  28% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+  68% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+  78%, 100% {
+    opacity: 0;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lawsPostulateRightArmHorizontal {
+  0%, 30% { transform: scaleX(1); }
+  44% { transform: scaleX(1.58); }
+  58% { transform: scaleX(0.58); }
+  70%, 100% { transform: scaleX(1); }
+}
+
+@keyframes lawsPostulateRightArmVertical {
+  0%, 30% { transform: scaleY(1); }
+  44% { transform: scaleY(1.58); }
+  58% { transform: scaleY(0.58); }
+  70%, 100% { transform: scaleY(1); }
+}
+
+@keyframes lawsPostulateRightDuplicates {
+  0%, 72% { opacity: 0; }
+  82%, 100% { opacity: 1; }
+}
+
+@keyframes lawsRightAngleEqualityPulse {
+  0%, 76%, 100% {
+    opacity: 1;
+    stroke-width: 6;
+  }
+  88% {
+    opacity: 1;
+    stroke-width: 9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .laws-world-page *,
+  .laws-world-page *::before,
+  .laws-world-page *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .laws-world-page {
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .laws-world-stage {
+    min-height: 74vh;
+    padding: 1.2rem;
+  }
+
+  .laws-comic-bubble {
+    min-height: 640px;
+  }
+
+  .laws-world-rail {
+    grid-template-rows: auto auto;
+    min-height: auto;
+    padding: 1rem 1.2rem 1.4rem;
+  }
+
+  .laws-world-ribbon,
+  .laws-world-progress {
+    display: none;
+  }
+
+  .laws-world-controls {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .laws-world-controls button {
+    font-size: 1.15rem;
+    text-align: center;
   }
 }

@@ -242,8 +242,12 @@ export function createPoint(
     fixed?: boolean;
     parentObjectIds?: string[];
     source?: string;
+    dependencies?: string[];
+    constructionStepId?: string;
+    createdByProposition?: string;
   } = {},
 ): Point {
+  const dependencies = options.dependencies ?? options.parentObjectIds;
   return {
     id: label,
     type: "point",
@@ -255,19 +259,45 @@ export function createPoint(
     source: options.source ?? createdBy,
     createdBy,
     parentObjectIds: options.parentObjectIds,
+    dependencies,
+    constructionStepId: options.constructionStepId ?? options.source,
+    createdByProposition: options.createdByProposition,
   };
 }
 
 export function createSegment(p1: string, p2: string, color?: string, source = "Post.1"): Segment {
   const id = `segment-${p1}-${p2}-${crypto.randomUUID().slice(0, 6)}`;
   const label = /^[A-Z]$/.test(p1) && /^[A-Z]$/.test(p2) ? `${p1}${p2}` : undefined;
-  return { id, type: "segment", p1, p2, label, color, source };
+  return {
+    id,
+    type: "segment",
+    p1,
+    p2,
+    label,
+    color,
+    source,
+    createdBy: source === "Post.1" ? "straightedge" : source,
+    dependencies: [p1, p2],
+    constructionStepId: source,
+    createdByProposition: source.startsWith("I.") ? source : undefined,
+  };
 }
 
 export function createCircle(center: string, through: string, color?: string, source = "Post.3"): Circle {
   const id = `circle-${center}-${through}-${crypto.randomUUID().slice(0, 6)}`;
   const label = /^[A-Z]$/.test(center) && /^[A-Z]$/.test(through) ? `${center}${through}` : undefined;
-  return { id, type: "circle", center, through, label, color, source, createdBy: "Post.3" };
+  return {
+    id,
+    type: "circle",
+    center,
+    through,
+    label,
+    color,
+    source,
+    createdBy: "Post.3",
+    dependencies: [center, through],
+    constructionStepId: source,
+  };
 }
 
 export function createCircleFromLength(
@@ -291,6 +321,9 @@ export function createCircleFromLength(
     color,
     source: "I.2",
     createdBy,
+    dependencies: [center, sourceP1, sourceP2],
+    constructionStepId: "set-compass-width",
+    createdByProposition: "I.2",
     sourceDescription: `radius equals ${sourceLabel}`,
   };
 }
@@ -311,6 +344,9 @@ export function createExtendedLine(from: string, through: string, baseSegment: s
     label,
     color,
     source: "Post.2",
+    createdBy: "extend-line",
+    dependencies: [from, through, baseSegment],
+    constructionStepId: "Post.2",
   };
 }
 
@@ -352,15 +388,26 @@ export function findNearbySegment(
       const p1 = getPoint(objects, segment.p1);
       const p2 = getPoint(objects, segment.p2);
       const projection = p1 && p2 ? projectToLine(p1, p2, x, y) : undefined;
-      if (!projection || projection.t < -0.03 || projection.t > 1.03) {
+      const maxParameter = segment.ray ? Number.POSITIVE_INFINITY : 1.03;
+      if (!p1 || !p2 || !projection || projection.t < -0.03 || projection.t > maxParameter) {
         return undefined;
       }
 
-      return { segment, distance: Math.hypot(x - projection.x, y - projection.y) };
+      return {
+        segment,
+        distance: Math.hypot(x - projection.x, y - projection.y),
+        length: Math.hypot(p2.x - p1.x, p2.y - p1.y),
+      };
     })
-    .filter((candidate): candidate is { segment: Segment; distance: number } => Boolean(candidate))
+    .filter((candidate): candidate is { segment: Segment; distance: number; length: number } => Boolean(candidate))
     .filter(({ distance: candidateDistance }) => candidateDistance <= tolerance)
-    .sort((a, b) => a.distance - b.distance)[0]?.segment;
+    .sort(
+      (a, b) =>
+        a.distance - b.distance ||
+        Number(Boolean(a.segment.given)) - Number(Boolean(b.segment.given)) ||
+        Number(Boolean(a.segment.ray)) - Number(Boolean(b.segment.ray)) ||
+        a.length - b.length,
+    )[0]?.segment;
 }
 
 export function findNearbyObjectSnap(
@@ -378,12 +425,14 @@ export function findNearbyObjectSnap(
         return undefined;
       }
 
-      if (object.type === "segment" && (projection.t < -0.03 || projection.t > 1.03)) {
-        return undefined;
-      }
+      if (object.type === "segment") {
+        if (object.ray && projection.t < -0.03) {
+          return undefined;
+        }
 
-      if (object.type === "extended-line" && projection.t < -0.03) {
-        return undefined;
+        if (!object.ray && object.given && (projection.t < -0.03 || projection.t > 1.03)) {
+          return undefined;
+        }
       }
 
       const snapDistance = Math.hypot(x - projection.x, y - projection.y);

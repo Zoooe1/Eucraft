@@ -52,10 +52,10 @@ export function circleCircleIntersections(
 
 function parameterWithinLineObject(line: LineObject, t: number) {
   if (line.type === "segment") {
-    return t >= -0.001 && t <= 1.001;
+    return line.given ? t >= -0.001 && t <= 1.001 : true;
   }
 
-  return t >= -0.001;
+  return true;
 }
 
 export function circleLineIntersections(

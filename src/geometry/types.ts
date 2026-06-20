@@ -1,11 +1,14 @@
 export type GeometryTool =
   | "point"
+  | "arrange-triangle"
   | "straightedge"
   | "extend"
   | "compass"
   | "compass-transfer"
   | "intersection"
   | "theorem-equilateral"
+  | "theorem-sas"
+  | "theorem-sss"
   | "theorem-bisect-angle"
   | "theorem-bisect-segment"
   | "theorem-perpendicular-on-line"
@@ -20,16 +23,45 @@ export type GeometryTool =
 
 export type AppPhase =
   | "title"
+  | "converse"
   | "map"
   | "laws"
   | "intro"
   | "construction"
+  | "constructionComplete"
+  | "playingProof"
+  | "proofComplete"
+  | "readingReplay"
   | "success"
   | "logicReplay"
   | "completionAnimation"
   | "completed";
 
-export type Point = {
+export type GeometryCreationMethod =
+  | "given"
+  | "free"
+  | "free-point"
+  | "snap"
+  | "straightedge"
+  | "compass"
+  | "set-compass-width"
+  | "compass-transfer"
+  | "intersection"
+  | "extend-line"
+  | "theorem-action"
+  | "system"
+  | "Post.1"
+  | "Post.2"
+  | "Post.3"
+  | "I.2";
+
+export type ProvenanceMetadata = {
+  dependencies?: string[];
+  constructionStepId?: string;
+  createdByProposition?: string;
+};
+
+export type Point = ProvenanceMetadata & {
   id: string;
   type: "point";
   x: number;
@@ -39,11 +71,11 @@ export type Point = {
   color?: string;
   auxiliary?: boolean;
   source?: string;
-  createdBy?: "free" | "given" | "intersection" | "snap" | "theorem-action";
+  createdBy?: GeometryCreationMethod;
   parentObjectIds?: string[];
 };
 
-export type Segment = {
+export type Segment = ProvenanceMetadata & {
   id: string;
   type: "segment";
   p1: string;
@@ -51,11 +83,12 @@ export type Segment = {
   label?: string;
   color?: string;
   given?: boolean;
+  ray?: boolean;
   source?: string;
-  createdBy?: string;
+  createdBy?: GeometryCreationMethod | string;
 };
 
-export type Circle = {
+export type Circle = ProvenanceMetadata & {
   id: string;
   type: "circle";
   center: string;
@@ -68,11 +101,11 @@ export type Circle = {
   label?: string;
   color?: string;
   source?: string;
-  createdBy?: "Post.3" | "I.2" | "free-compass-transfer" | string;
+  createdBy?: GeometryCreationMethod | "free-compass-transfer" | string;
   sourceDescription?: string;
 };
 
-export type ExtendedLine = {
+export type ExtendedLine = ProvenanceMetadata & {
   id: string;
   type: "extended-line";
   from: string;
@@ -90,10 +123,25 @@ export type GeometryObjects = GeometryObject[];
 
 export type ProofHighlight = string;
 
+export type ReplayHighlightStyle = {
+  target: ProofHighlight;
+  color: string;
+};
+
+export type ReplayAngleHighlight = {
+  points: [ProofHighlight, ProofHighlight, ProofHighlight];
+  color?: string;
+  radius?: number;
+  rightAngle?: boolean;
+  amplifyVertex?: boolean;
+};
+
 export type ReplayStep = {
   id: string;
   text: string;
   highlight: ProofHighlight[];
+  highlightStyles?: ReplayHighlightStyle[];
+  angleHighlights?: ReplayAngleHighlight[];
   futureTokens?: string[];
   highlightRoles?: ProofHighlight[];
   ruleRefs?: string[];
@@ -178,7 +226,20 @@ export type GeometricRelation =
   | { type: "double-area"; a: FigureRef; b: FigureRef }
   | { type: "is-square"; figure: FigureRef }
   | { type: "is-parallelogram"; figure: FigureRef }
-  | { type: "is-triangle"; figure: FigureRef };
+  | { type: "is-triangle"; figure: FigureRef }
+  | { type: "triangle-congruence"; a: FigureRef; b: FigureRef; method: "SAS" | "SSS" };
+
+export type ReasoningRelation = {
+  id: string;
+  type: "triangle-congruence";
+  method: "SAS" | "SSS";
+  triangle1: [string, string, string];
+  triangle2: [string, string, string];
+  correspondence: Record<string, string>;
+  derivedRelations: GeometricRelation[];
+  createdBy: "logic-rule";
+  propositionSource: string;
+};
 
 export type Proposition = {
   id: string;
