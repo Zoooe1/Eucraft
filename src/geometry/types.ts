@@ -226,10 +226,11 @@ export type GeometricRelation =
   | { type: "double-area"; a: FigureRef; b: FigureRef }
   | { type: "is-square"; figure: FigureRef }
   | { type: "is-parallelogram"; figure: FigureRef }
+  | { type: "is-equilateral"; figure: FigureRef }
   | { type: "is-triangle"; figure: FigureRef }
   | { type: "triangle-congruence"; a: FigureRef; b: FigureRef; method: "SAS" | "SSS" };
 
-export type ReasoningRelation = {
+export type TriangleCongruenceReasoningRelation = {
   id: string;
   type: "triangle-congruence";
   method: "SAS" | "SSS";
@@ -240,6 +241,17 @@ export type ReasoningRelation = {
   createdBy: "logic-rule";
   propositionSource: string;
 };
+
+export type EquilateralReasoningRelation = {
+  id: string;
+  type: "equilateral-triangle";
+  triangle: [string, string, string];
+  derivedRelations: GeometricRelation[];
+  createdBy: "theorem-action";
+  propositionSource: "I.1";
+};
+
+export type ReasoningRelation = TriangleCongruenceReasoningRelation | EquilateralReasoningRelation;
 
 export type Proposition = {
   id: string;

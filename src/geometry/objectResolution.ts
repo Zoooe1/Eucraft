@@ -1,4 +1,4 @@
-import type { GeometryObject, ProofContext } from "./types";
+import type { GeometryObject, Point, ProofContext, ReasoningRelation, Segment } from "./types";
 import {
   allCircles,
   allNamedPoints,
@@ -792,30 +792,62 @@ export function resolveBook1Prop12Context(objects: GeometryObject[]): ProofConte
 }
 
 export function resolveBook1Prop15Context(objects: GeometryObject[]): ProofContext | undefined {
-  const A = getPoint(objects, "A");
-  const B = getPoint(objects, "B");
-  const C = getPoint(objects, "C");
-  const D = getPoint(objects, "D");
-  const E = getPoint(objects, "E");
-  const segmentAB = segmentExistsBetween(objects, "A", "B");
-  const segmentCD = segmentExistsBetween(objects, "C", "D");
-  if (!A || !B || !C || !D || !E || !segmentAB || !segmentCD) {
-    return undefined;
+  const segments = allSegments(objects).filter((segment) => segment.createdBy !== "given" && segment.source !== "given");
+  const points = allNamedPoints(objects);
+
+  for (const firstSegment of segments) {
+    const firstStart = getPoint(objects, firstSegment.p1);
+    const firstEnd = getPoint(objects, firstSegment.p2);
+    if (!firstStart || !firstEnd || distance(firstStart, firstEnd) < 12) {
+      continue;
+    }
+
+    for (const secondSegment of segments) {
+      if (secondSegment.id === firstSegment.id) {
+        continue;
+      }
+
+      const secondStart = getPoint(objects, secondSegment.p1);
+      const secondEnd = getPoint(objects, secondSegment.p2);
+      if (!secondStart || !secondEnd || distance(secondStart, secondEnd) < 12) {
+        continue;
+      }
+
+      if (arePointsCollinear(firstStart, firstEnd, secondStart, 0.035) && arePointsCollinear(firstStart, firstEnd, secondEnd, 0.035)) {
+        continue;
+      }
+
+      const E = points.find(
+        (point) =>
+          point.id !== firstStart.id &&
+          point.id !== firstEnd.id &&
+          point.id !== secondStart.id &&
+          point.id !== secondEnd.id &&
+          isPointBetween(firstStart, point, firstEnd, 0.035) &&
+          isPointBetween(secondStart, point, secondEnd, 0.035),
+      );
+      if (!E) {
+        continue;
+      }
+
+      const angle = angleAt(E, firstStart, secondStart);
+      if (angle < 0.08 || Math.abs(Math.PI - angle) < 0.08) {
+        continue;
+      }
+
+      return {
+        pointA: firstStart.id,
+        pointB: firstEnd.id,
+        pointC: secondStart.id,
+        pointD: secondEnd.id,
+        pointE: E.id,
+        segmentAB: firstSegment.id,
+        segmentCD: secondSegment.id,
+      };
+    }
   }
 
-  if (!isPointBetween(A, E, B, 0.035) || !isPointBetween(C, E, D, 0.035)) {
-    return undefined;
-  }
-
-  return {
-    pointA: A.id,
-    pointB: B.id,
-    pointC: C.id,
-    pointD: D.id,
-    pointE: E.id,
-    segmentAB: segmentAB.id,
-    segmentCD: segmentCD.id,
-  };
+  return undefined;
 }
 
 export function resolveBook1Prop16Context(objects: GeometryObject[]): ProofContext | undefined {
@@ -998,19 +1030,31 @@ export function resolveBook1Prop21Context(objects: GeometryObject[]): ProofConte
   const A = getPoint(objects, "A");
   const B = getPoint(objects, "B");
   const C = getPoint(objects, "C");
-  const D = getPoint(objects, "D");
   const segmentAB = segmentExistsBetween(objects, "A", "B");
   const segmentBC = segmentExistsBetween(objects, "B", "C");
   const segmentAC = segmentExistsBetween(objects, "A", "C");
-  const segmentBD = segmentExistsBetween(objects, "B", "D");
-  const segmentDC = segmentExistsBetween(objects, "D", "C");
-  if (!A || !B || !C || !D || !segmentAB || !segmentBC || !segmentAC || !segmentBD || !segmentDC || !pointInTriangle(D, A, B, C)) {
+  if (!A || !B || !C || !segmentAB || !segmentBC || !segmentAC) {
     return undefined;
   }
 
+  const interiorBrokenPoint = allNamedPoints(objects)
+    .filter((point) => !["A", "B", "C"].includes(point.id) && pointInTriangle(point, A, B, C))
+    .map((point) => {
+      const segmentBD = segmentExistsBetween(objects, B.id, point.id);
+      const segmentDC = segmentExistsBetween(objects, point.id, C.id);
+      return segmentBD && segmentDC ? { point, segmentBD, segmentDC } : undefined;
+    })
+    .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))[0];
+  if (!interiorBrokenPoint) {
+    return undefined;
+  }
+
+  const D = interiorBrokenPoint.point;
+  const segmentBD = interiorBrokenPoint.segmentBD;
+  const segmentDC = interiorBrokenPoint.segmentDC;
   const E = allNamedPoints(objects).find(
     (point) =>
-      !["A", "B", "C", "D"].includes(point.id) &&
+      !["A", "B", "C", D.id].includes(point.id) &&
       isPointBetween(A, point, C, 0.035) &&
       isPointOnRay(B, D, point, 0.035) &&
       rayParameter(B, D, point) > 1.02,
@@ -1083,6 +1127,297 @@ function transversalSegmentForPoints(objects: GeometryObject[], points: Array<No
   }
 
   return allSegments(objects).find((segment) => points.every((point) => segmentSupportsPoint(objects, segment, point)));
+}
+
+type Prop22SourceLength = {
+  segment: Segment;
+};
+
+const PROP22_SOURCE_SEGMENT_IDS = ["AB", "CD", "EF"] as const;
+
+function prop22SourceSegment(objects: GeometryObject[], id: (typeof PROP22_SOURCE_SEGMENT_IDS)[number]) {
+  return allSegments(objects).find(
+    (segment) =>
+      (segment.given || segment.source === "given") &&
+      (segment.id === id ||
+        segment.label === id ||
+        (segment.p1 === id[0] && segment.p2 === id[1]) ||
+        (segment.p1 === id[1] && segment.p2 === id[0])),
+  );
+}
+
+function prop22SourceFromSegment(objects: GeometryObject[], segment: Segment): Prop22SourceLength | undefined {
+  const start = getPoint(objects, segment.p1);
+  const end = getPoint(objects, segment.p2);
+  return start && end ? { segment } : undefined;
+}
+
+function prop22SourceLengths(objects: GeometryObject[]): [Prop22SourceLength, Prop22SourceLength, Prop22SourceLength] | undefined {
+  const sourceSegments = PROP22_SOURCE_SEGMENT_IDS.map((id) => prop22SourceSegment(objects, id)).map((segment) =>
+    segment ? prop22SourceFromSegment(objects, segment) : undefined,
+  );
+
+  if (sourceSegments.every(Boolean)) {
+    return sourceSegments as [Prop22SourceLength, Prop22SourceLength, Prop22SourceLength];
+  }
+
+  const fallbackSources = allSegments(objects)
+    .filter((segment) => segment.given || segment.source === "given")
+    .map((segment) => prop22SourceFromSegment(objects, segment))
+    .filter((source): source is Prop22SourceLength => Boolean(source));
+
+  return fallbackSources.length >= 3 ? [fallbackSources[0], fallbackSources[1], fallbackSources[2]] : undefined;
+}
+
+function segmentBetweenOrSupportingPoints(objects: GeometryObject[], first: Point, second: Point) {
+  return (
+    segmentExistsBetween(objects, first.id, second.id) ??
+    allSegments(objects).find((segment) => segmentSupportsPoint(objects, segment, first) && segmentSupportsPoint(objects, segment, second))
+  );
+}
+
+type Prop22TriangleSide = {
+  points: [Point, Point];
+  segment: Segment;
+  sideRef: string;
+};
+
+function prop22SideRef(firstId: string, secondId: string) {
+  return [firstId, secondId].sort().join("");
+}
+
+function prop22SideNode(sideRef: string) {
+  return `side:${sideRef}`;
+}
+
+function prop22CircleNode(circleId: string) {
+  return `circle:${circleId}`;
+}
+
+function prop22SideAliasMap(objects: GeometryObject[]) {
+  const aliases = new Map<string, string>();
+  const points = allNamedPoints(objects);
+
+  for (const first of points) {
+    for (const second of points) {
+      if (first.id === second.id) {
+        continue;
+      }
+
+      const sideRef = prop22SideRef(first.id, second.id);
+      aliases.set(`${first.id}${second.id}`, sideRef);
+      aliases.set(`${second.id}${first.id}`, sideRef);
+    }
+  }
+
+  return aliases;
+}
+
+function prop22CanonicalRelationSideRef(sideAliases: Map<string, string>, ref: string) {
+  return sideAliases.get(ref) ?? ref;
+}
+
+function prop22PointKnownOnCircle(objects: GeometryObject[], point: Point, circle: NonNullable<ReturnType<typeof circleUsingBase>>) {
+  if (point.parentObjectIds?.includes(circle.id) || point.dependencies?.includes(circle.id)) {
+    return true;
+  }
+
+  const center = getPoint(objects, circle.center);
+  return center ? areDistancesEqual(distance(center, point), circleRadius(circle, objects), 12) : false;
+}
+
+function buildProp22LengthGraph(objects: GeometryObject[], reasoningRelations: ReasoningRelation[]) {
+  const parent = new Map<string, string>();
+  const sideAliases = prop22SideAliasMap(objects);
+
+  const find = (node: string): string => {
+    const current = parent.get(node);
+    if (!current) {
+      parent.set(node, node);
+      return node;
+    }
+
+    if (current === node) {
+      return node;
+    }
+
+    const root = find(current);
+    parent.set(node, root);
+    return root;
+  };
+
+  const unite = (first: string, second: string) => {
+    const firstRoot = find(first);
+    const secondRoot = find(second);
+    if (firstRoot !== secondRoot) {
+      parent.set(secondRoot, firstRoot);
+    }
+  };
+
+  for (const circle of allCircles(objects)) {
+    const circleRef = prop22CircleNode(circle.id);
+    if (circle.through) {
+      unite(circleRef, prop22SideNode(prop22SideRef(circle.center, circle.through)));
+    }
+
+    if (circle.radiusSegment) {
+      unite(circleRef, prop22SideNode(prop22SideRef(circle.radiusSegment.p1, circle.radiusSegment.p2)));
+    }
+
+    for (const point of allNamedPoints(objects)) {
+      if (point.id !== circle.center && prop22PointKnownOnCircle(objects, point, circle)) {
+        unite(circleRef, prop22SideNode(prop22SideRef(circle.center, point.id)));
+      }
+    }
+  }
+
+  for (const relation of reasoningRelations) {
+    for (const derived of relation.derivedRelations) {
+      if (derived.type === "equal-length") {
+        unite(
+          prop22SideNode(prop22CanonicalRelationSideRef(sideAliases, derived.a)),
+          prop22SideNode(prop22CanonicalRelationSideRef(sideAliases, derived.b)),
+        );
+      }
+    }
+  }
+
+  return {
+    connected(firstSideRef: string, secondSideRef: string) {
+      return find(prop22SideNode(firstSideRef)) === find(prop22SideNode(secondSideRef));
+    },
+  };
+}
+
+function prop22SideMatchesSourceLength(
+  side: Prop22TriangleSide,
+  source: Prop22SourceLength,
+  lengthGraph: ReturnType<typeof buildProp22LengthGraph>,
+) {
+  const sourceRef = prop22SideRef(source.segment.p1, source.segment.p2);
+  const sameSegment = side.segment.id === source.segment.id || side.sideRef === sourceRef;
+  const knownEqual = lengthGraph.connected(side.sideRef, sourceRef);
+  return sameSegment || knownEqual;
+}
+
+function prop22TriangleSides(
+  objects: GeometryObject[],
+  first: Point,
+  second: Point,
+  third: Point,
+): [Prop22TriangleSide, Prop22TriangleSide, Prop22TriangleSide] | undefined {
+  const firstSecond = segmentBetweenOrSupportingPoints(objects, first, second);
+  const secondThird = segmentBetweenOrSupportingPoints(objects, second, third);
+  const thirdFirst = segmentBetweenOrSupportingPoints(objects, third, first);
+  if (!firstSecond || !secondThird || !thirdFirst) {
+    return undefined;
+  }
+
+  return [
+    { points: [first, second], segment: firstSecond, sideRef: prop22SideRef(first.id, second.id) },
+    { points: [second, third], segment: secondThird, sideRef: prop22SideRef(second.id, third.id) },
+    { points: [third, first], segment: thirdFirst, sideRef: prop22SideRef(third.id, first.id) },
+  ];
+}
+
+function prop22Permutations<T>(items: T[]): T[][] {
+  if (items.length <= 1) {
+    return [items];
+  }
+
+  return items.flatMap((item, index) =>
+    prop22Permutations(items.filter((_, candidateIndex) => candidateIndex !== index)).map((rest) => [item, ...rest]),
+  );
+}
+
+function prop22PointSharedBySides(first: Prop22TriangleSide, second: Prop22TriangleSide) {
+  return first.points.find((point) => second.points.some((candidate) => candidate.id === point.id));
+}
+
+function prop22OtherPoint(side: Prop22TriangleSide, point: Point) {
+  return side.points.find((candidate) => candidate.id !== point.id);
+}
+
+function prop22ContextFromFinalTriangle(
+  sources: [Prop22SourceLength, Prop22SourceLength, Prop22SourceLength],
+  sideForSourceA: Prop22TriangleSide,
+  sideForSourceB: Prop22TriangleSide,
+  sideForSourceC: Prop22TriangleSide,
+): ProofContext | undefined {
+  const K = prop22PointSharedBySides(sideForSourceA, sideForSourceC);
+  if (!K) {
+    return undefined;
+  }
+
+  const F = prop22OtherPoint(sideForSourceA, K);
+  const G = prop22OtherPoint(sideForSourceC, K);
+  if (!F || !G || !sideForSourceB.points.some((point) => point.id === F.id) || !sideForSourceB.points.some((point) => point.id === G.id)) {
+    return undefined;
+  }
+
+  return {
+    pointD: sources[0].segment.p1,
+    pointF: F.id,
+    pointG: G.id,
+    pointH: sources[2].segment.p2,
+    pointK: K.id,
+    segmentSourceA: sources[0].segment.id,
+    segmentSourceB: sources[1].segment.id,
+    segmentSourceC: sources[2].segment.id,
+    segmentDF: sources[0].segment.id,
+    segmentFG: sideForSourceB.segment.id,
+    segmentGH: sources[2].segment.id,
+    segmentKF: sideForSourceA.segment.id,
+    segmentKG: sideForSourceC.segment.id,
+    segmentKFG: sideForSourceB.segment.id,
+  };
+}
+
+export function resolveBook1Prop22Context(
+  objects: GeometryObject[],
+  reasoningRelations: ReasoningRelation[] = [],
+): ProofContext | undefined {
+  const sourceLengths = prop22SourceLengths(objects);
+  if (!sourceLengths) {
+    return undefined;
+  }
+
+  const lengthGraph = buildProp22LengthGraph(objects, reasoningRelations);
+  const points = allNamedPoints(objects);
+
+  for (let firstIndex = 0; firstIndex < points.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < points.length; secondIndex += 1) {
+      for (let thirdIndex = secondIndex + 1; thirdIndex < points.length; thirdIndex += 1) {
+        const first = points[firstIndex];
+        const second = points[secondIndex];
+        const third = points[thirdIndex];
+        if (arePointsCollinear(first, second, third, 0.035)) {
+          continue;
+        }
+
+        const sides = prop22TriangleSides(objects, first, second, third);
+        if (!sides) {
+          continue;
+        }
+
+        for (const sidePermutation of prop22Permutations(sides)) {
+          const matches = sidePermutation.every((side, sourceIndex) =>
+            prop22SideMatchesSourceLength(side, sourceLengths[sourceIndex], lengthGraph),
+          );
+          if (!matches) {
+            continue;
+          }
+
+          const context = prop22ContextFromFinalTriangle(sourceLengths, sidePermutation[0], sidePermutation[1], sidePermutation[2]);
+          if (context) {
+            return context;
+          }
+        }
+      }
+    }
+  }
+
+  return undefined;
 }
 
 export function resolveBook1Prop24Context(objects: GeometryObject[]): ProofContext | undefined {

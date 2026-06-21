@@ -73,8 +73,8 @@ export const euclidPropositions: EuclidProposition[] = [
       hiddenConstraints: ["isPointBetween", "compareSegmentLengths"],
     },
     replaySteps: infrastructureReplay(
-      "Use Copy Length with CD as the source, A as the start point, and AB as the target line.",
-      "The placed point cuts the greater line at the required distance.",
+      "Use Copy Length with CD as the source and A as the compass center.",
+      "Mark where the compass circle cuts the greater line at the required distance.",
       "Cut Off Equal Segment becomes available for later constructions.",
     ),
   },

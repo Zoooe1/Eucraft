@@ -86,7 +86,7 @@ function toolBrief(tool: GeometryTool, propositionId: string) {
   }
 
   if (tool === "compass-transfer") {
-    return "Copy Length: choose a source length, a start point, then a target line or ray.";
+    return "Copy Length: choose a source length, then a compass center point.";
   }
 
   if (tool === "theorem-equilateral") {

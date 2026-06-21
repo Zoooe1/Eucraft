@@ -20,7 +20,7 @@ const toolLabels: Partial<Record<GeometryTool, { label: string; mark: string; hi
   "compass-transfer": {
     label: "Copy Length",
     mark: "◌",
-    hint: "Choose a source length, a start point, then a target line or ray.",
+    hint: "Choose a source length, then choose the compass center point.",
   },
   intersection: {
     label: "Intersection",
@@ -58,7 +58,7 @@ function toolInstruction(tool: GeometryTool, selectedCount: number) {
   }
 
   if (tool === "compass-transfer") {
-    return selectedCount === 1 ? "Choose the next point for Copy Length." : toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
+    return toolLabels[tool]?.hint ?? fallbackToolLabel.hint;
   }
 
   if (tool === "straightedge" && selectedCount === 1) {

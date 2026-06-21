@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type {
   Circle,
   ExtendedLine,
@@ -13,7 +13,9 @@ import type {
 import { findNearbyIntersection } from "../geometry/intersections";
 import { resolveBook1Prop7Context, resolveBook1Prop34Context, resolveBook1Prop36Context } from "../geometry/objectResolution";
 import {
+  areDistancesEqual,
   circleRadius,
+  distance,
   findNearbyPoint,
   getPoint,
   INTERSECTION_TOLERANCE,
@@ -21,7 +23,9 @@ import {
   isExtendedLine,
   isPoint,
   isSegment,
+  POINT_TOLERANCE,
   snapToPointRay,
+  STRAIGHTEDGE_GUIDE_TOLERANCE,
 } from "../geometry/operations";
 import { getProposition } from "../propositions";
 import { useGeometryStore } from "../state/useGeometryStore";
@@ -30,34 +34,154 @@ import { WorkspaceToolGuide } from "./WorkspaceToolGuide";
 const VIEW_BOX = { minX: -120, minY: 0, width: 1000, height: 660 };
 const DRAG_THRESHOLD = 5;
 const LINE_RENDER_SPAN = 1800;
+const MIN_VIEWPORT_ZOOM = 0.65;
+const MAX_VIEWPORT_ZOOM = 5;
+const WHEEL_ZOOM_SENSITIVITY = 0.0025;
+const PAN_MARGIN_FACTOR = 1.25;
 
-const geometryColor: Record<string, string> = {
-  red: "#8e1410",
-  blue: "#15549a",
-  gold: "#b98a2d",
-  green: "#2f7350",
+const NEUTRAL_GEOMETRY_COLOR = "#16120e";
+const BYRNE_LENGTH_CLASS_COLORS = [
+  "#b82018",
+  "#15549a",
+  "#c9971a",
+  "#2f7350",
+  "#d66a1f",
+  "#6d3b8f",
+];
+const replayPalette: Record<string, string> = {
+  red: BYRNE_LENGTH_CLASS_COLORS[0],
+  blue: BYRNE_LENGTH_CLASS_COLORS[1],
+  gold: BYRNE_LENGTH_CLASS_COLORS[2],
+  yellow: BYRNE_LENGTH_CLASS_COLORS[2],
+  green: BYRNE_LENGTH_CLASS_COLORS[3],
+  orange: BYRNE_LENGTH_CLASS_COLORS[4],
+  violet: BYRNE_LENGTH_CLASS_COLORS[5],
   rose: "#9d3152",
   teal: "#0f766e",
-  violet: "#6d3b8f",
-  black: "#240e08",
-  ink: "#240e08",
+  black: NEUTRAL_GEOMETRY_COLOR,
+  ink: NEUTRAL_GEOMETRY_COLOR,
 };
 
 type DrawStyle = CSSProperties & {
   "--draw-length"?: string;
 };
 
-function colorFor(object: GeometryObject) {
-  return geometryColor[object.color ?? "ink"] ?? object.color ?? geometryColor.ink;
+function replayColor(color?: string) {
+  return color ? (replayPalette[color] ?? color) : BYRNE_LENGTH_CLASS_COLORS[2];
 }
 
-function replayColor(color?: string) {
-  return color ? (geometryColor[color] ?? color) : geometryColor.gold;
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function zoomForViewport(viewport: CanvasViewport) {
+  return VIEW_BOX.width / viewport.width;
+}
+
+function clampViewportZoom(zoom: number) {
+  return clamp(zoom, MIN_VIEWPORT_ZOOM, MAX_VIEWPORT_ZOOM);
+}
+
+function clampViewportAxis(min: number, size: number, baseMin: number, baseSize: number) {
+  const lower = baseMin - baseSize * PAN_MARGIN_FACTOR;
+  const upper = baseMin + baseSize * (1 + PAN_MARGIN_FACTOR) - size;
+  if (upper < lower) {
+    return baseMin + (baseSize - size) / 2;
+  }
+
+  return clamp(min, lower, upper);
+}
+
+function clampViewport(viewport: CanvasViewport): CanvasViewport {
+  return {
+    ...viewport,
+    minX: clampViewportAxis(viewport.minX, viewport.width, VIEW_BOX.minX, VIEW_BOX.width),
+    minY: clampViewportAxis(viewport.minY, viewport.height, VIEW_BOX.minY, VIEW_BOX.height),
+  };
+}
+
+function viewportForZoomAtRatio(zoom: number, anchorWorld: CanvasPoint, ratio: CanvasPoint): CanvasViewport {
+  const nextZoom = clampViewportZoom(zoom);
+  const width = VIEW_BOX.width / nextZoom;
+  const height = VIEW_BOX.height / nextZoom;
+
+  return clampViewport({
+    minX: anchorWorld.x - clamp(ratio.x, 0, 1) * width,
+    minY: anchorWorld.y - clamp(ratio.y, 0, 1) * height,
+    width,
+    height,
+  });
+}
+
+function svgClientRatio(svg: SVGSVGElement, clientX: number, clientY: number): CanvasPoint {
+  const rect = svg.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return { x: 0.5, y: 0.5 };
+  }
+
+  const viewAspect = VIEW_BOX.width / VIEW_BOX.height;
+  const elementAspect = rect.width / rect.height;
+  let renderedWidth = rect.width;
+  let renderedHeight = rect.height;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  if (elementAspect > viewAspect) {
+    renderedHeight = rect.height;
+    renderedWidth = renderedHeight * viewAspect;
+    offsetX = (rect.width - renderedWidth) / 2;
+  } else {
+    renderedWidth = rect.width;
+    renderedHeight = renderedWidth / viewAspect;
+    offsetY = (rect.height - renderedHeight) / 2;
+  }
+
+  return {
+    x: clamp((clientX - rect.left - offsetX) / renderedWidth, 0, 1),
+    y: clamp((clientY - rect.top - offsetY) / renderedHeight, 0, 1),
+  };
+}
+
+function pointerDistance(first: TrackedPointer, second: TrackedPointer) {
+  return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+}
+
+function pointerCenter(first: TrackedPointer, second: TrackedPointer) {
+  return {
+    x: (first.clientX + second.clientX) / 2,
+    y: (first.clientY + second.clientY) / 2,
+  };
 }
 
 type CanvasPoint = {
   x: number;
   y: number;
+};
+
+type CanvasViewport = {
+  minX: number;
+  minY: number;
+  width: number;
+  height: number;
+};
+
+type TrackedPointer = {
+  clientX: number;
+  clientY: number;
+  pointerType: string;
+};
+
+type PinchGesture = {
+  startDistance: number;
+  startZoom: number;
+  anchorWorld: CanvasPoint;
+};
+
+type PanGesture = {
+  pointerId: number;
+  lastClientX: number;
+  lastClientY: number;
+  hasPanned: boolean;
 };
 
 type LabelRect = {
@@ -74,13 +198,27 @@ type PlacedPointLabel = {
 };
 
 type DragPreview = {
-  tool: "compass" | "straightedge" | "extend" | "congruence" | "equilateral";
+  tool: "compass" | "straightedge" | "extend" | "congruence" | "equilateral" | "copy-length";
   start: CanvasPoint;
   current: CanvasPoint;
   startPoint: Point;
   startPointId: string | null;
   baseEndPointId?: string | null;
+  equilateralCarrier?: EquilateralPreviewCarrier;
+  baseStart?: CanvasPoint;
+  baseEnd?: CanvasPoint;
+  dragPath?: CanvasPoint[];
+  arcGesture?: boolean;
   hasMoved: boolean;
+};
+
+type EquilateralPreviewCarrier = {
+  id: string;
+  kind: "segment" | "extended-line";
+  start: CanvasPoint;
+  end: CanvasPoint;
+  ray?: boolean;
+  bounded?: boolean;
 };
 
 type TriangleDragPreview = {
@@ -138,6 +276,151 @@ function equilateralApexForPreview(p1: CanvasPoint, p2: CanvasPoint, pull: Canva
     x: midX - baseY * heightScale * side,
     y: midY + baseX * heightScale * side,
   };
+}
+
+const EQUILATERAL_CARRIER_TOLERANCE = 28;
+const EQUILATERAL_ENDPOINT_SNAP_TOLERANCE = 12;
+
+function projectPointToLine(a: CanvasPoint, b: CanvasPoint, point: CanvasPoint) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared < 1) {
+    return undefined;
+  }
+
+  const t = ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared;
+  return {
+    x: a.x + t * dx,
+    y: a.y + t * dy,
+    t,
+  };
+}
+
+function projectionAllowedOnEquilateralCarrier(carrier: EquilateralPreviewCarrier, t: number) {
+  if (carrier.ray && t < -0.03) {
+    return false;
+  }
+
+  if (carrier.bounded && (t < -0.03 || t > 1.03)) {
+    return false;
+  }
+
+  return true;
+}
+
+function equilateralCarrierFromObject(objects: GeometryObject[], object: Segment | ExtendedLine): EquilateralPreviewCarrier | undefined {
+  if (object.type === "segment") {
+    const start = getPoint(objects, object.p1);
+    const end = getPoint(objects, object.p2);
+    if (!start || !end) {
+      return undefined;
+    }
+
+    return {
+      id: object.id,
+      kind: "segment",
+      start,
+      end,
+      ray: object.ray,
+      bounded: object.given,
+    };
+  }
+
+  const start = getPoint(objects, object.from);
+  const end = getPoint(objects, object.through);
+  if (!start || !end) {
+    return undefined;
+  }
+
+  return {
+    id: object.id,
+    kind: "extended-line",
+    start,
+    end,
+  };
+}
+
+function findEquilateralPreviewCarrier(
+  objects: GeometryObject[],
+  point: CanvasPoint,
+  tolerance = EQUILATERAL_CARRIER_TOLERANCE,
+) {
+  return objects
+    .filter((object): object is Segment | ExtendedLine => isSegment(object) || isExtendedLine(object))
+    .map((object) => {
+      const carrier = equilateralCarrierFromObject(objects, object);
+      const projection = carrier ? projectPointToLine(carrier.start, carrier.end, point) : undefined;
+      if (!carrier || !projection || !projectionAllowedOnEquilateralCarrier(carrier, projection.t)) {
+        return undefined;
+      }
+
+      return {
+        carrier,
+        distance: Math.hypot(point.x - projection.x, point.y - projection.y),
+        length: Math.hypot(carrier.end.x - carrier.start.x, carrier.end.y - carrier.start.y),
+      };
+    })
+    .filter((candidate): candidate is { carrier: EquilateralPreviewCarrier; distance: number; length: number } => Boolean(candidate))
+    .filter((candidate) => candidate.distance <= tolerance)
+    .sort((a, b) => a.distance - b.distance || b.length - a.length)[0]?.carrier;
+}
+
+function pointNearEquilateralCarrierCursor(
+  objects: GeometryObject[],
+  carrier: EquilateralPreviewCarrier,
+  cursor: CanvasPoint,
+  tolerance = EQUILATERAL_ENDPOINT_SNAP_TOLERANCE,
+) {
+  return objects
+    .filter((object): object is Point => isPoint(object) && !object.auxiliary)
+    .map((point) => {
+      const projection = projectPointToLine(carrier.start, carrier.end, point);
+      if (!projection || !projectionAllowedOnEquilateralCarrier(carrier, projection.t)) {
+        return undefined;
+      }
+
+      const offCarrierDistance = Math.hypot(point.x - projection.x, point.y - projection.y);
+      const cursorDistance = Math.hypot(point.x - cursor.x, point.y - cursor.y);
+      return offCarrierDistance <= tolerance
+        ? { point, distance: cursorDistance }
+        : undefined;
+    })
+    .filter((candidate): candidate is { point: Point; distance: number } => Boolean(candidate))
+    .filter((candidate) => candidate.distance <= tolerance)
+    .sort((a, b) => a.distance - b.distance)[0]?.point;
+}
+
+function projectedEquilateralEndpoint(
+  objects: GeometryObject[],
+  carrier: EquilateralPreviewCarrier,
+  cursor: CanvasPoint,
+  tolerance = EQUILATERAL_ENDPOINT_SNAP_TOLERANCE,
+) {
+  const snapped = pointNearEquilateralCarrierCursor(objects, carrier, cursor, tolerance);
+  if (snapped) {
+    return { point: snapped, coords: { x: snapped.x, y: snapped.y }, pointId: snapped.id };
+  }
+
+  const projection = projectPointToLine(carrier.start, carrier.end, cursor);
+  if (!projection || !projectionAllowedOnEquilateralCarrier(carrier, projection.t)) {
+    return undefined;
+  }
+
+  return {
+    coords: { x: projection.x, y: projection.y },
+    pointId: null,
+  };
+}
+
+function appendDragPathPoint(path: CanvasPoint[] | undefined, point: CanvasPoint, minimumDistance = 3) {
+  const existingPath = path ?? [];
+  const last = existingPath[existingPath.length - 1];
+  if (last && Math.hypot(point.x - last.x, point.y - last.y) < minimumDistance) {
+    return existingPath;
+  }
+
+  return [...existingPath, point].slice(-80);
 }
 
 function rayEndpointThroughPoints(p1: CanvasPoint, p2: CanvasPoint, span = LINE_RENDER_SPAN) {
@@ -239,12 +522,15 @@ function rectSamplePoints(rect: LabelRect): CanvasPoint[] {
   ];
 }
 
-function labelRectForPoint(point: Point, label: string, dx: number, dy: number): LabelRect {
-  const width = Math.max(15, label.length * 13);
-  const height = 24;
+function labelRectForPoint(point: Point, label: string, dx: number, dy: number, zoom: number): LabelRect {
+  const worldScale = 1 / zoom;
+  const width = Math.max(15, label.length * 13) * worldScale;
+  const height = 24 * worldScale;
+  const offsetX = dx * worldScale;
+  const offsetY = dy * worldScale;
   return {
-    x: dx < 0 ? point.x + dx - width : point.x + dx,
-    y: dy < 0 ? point.y + dy - height : point.y + dy,
+    x: offsetX < 0 ? point.x + offsetX - width : point.x + offsetX,
+    y: offsetY < 0 ? point.y + offsetY - height : point.y + offsetY,
     width,
     height,
   };
@@ -341,13 +627,15 @@ function labelCollisionScore(
   objects: GeometryObject[],
   placedLabels: PlacedPointLabel[],
   arcObstacles: CanvasPoint[][],
+  zoom: number,
 ) {
-  const padded = rectWithPadding(rect, 3);
+  const worldScale = 1 / zoom;
+  const padded = rectWithPadding(rect, 3 * worldScale);
   let score = 0;
 
   for (const object of objects) {
     if (object.type === "point") {
-      const markerRadius = object.id === point.id ? 10 : object.auxiliary ? 7 : 11;
+      const markerRadius = (object.id === point.id ? 10 : object.auxiliary ? 7 : 11) * worldScale;
       if (rectIntersectsCircle(padded, object, markerRadius)) {
         score += object.id === point.id ? 5 : 20;
       }
@@ -377,7 +665,7 @@ function labelCollisionScore(
   }
 
   for (const label of placedLabels) {
-    if (rectsOverlap(padded, rectWithPadding(label.rect, 4))) {
+    if (rectsOverlap(padded, rectWithPadding(label.rect, 4 * worldScale))) {
       score += 30;
     }
   }
@@ -396,6 +684,7 @@ function placePointLabels(
   context: ReturnType<typeof useGeometryStore.getState>["proofContext"],
   angles: ReplayAngleHighlight[],
   propositionId: string,
+  zoom: number,
 ) {
   const candidateOffsets = [
     [18, -18],
@@ -419,11 +708,11 @@ function placePointLabels(
   for (const point of objects.filter(isPoint).filter((candidate) => candidate.label && !candidate.auxiliary)) {
     const label = point.label ?? point.id;
     const candidates = candidateOffsets.map(([dx, dy], index) => {
-      const rect = labelRectForPoint(point, label, dx, dy);
+      const rect = labelRectForPoint(point, label, dx, dy, zoom);
       return {
         index,
         rect,
-        score: labelCollisionScore(rect, point, objects, placed, arcs),
+        score: labelCollisionScore(rect, point, objects, placed, arcs, zoom),
       };
     });
     const best = candidates.sort((a, b) => a.score - b.score || a.index - b.index)[0];
@@ -582,6 +871,194 @@ function pointFromReplayRef(
   return getPoint(objects, contextId);
 }
 
+type LengthColorMaps = {
+  sides: Map<string, string>;
+  circles: Map<string, string>;
+};
+
+function canonicalLengthSide(a: string, b: string) {
+  return [a, b].sort().join("");
+}
+
+function sideNode(sideRef: string) {
+  return `side:${sideRef}`;
+}
+
+function circleNode(circleId: string) {
+  return `circle:${circleId}`;
+}
+
+function isFiniteLengthSegment(segment: Segment) {
+  return !segment.ray && !(segment.source === "given" && !segment.given);
+}
+
+function legacyLengthClassSegment(segment: Segment) {
+  return isFiniteLengthSegment(segment) && (segment.given || segment.source === "given" || segment.source === "target");
+}
+
+function buildLengthColorMaps(objects: GeometryObject[], relations: ReasoningRelation[]): LengthColorMaps {
+  const parent = new Map<string, string>();
+  const order = new Map<string, number>();
+  const visibleSides = new Set<string>();
+  const visibleCircles = new Set<string>();
+
+  const touch = (node: string, index: number) => {
+    if (!parent.has(node)) {
+      parent.set(node, node);
+      order.set(node, index);
+    }
+  };
+
+  const find = (node: string): string => {
+    const current = parent.get(node);
+    if (!current) {
+      parent.set(node, node);
+      return node;
+    }
+
+    if (current === node) {
+      return node;
+    }
+
+    const root = find(current);
+    parent.set(node, root);
+    return root;
+  };
+
+  const unite = (a: string, b: string, index: number) => {
+    touch(a, index);
+    touch(b, index);
+    const rootA = find(a);
+    const rootB = find(b);
+    if (rootA === rootB) {
+      return;
+    }
+
+    const first = (order.get(rootA) ?? index) <= (order.get(rootB) ?? index) ? rootA : rootB;
+    const second = first === rootA ? rootB : rootA;
+    parent.set(second, first);
+    order.set(first, Math.min(order.get(first) ?? index, order.get(second) ?? index));
+  };
+
+  objects.forEach((object, index) => {
+    if (object.type === "segment" && isFiniteLengthSegment(object)) {
+      visibleSides.add(canonicalLengthSide(object.p1, object.p2));
+    }
+
+    if (object.type === "circle") {
+      visibleCircles.add(object.id);
+      const circleKey = circleNode(object.id);
+      if (object.through) {
+        unite(circleKey, sideNode(canonicalLengthSide(object.center, object.through)), index);
+      } else if (object.radiusSegment) {
+        unite(circleKey, sideNode(canonicalLengthSide(object.radiusSegment.p1, object.radiusSegment.p2)), index);
+      } else {
+        touch(circleKey, index);
+      }
+    }
+  });
+
+  const finiteSegments = objects.filter((object): object is Segment => object.type === "segment" && isFiniteLengthSegment(object));
+  objects
+    .filter((object): object is Circle => object.type === "circle")
+    .forEach((circle, circleIndex) => {
+      const center = getPoint(objects, circle.center);
+      const radius = circleRadius(circle, objects);
+      if (!center || radius <= 0) {
+        return;
+      }
+
+      finiteSegments.forEach((segment, segmentIndex) => {
+        const otherPointId = segment.p1 === circle.center ? segment.p2 : segment.p2 === circle.center ? segment.p1 : undefined;
+        const otherPoint = otherPointId ? getPoint(objects, otherPointId) : undefined;
+        if (!otherPoint || !areDistancesEqual(distance(center, otherPoint), radius, 8)) {
+          return;
+        }
+
+        unite(
+          circleNode(circle.id),
+          sideNode(canonicalLengthSide(segment.p1, segment.p2)),
+          objects.length + circleIndex + segmentIndex,
+        );
+      });
+    });
+
+  relations.forEach((relation, relationIndex) => {
+    relation.derivedRelations.forEach((derived) => {
+      if (derived.type === "equal-length") {
+        unite(sideNode(derived.a), sideNode(derived.b), objects.length + relationIndex);
+      }
+    });
+  });
+
+  const legacyColorGroups = new Map<string, string[]>();
+  objects.forEach((object) => {
+    if (object.type !== "segment" || !legacyLengthClassSegment(object) || !object.color) {
+      return;
+    }
+
+    const key = object.color;
+    legacyColorGroups.set(key, [...(legacyColorGroups.get(key) ?? []), canonicalLengthSide(object.p1, object.p2)]);
+  });
+
+  legacyColorGroups.forEach((sideRefs, colorKey) => {
+    const uniqueSideRefs = [...new Set(sideRefs)];
+    if (uniqueSideRefs.length < 2) {
+      return;
+    }
+
+    const first = sideNode(uniqueSideRefs[0]);
+    uniqueSideRefs.slice(1).forEach((sideRef, index) => {
+      unite(first, sideNode(sideRef), objects.length + relations.length + index + colorKey.length);
+    });
+  });
+
+  const componentMembers = new Map<string, string[]>();
+  parent.forEach((_, node) => {
+    const root = find(node);
+    componentMembers.set(root, [...(componentMembers.get(root) ?? []), node]);
+  });
+
+  const colorByRoot = new Map<string, string>();
+  [...componentMembers.entries()]
+    .filter(([, members]) => members.length > 1)
+    .filter(([, members]) =>
+      members.some((member) => {
+        if (member.startsWith("circle:")) {
+          return visibleCircles.has(member.slice("circle:".length));
+        }
+
+        return visibleSides.has(member.slice("side:".length));
+      }),
+    )
+    .sort(([rootA], [rootB]) => (order.get(rootA) ?? 0) - (order.get(rootB) ?? 0))
+    .forEach(([root], index) => {
+      colorByRoot.set(root, BYRNE_LENGTH_CLASS_COLORS[index % BYRNE_LENGTH_CLASS_COLORS.length]);
+    });
+
+  const sides = new Map<string, string>();
+  visibleSides.forEach((sideRef) => {
+    const node = sideNode(sideRef);
+    const root = parent.has(node) ? find(node) : undefined;
+    const color = root ? colorByRoot.get(root) : undefined;
+    if (color) {
+      sides.set(sideRef, color);
+    }
+  });
+
+  const circles = new Map<string, string>();
+  visibleCircles.forEach((circleId) => {
+    const node = circleNode(circleId);
+    const root = parent.has(node) ? find(node) : undefined;
+    const color = root ? colorByRoot.get(root) : undefined;
+    if (color) {
+      circles.set(circleId, color);
+    }
+  });
+
+  return { sides, circles };
+}
+
 function SegmentElement({
   segment,
   objects,
@@ -590,6 +1067,7 @@ function SegmentElement({
   selected,
   animated,
   replaying,
+  lengthColor,
 }: {
   segment: Segment;
   objects: GeometryObject[];
@@ -598,6 +1076,7 @@ function SegmentElement({
   selected: boolean;
   animated: boolean;
   replaying: boolean;
+  lengthColor?: string;
 }) {
   const p1 = getPoint(objects, segment.p1);
   const p2 = getPoint(objects, segment.p2);
@@ -650,7 +1129,7 @@ function SegmentElement({
         x2={segment.given || segment.ray || isGivenInfiniteLine ? end.x : p2.x}
         y2={segment.given || segment.ray || isGivenInfiniteLine ? end.y : p2.y}
         style={segment.given || segment.ray || isGivenInfiniteLine ? drawStyle : centerDrawStyle}
-        stroke={selected ? "#16120e" : highlightColor ?? colorFor(segment)}
+        stroke={selected ? NEUTRAL_GEOMETRY_COLOR : lengthColor ?? NEUTRAL_GEOMETRY_COLOR}
         strokeWidth={highlighted ? 7 : segment.given ? 4 : 3}
         strokeLinecap="round"
       />
@@ -665,6 +1144,7 @@ function CircleElement({
   highlightColor,
   animated,
   replaying,
+  lengthColor,
 }: {
   circle: Circle;
   objects: GeometryObject[];
@@ -672,6 +1152,7 @@ function CircleElement({
   highlightColor?: string;
   animated: boolean;
   replaying: boolean;
+  lengthColor?: string;
 }) {
   const center = getPoint(objects, circle.center);
   const radius = circleRadius(circle, objects);
@@ -681,11 +1162,13 @@ function CircleElement({
 
   const drawLength = 2 * Math.PI * radius * 1.04;
   const drawStyle: DrawStyle = { "--draw-length": `${drawLength}` };
+  const isCompassMark = Boolean(circle.radiusSegment);
 
   return (
     <circle
       className={[
         "svg-circle",
+        isCompassMark ? "compass-mark" : "",
         highlighted ? "highlighted" : "",
         animated ? "draw-in" : "",
         replaying ? "replay-draw" : "",
@@ -697,8 +1180,9 @@ function CircleElement({
       r={radius}
       style={drawStyle}
       fill="none"
-      stroke={highlightColor ?? colorFor(circle)}
-      strokeWidth={highlighted ? 4 : 2}
+      stroke={lengthColor ?? NEUTRAL_GEOMETRY_COLOR}
+      strokeOpacity={isCompassMark ? 0.58 : undefined}
+      strokeWidth={highlighted ? 4 : isCompassMark ? 1.5 : 2}
     />
   );
 }
@@ -747,7 +1231,7 @@ function ExtendedLineElement({
       x2={renderedLine.end.x}
       y2={renderedLine.end.y}
       style={drawStyle}
-      stroke={highlightColor ?? colorFor(line)}
+      stroke={NEUTRAL_GEOMETRY_COLOR}
       strokeWidth={highlighted ? 5 : 2.5}
       strokeLinecap="round"
     />
@@ -760,12 +1244,14 @@ function PointElement({
   highlightColor,
   selected,
   animated,
+  zoom,
 }: {
   point: Point;
   highlighted: boolean;
   highlightColor?: string;
   selected: boolean;
   animated: boolean;
+  zoom: number;
 }) {
   return (
     <g
@@ -778,12 +1264,13 @@ function PointElement({
       ]
         .filter(Boolean)
         .join(" ")}
+      transform={`translate(${point.x} ${point.y}) scale(${1 / zoom})`}
     >
       <circle
-        cx={point.x}
-        cy={point.y}
+        cx={0}
+        cy={0}
         r={point.auxiliary ? 3 : selected ? 8 : highlighted ? 7 : 5}
-        fill={selected ? "#f6ead6" : point.auxiliary ? "#7d725f" : highlightColor ?? colorFor(point)}
+        fill={NEUTRAL_GEOMETRY_COLOR}
         stroke={selected || highlighted ? "#2b251f" : "#f6ead6"}
         strokeWidth={point.auxiliary ? 0 : selected || highlighted ? 2 : 1}
       />
@@ -791,26 +1278,40 @@ function PointElement({
   );
 }
 
-function PointLabelElement({ label }: { label: PlacedPointLabel }) {
+function PointLabelElement({ label, zoom }: { label: PlacedPointLabel; zoom: number }) {
   return (
-    <text className="svg-point-label" x={label.rect.x} y={label.rect.y} dominantBaseline="hanging">
+    <text
+      className="svg-point-label"
+      x={0}
+      y={0}
+      dominantBaseline="hanging"
+      transform={`translate(${label.rect.x} ${label.rect.y}) scale(${1 / zoom})`}
+    >
       {label.text}
     </text>
   );
 }
 
-function DragPreviewElement({ preview, objects }: { preview: DragPreview; objects: GeometryObject[] }) {
-  const snappedPoint = findNearbyPoint(objects, preview.current.x, preview.current.y);
+function DragPreviewElement({
+  preview,
+  objects,
+  toleranceScale,
+}: {
+  preview: DragPreview;
+  objects: GeometryObject[];
+  toleranceScale: number;
+}) {
+  const snappedPoint = findNearbyPoint(objects, preview.current.x, preview.current.y, POINT_TOLERANCE * toleranceScale);
   const guidedEnd =
     preview.tool === "extend" && !snappedPoint
-      ? snapToPointRay(objects, preview.startPoint, preview.current.x, preview.current.y)
+      ? snapToPointRay(objects, preview.startPoint, preview.current.x, preview.current.y, STRAIGHTEDGE_GUIDE_TOLERANCE * toleranceScale)
       : undefined;
   const end = snappedPoint ?? guidedEnd ?? preview.current;
 
-  if (preview.tool === "equilateral" && preview.startPointId && preview.baseEndPointId) {
-    const baseStart = getPoint(objects, preview.startPointId);
-    const baseEnd = getPoint(objects, preview.baseEndPointId);
-    if (baseStart && baseEnd) {
+  if (preview.tool === "equilateral" && preview.baseStart && preview.baseEnd) {
+    const baseStart = preview.baseStart;
+    const baseEnd = preview.baseEnd;
+    if (Math.hypot(baseStart.x - baseEnd.x, baseStart.y - baseEnd.y) > 2) {
       const apex = equilateralApexForPreview(baseStart, baseEnd, preview.current);
 
       return (
@@ -844,6 +1345,22 @@ function DragPreviewElement({ preview, objects }: { preview: DragPreview; object
     }
   }
 
+  if (preview.tool === "copy-length" && preview.baseStart && preview.baseEnd) {
+    return (
+      <g className="tool-preview">
+        <line
+          className="preview-segment"
+          x1={preview.baseStart.x}
+          y1={preview.baseStart.y}
+          x2={preview.baseEnd.x}
+          y2={preview.baseEnd.y}
+        />
+        <circle className="preview-anchor" cx={preview.baseStart.x} cy={preview.baseStart.y} r="6" />
+        <circle className="preview-guide" cx={preview.baseEnd.x} cy={preview.baseEnd.y} r="9" />
+      </g>
+    );
+  }
+
   if (preview.tool === "compass") {
     const radius = Math.hypot(preview.startPoint.x - end.x, preview.startPoint.y - end.y);
     return (
@@ -863,6 +1380,20 @@ function DragPreviewElement({ preview, objects }: { preview: DragPreview; object
           y2={end.y}
         />
         <circle className="preview-anchor" cx={preview.startPoint.x} cy={preview.startPoint.y} r="6" />
+      </g>
+    );
+  }
+
+  if (preview.tool === "congruence" && preview.arcGesture && preview.dragPath && preview.dragPath.length > 1) {
+    return (
+      <g className="tool-preview">
+        <polyline
+          className="preview-segment"
+          points={preview.dragPath.map((point) => `${point.x},${point.y}`).join(" ")}
+          fill="none"
+        />
+        <circle className="preview-anchor" cx={preview.dragPath[0].x} cy={preview.dragPath[0].y} r="6" />
+        <circle className="preview-guide" cx={preview.current.x} cy={preview.current.y} r="7" />
       </g>
     );
   }
@@ -924,8 +1455,8 @@ function TriangleHighlight({
     <polygon
       className="triangle-wash"
       points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`}
-      fill="#c9971a"
-      opacity="0.16"
+      fill={NEUTRAL_GEOMETRY_COLOR}
+      opacity="0.1"
     />
   );
 }
@@ -1212,15 +1743,22 @@ function ReasoningRelationLog({ relations }: { relations: ReasoningRelation[] })
 
 export function GeometryCanvas() {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const activePointersRef = useRef<Map<number, TrackedPointer>>(new Map());
+  const pinchGestureRef = useRef<PinchGesture | null>(null);
+  const safariGestureRef = useRef<PinchGesture | null>(null);
+  const panGestureRef = useRef<PanGesture | null>(null);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
   const [triangleDragPreview, setTriangleDragPreview] = useState<TriangleDragPreview | null>(null);
   const [intersectionPreview, setIntersectionPreview] = useState<CanvasPoint | null>(null);
+  const [viewport, setViewport] = useState<CanvasViewport>(VIEW_BOX);
+  const [isPanning, setIsPanning] = useState(false);
   const phase = useGeometryStore((state) => state.phase);
   const currentPropositionId = useGeometryStore((state) => state.currentPropositionId);
   const objects = useGeometryStore((state) => state.objects);
   const selectedTool = useGeometryStore((state) => state.selectedTool);
   const selectedPointIds = useGeometryStore((state) => state.selectedPointIds);
   const theoremSelectionIds = useGeometryStore((state) => state.theoremSelectionIds);
+  const compassTransferSource = useGeometryStore((state) => state.compassTransferSource);
   const congruenceSelection = useGeometryStore((state) => state.congruenceSelection);
   const completedActionIds = useGeometryStore((state) => state.completedActionIds);
   const handleCanvasClick = useGeometryStore((state) => state.handleCanvasClick);
@@ -1234,8 +1772,16 @@ export function GeometryCanvas() {
 
   const trianglePreviewPositions = triangleDragPreview ? transformedTrianglePositions(triangleDragPreview) : null;
   const displayObjects = objectsWithTransformedPoints(objects, trianglePreviewPositions);
+  const viewportZoom = zoomForViewport(viewport);
+  const toleranceScale = 1 / viewportZoom;
+  const dragThreshold = DRAG_THRESHOLD * toleranceScale;
+  const dragPathMinimumDistance = 3 * toleranceScale;
   const selectedIds = useMemo(() => new Set(selectedPointIds), [selectedPointIds]);
   const selectedSegmentIds = useMemo(() => new Set(theoremSelectionIds), [theoremSelectionIds]);
+  const lengthColorMaps = useMemo(
+    () => buildLengthColorMaps(displayObjects, reasoningRelations),
+    [displayObjects, reasoningRelations],
+  );
   const proposition = getProposition(currentPropositionId);
   const currentReplay =
     phase === "readingReplay" || phase === "logicReplay" || phase === "completionAnimation" || phase === "completed"
@@ -1250,8 +1796,8 @@ export function GeometryCanvas() {
     [currentReplay?.highlightStyles, proofContext],
   );
   const pointLabels = useMemo(
-    () => placePointLabels(displayObjects, proofContext, currentReplay?.angleHighlights ?? [], currentPropositionId),
-    [displayObjects, proofContext, currentReplay?.angleHighlights, currentPropositionId],
+    () => placePointLabels(displayObjects, proofContext, currentReplay?.angleHighlights ?? [], currentPropositionId, viewportZoom),
+    [displayObjects, proofContext, currentReplay?.angleHighlights, currentPropositionId, viewportZoom],
   );
   const shouldHighlightTriangle = currentReplay?.highlight.includes("triangleABC") ?? false;
   const replayAnimationKey = currentReplay?.id ?? "static";
@@ -1262,10 +1808,6 @@ export function GeometryCanvas() {
     phase === "construction" &&
     !completedActionIds.includes("prop7-no-such-d") &&
     Boolean(resolveBook1Prop7Context(displayObjects));
-  const showProp15VerticalPairSelection =
-    currentPropositionId === "I.15" &&
-    phase === "construction" &&
-    !completedActionIds.includes("prop15-select-vertical-pair");
   const showProp28AngleConditionSelection =
     currentPropositionId === "I.28" &&
     phase === "construction" &&
@@ -1285,7 +1827,19 @@ export function GeometryCanvas() {
     phase === "construction" &&
     !completedActionIds.includes("prop43-select-complements");
 
-  const eventToCanvasPoint = (event: React.PointerEvent<SVGSVGElement>): CanvasPoint | null => {
+  useEffect(() => {
+    activePointersRef.current.clear();
+    pinchGestureRef.current = null;
+    safariGestureRef.current = null;
+    panGestureRef.current = null;
+    setViewport(VIEW_BOX);
+    setIsPanning(false);
+    setDragPreview(null);
+    setTriangleDragPreview(null);
+    setIntersectionPreview(null);
+  }, [currentPropositionId]);
+
+  const clientToCanvasPoint = (clientX: number, clientY: number): CanvasPoint | null => {
     const svg = svgRef.current;
     if (!svg) {
       return null;
@@ -1297,8 +1851,8 @@ export function GeometryCanvas() {
     }
 
     const point = svg.createSVGPoint();
-    point.x = event.clientX;
-    point.y = event.clientY;
+    point.x = clientX;
+    point.y = clientY;
     const canvasPoint = point.matrixTransform(matrix.inverse());
 
     return {
@@ -1307,7 +1861,210 @@ export function GeometryCanvas() {
     };
   };
 
+  const eventToCanvasPoint = (event: React.PointerEvent<SVGSVGElement>): CanvasPoint | null =>
+    clientToCanvasPoint(event.clientX, event.clientY);
+
+  const screenDeltaToWorld = (deltaX: number, deltaY: number): CanvasPoint => {
+    const svg = svgRef.current;
+    const matrix = svg?.getScreenCTM();
+    if (!matrix) {
+      return {
+        x: deltaX * toleranceScale,
+        y: deltaY * toleranceScale,
+      };
+    }
+
+    return {
+      x: deltaX / Math.max(Math.abs(matrix.a), 0.001),
+      y: deltaY / Math.max(Math.abs(matrix.d), 0.001),
+    };
+  };
+
+  const applyZoomAtClientPoint = (clientX: number, clientY: number, zoomMultiplier: number) => {
+    const svg = svgRef.current;
+    const anchorWorld = clientToCanvasPoint(clientX, clientY);
+    if (!svg || !anchorWorld) {
+      return;
+    }
+
+    const ratio = svgClientRatio(svg, clientX, clientY);
+    setViewport((current) => viewportForZoomAtRatio(zoomForViewport(current) * zoomMultiplier, anchorWorld, ratio));
+  };
+
+  const panViewportByScreenDelta = (deltaX: number, deltaY: number, mode: "scroll" | "drag") => {
+    const delta = screenDeltaToWorld(deltaX, deltaY);
+    const direction = mode === "drag" ? -1 : 1;
+    setViewport((current) =>
+      clampViewport({
+        ...current,
+        minX: current.minX + delta.x * direction,
+        minY: current.minY + delta.y * direction,
+      }),
+    );
+  };
+
+  const trackedTouchPointers = () =>
+    Array.from(activePointersRef.current.values()).filter((pointer) => pointer.pointerType === "touch");
+
+  const beginPinchGesture = () => {
+    const svg = svgRef.current;
+    const [first, second] = trackedTouchPointers();
+    if (!svg || !first || !second) {
+      return false;
+    }
+
+    const center = pointerCenter(first, second);
+    const anchorWorld = clientToCanvasPoint(center.x, center.y);
+    if (!anchorWorld) {
+      return false;
+    }
+
+    pinchGestureRef.current = {
+      startDistance: Math.max(pointerDistance(first, second), 1),
+      startZoom: viewportZoom,
+      anchorWorld,
+    };
+    panGestureRef.current = null;
+    setDragPreview(null);
+    setTriangleDragPreview(null);
+    setIntersectionPreview(null);
+    setIsPanning(true);
+    return true;
+  };
+
+  const updatePinchGesture = () => {
+    const svg = svgRef.current;
+    const pinch = pinchGestureRef.current;
+    const [first, second] = trackedTouchPointers();
+    if (!svg || !pinch || !first || !second) {
+      return false;
+    }
+
+    const center = pointerCenter(first, second);
+    const ratio = svgClientRatio(svg, center.x, center.y);
+    const nextZoom = pinch.startZoom * (pointerDistance(first, second) / pinch.startDistance);
+    setViewport(viewportForZoomAtRatio(nextZoom, pinch.anchorWorld, ratio));
+    return true;
+  };
+
+  const shouldStartPanGesture = (event: React.PointerEvent<SVGSVGElement>) =>
+    event.button === 1 || (event.button === 0 && (event.altKey || event.shiftKey));
+
+  const startPanGesture = (event: React.PointerEvent<SVGSVGElement>) => {
+    panGestureRef.current = {
+      pointerId: event.pointerId,
+      lastClientX: event.clientX,
+      lastClientY: event.clientY,
+      hasPanned: false,
+    };
+    setDragPreview(null);
+    setTriangleDragPreview(null);
+    setIntersectionPreview(null);
+    setIsPanning(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onWheel = (event: React.WheelEvent<SVGSVGElement>) => {
+    event.preventDefault();
+
+    if (event.ctrlKey || event.metaKey) {
+      applyZoomAtClientPoint(event.clientX, event.clientY, Math.exp(-event.deltaY * WHEEL_ZOOM_SENSITIVITY));
+      return;
+    }
+
+    panViewportByScreenDelta(event.deltaX, event.deltaY, "scroll");
+  };
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) {
+      return;
+    }
+
+    type SafariGestureEvent = Event & {
+      clientX?: number;
+      clientY?: number;
+      scale?: number;
+    };
+
+    const clientPointForGesture = (event: SafariGestureEvent) => {
+      const rect = svg.getBoundingClientRect();
+      return {
+        x: event.clientX ?? rect.left + rect.width / 2,
+        y: event.clientY ?? rect.top + rect.height / 2,
+      };
+    };
+
+    const onGestureStart = (event: Event) => {
+      event.preventDefault();
+      const clientPoint = clientPointForGesture(event as SafariGestureEvent);
+      const anchorWorld = clientToCanvasPoint(clientPoint.x, clientPoint.y);
+      if (!anchorWorld) {
+        return;
+      }
+
+      safariGestureRef.current = {
+        startDistance: 1,
+        startZoom: viewportZoom,
+        anchorWorld,
+      };
+      setDragPreview(null);
+      setTriangleDragPreview(null);
+      setIntersectionPreview(null);
+      setIsPanning(true);
+    };
+
+    const onGestureChange = (event: Event) => {
+      event.preventDefault();
+      const gesture = safariGestureRef.current;
+      if (!gesture) {
+        return;
+      }
+
+      const clientPoint = clientPointForGesture(event as SafariGestureEvent);
+      const ratio = svgClientRatio(svg, clientPoint.x, clientPoint.y);
+      const scale = Math.max((event as SafariGestureEvent).scale ?? 1, 0.01);
+      setViewport(viewportForZoomAtRatio(gesture.startZoom * scale, gesture.anchorWorld, ratio));
+    };
+
+    const onGestureEnd = (event: Event) => {
+      event.preventDefault();
+      safariGestureRef.current = null;
+      setIsPanning(false);
+    };
+
+    const listenerOptions = { passive: false } as AddEventListenerOptions;
+    svg.addEventListener("gesturestart", onGestureStart, listenerOptions);
+    svg.addEventListener("gesturechange", onGestureChange, listenerOptions);
+    svg.addEventListener("gestureend", onGestureEnd, listenerOptions);
+
+    return () => {
+      svg.removeEventListener("gesturestart", onGestureStart);
+      svg.removeEventListener("gesturechange", onGestureChange);
+      svg.removeEventListener("gestureend", onGestureEnd);
+    };
+  }, [clientToCanvasPoint, viewportZoom]);
+
   const onPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
+    activePointersRef.current.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pointerType: event.pointerType,
+    });
+
+    if (event.pointerType === "touch" && trackedTouchPointers().length >= 2) {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      beginPinchGesture();
+      return;
+    }
+
+    if (shouldStartPanGesture(event)) {
+      event.preventDefault();
+      startPanGesture(event);
+      return;
+    }
+
     const point = eventToCanvasPoint(event);
     if (!point || phase !== "construction") {
       return;
@@ -1324,13 +2081,23 @@ export function GeometryCanvas() {
     }
 
     if (selectedTool === "theorem-equilateral") {
+      const carrier = findEquilateralPreviewCarrier(objects, point, EQUILATERAL_CARRIER_TOLERANCE * toleranceScale);
+      if (!carrier) {
+        return;
+      }
+
+      const projectedStart = projectedEquilateralEndpoint(objects, carrier, point, EQUILATERAL_ENDPOINT_SNAP_TOLERANCE * toleranceScale);
+      if (!projectedStart) {
+        return;
+      }
+
       const startPoint =
-        findNearbyPoint(objects, point.x, point.y) ??
+        projectedStart.point ??
         ({
           id: "__preview-start",
           type: "point",
-          x: point.x,
-          y: point.y,
+          x: projectedStart.coords.x,
+          y: projectedStart.coords.y,
         } as Point);
 
       setDragPreview({
@@ -1338,16 +2105,58 @@ export function GeometryCanvas() {
         start: point,
         current: point,
         startPoint,
-        startPointId: startPoint.id === "__preview-start" ? null : startPoint.id,
+        startPointId: projectedStart.pointId,
         baseEndPointId: null,
+        equilateralCarrier: carrier,
+        baseStart: projectedStart.coords,
+        baseEnd: projectedStart.coords,
+        dragPath: [point],
+        hasMoved: false,
+      });
+      return;
+    }
+
+    if (selectedTool === "compass-transfer" && !compassTransferSource) {
+      const carrier = findEquilateralPreviewCarrier(objects, point, EQUILATERAL_CARRIER_TOLERANCE * toleranceScale);
+      if (!carrier) {
+        return;
+      }
+
+      const projectedStart = projectedEquilateralEndpoint(objects, carrier, point, EQUILATERAL_ENDPOINT_SNAP_TOLERANCE * toleranceScale);
+      if (!projectedStart) {
+        return;
+      }
+
+      const startPoint =
+        projectedStart.point ??
+        ({
+          id: "__preview-start",
+          type: "point",
+          x: projectedStart.coords.x,
+          y: projectedStart.coords.y,
+        } as Point);
+
+      setDragPreview({
+        tool: "copy-length",
+        start: point,
+        current: point,
+        startPoint,
+        startPointId: projectedStart.pointId,
+        baseEndPointId: null,
+        equilateralCarrier: carrier,
+        baseStart: projectedStart.coords,
+        baseEnd: projectedStart.coords,
+        dragPath: [point],
         hasMoved: false,
       });
       return;
     }
 
     if (selectedTool === "theorem-sas" || selectedTool === "theorem-sss") {
+      const congruencePickCount = congruenceSelection?.picks.length ?? 0;
+      const arcGesture = selectedTool === "theorem-sas" && (congruencePickCount === 1 || congruencePickCount === 4);
       const startPoint =
-        findNearbyPoint(objects, point.x, point.y) ??
+        findNearbyPoint(objects, point.x, point.y, POINT_TOLERANCE * toleranceScale) ??
         ({
           id: "__preview-start",
           type: "point",
@@ -1361,6 +2170,8 @@ export function GeometryCanvas() {
         current: point,
         startPoint,
         startPointId: startPoint.id === "__preview-start" ? null : startPoint.id,
+        dragPath: [point],
+        arcGesture,
         hasMoved: false,
       });
       return;
@@ -1368,7 +2179,7 @@ export function GeometryCanvas() {
 
     if (selectedTool === "compass" || selectedTool === "straightedge") {
       const startPoint =
-        findNearbyPoint(objects, point.x, point.y) ??
+        findNearbyPoint(objects, point.x, point.y, POINT_TOLERANCE * toleranceScale) ??
         ({
           id: "__preview-start",
           type: "point",
@@ -1382,12 +2193,13 @@ export function GeometryCanvas() {
         current: point,
         startPoint,
         startPointId: startPoint.id === "__preview-start" ? null : startPoint.id,
+        dragPath: [point],
         hasMoved: false,
       });
     }
 
     if (selectedTool === "extend") {
-      const startPoint = findNearbyPoint(objects, point.x, point.y);
+      const startPoint = findNearbyPoint(objects, point.x, point.y, POINT_TOLERANCE * toleranceScale);
       if (!startPoint) {
         return;
       }
@@ -1398,12 +2210,42 @@ export function GeometryCanvas() {
         current: point,
         startPoint,
         startPointId: startPoint.id,
+        dragPath: [point],
         hasMoved: false,
       });
     }
   };
 
   const onPointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
+    if (activePointersRef.current.has(event.pointerId)) {
+      activePointersRef.current.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        pointerType: event.pointerType,
+      });
+    }
+
+    if (pinchGestureRef.current) {
+      event.preventDefault();
+      updatePinchGesture();
+      return;
+    }
+
+    const panGesture = panGestureRef.current;
+    if (panGesture && panGesture.pointerId === event.pointerId) {
+      event.preventDefault();
+      const deltaX = event.clientX - panGesture.lastClientX;
+      const deltaY = event.clientY - panGesture.lastClientY;
+      panViewportByScreenDelta(deltaX, deltaY, "drag");
+      panGestureRef.current = {
+        ...panGesture,
+        lastClientX: event.clientX,
+        lastClientY: event.clientY,
+        hasPanned: panGesture.hasPanned || Math.hypot(deltaX, deltaY) > DRAG_THRESHOLD,
+      };
+      return;
+    }
+
     const point = eventToCanvasPoint(event);
     if (!point) {
       return;
@@ -1415,13 +2257,13 @@ export function GeometryCanvas() {
         current: point,
         hasMoved:
           triangleDragPreview.hasMoved ||
-          Math.hypot(point.x - triangleDragPreview.start.x, point.y - triangleDragPreview.start.y) > DRAG_THRESHOLD,
+          Math.hypot(point.x - triangleDragPreview.start.x, point.y - triangleDragPreview.start.y) > dragThreshold,
       });
       return;
     }
 
     if (!dragPreview && selectedTool === "intersection" && phase === "construction") {
-      const intersection = findNearbyIntersection(objects, point.x, point.y, INTERSECTION_TOLERANCE);
+      const intersection = findNearbyIntersection(objects, point.x, point.y, INTERSECTION_TOLERANCE * toleranceScale);
       setIntersectionPreview(intersection ? { x: intersection.x, y: intersection.y } : null);
       return;
     }
@@ -1430,21 +2272,28 @@ export function GeometryCanvas() {
       return;
     }
 
-    if (dragPreview.tool === "equilateral") {
-      let snappedBaseEnd: Point | null | undefined = null;
-      if (!dragPreview.baseEndPointId && dragPreview.startPointId) {
-        snappedBaseEnd = findNearbyPoint(objects, point.x, point.y, 30);
+    if (dragPreview.tool === "equilateral" || dragPreview.tool === "copy-length") {
+      const dragPath = appendDragPathPoint(dragPreview.dragPath, point, dragPathMinimumDistance);
+      const projectedEnd = dragPreview.equilateralCarrier
+        ? projectedEquilateralEndpoint(objects, dragPreview.equilateralCarrier, point, EQUILATERAL_ENDPOINT_SNAP_TOLERANCE * toleranceScale)
+        : undefined;
+      if (!projectedEnd) {
+        setDragPreview({
+          ...dragPreview,
+          current: point,
+          dragPath,
+          hasMoved: dragPreview.hasMoved || Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > dragThreshold,
+        });
+        return;
       }
-      const baseEndPointId =
-        snappedBaseEnd && snappedBaseEnd.id !== dragPreview.startPointId
-          ? snappedBaseEnd.id
-          : dragPreview.baseEndPointId;
 
       setDragPreview({
         ...dragPreview,
         current: point,
-        baseEndPointId,
-        hasMoved: dragPreview.hasMoved || Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD,
+        baseEndPointId: projectedEnd.pointId && projectedEnd.pointId !== dragPreview.startPointId ? projectedEnd.pointId : null,
+        baseEnd: projectedEnd.coords,
+        dragPath,
+        hasMoved: dragPreview.hasMoved || Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > dragThreshold,
       });
       return;
     }
@@ -1452,11 +2301,37 @@ export function GeometryCanvas() {
     setDragPreview({
       ...dragPreview,
       current: point,
-      hasMoved: dragPreview.hasMoved || Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD,
+      dragPath: appendDragPathPoint(dragPreview.dragPath, point, dragPathMinimumDistance),
+      hasMoved: dragPreview.hasMoved || Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > dragThreshold,
     });
   };
 
   const onPointerUp = (event: React.PointerEvent<SVGSVGElement>) => {
+    activePointersRef.current.delete(event.pointerId);
+
+    if (pinchGestureRef.current) {
+      if (trackedTouchPointers().length < 2) {
+        pinchGestureRef.current = null;
+        setIsPanning(false);
+      }
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      event.preventDefault();
+      return;
+    }
+
+    const panGesture = panGestureRef.current;
+    if (panGesture && panGesture.pointerId === event.pointerId) {
+      panGestureRef.current = null;
+      setIsPanning(false);
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      event.preventDefault();
+      return;
+    }
+
     const point = eventToCanvasPoint(event);
     if (!point) {
       setDragPreview(null);
@@ -1470,7 +2345,7 @@ export function GeometryCanvas() {
     if (triangleDragPreview) {
       const moved =
         triangleDragPreview.hasMoved ||
-        Math.hypot(point.x - triangleDragPreview.start.x, point.y - triangleDragPreview.start.y) > DRAG_THRESHOLD;
+        Math.hypot(point.x - triangleDragPreview.start.x, point.y - triangleDragPreview.start.y) > dragThreshold;
       const nextPositions = transformedTrianglePositions(triangleDragPreview, point);
       setTriangleDragPreview(null);
       setIntersectionPreview(null);
@@ -1484,36 +2359,47 @@ export function GeometryCanvas() {
     if (dragPreview) {
       const moved =
         dragPreview.hasMoved ||
-        Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > DRAG_THRESHOLD;
+        Math.hypot(point.x - dragPreview.start.x, point.y - dragPreview.start.y) > dragThreshold;
       const startPointId = dragPreview.startPointId;
       setDragPreview(null);
       setIntersectionPreview(null);
 
       if (moved) {
         const guidePointId =
-          dragPreview.tool === "equilateral"
-            ? dragPreview.baseEndPointId ??
-              (() => {
-                const finalSnap = findNearbyPoint(objects, point.x, point.y, 30);
-                return finalSnap && finalSnap.id !== dragPreview.startPointId ? finalSnap.id : null;
-              })()
+          dragPreview.tool === "equilateral" || dragPreview.tool === "copy-length"
+            ? dragPreview.baseEndPointId ?? null
             : undefined;
-        handleCanvasDrag(startPointId, dragPreview.start.x, dragPreview.start.y, point.x, point.y, guidePointId);
+        handleCanvasDrag(
+          startPointId,
+          dragPreview.start.x,
+          dragPreview.start.y,
+          point.x,
+          point.y,
+          guidePointId,
+          dragPreview.tool === "equilateral" || dragPreview.tool === "copy-length" ? dragPreview.equilateralCarrier?.kind : undefined,
+          dragPreview.tool === "equilateral" || dragPreview.tool === "copy-length" ? dragPreview.equilateralCarrier?.id : undefined,
+          dragPreview.tool === "congruence" ? appendDragPathPoint(dragPreview.dragPath, point, dragPathMinimumDistance) : undefined,
+          toleranceScale,
+        );
         return;
       }
     }
 
     setIntersectionPreview(null);
-    handleCanvasClick(point.x, point.y);
+    handleCanvasClick(point.x, point.y, toleranceScale);
   };
 
   const onPointerCancel = (event: React.PointerEvent<SVGSVGElement>) => {
+    activePointersRef.current.delete(event.pointerId);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    pinchGestureRef.current = null;
+    panGestureRef.current = null;
     setDragPreview(null);
     setTriangleDragPreview(null);
     setIntersectionPreview(null);
+    setIsPanning(false);
   };
 
   return (
@@ -1524,22 +2410,24 @@ export function GeometryCanvas() {
           "geometry-canvas",
           phase === "success" ? "success-pulse" : "",
           phase === "construction" ? "" : "is-readonly",
+          isPanning ? "is-panning" : "",
         ]
           .filter(Boolean)
           .join(" ")}
-        viewBox={`${VIEW_BOX.minX} ${VIEW_BOX.minY} ${VIEW_BOX.width} ${VIEW_BOX.height}`}
+        viewBox={`${viewport.minX} ${viewport.minY} ${viewport.width} ${viewport.height}`}
         role="img"
         aria-label={`A geometric construction of Proposition ${proposition.id}`}
+        onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
         <rect
-          x={VIEW_BOX.minX}
-          y={VIEW_BOX.minY}
-          width={VIEW_BOX.width}
-          height={VIEW_BOX.height}
+          x={viewport.minX}
+          y={viewport.minY}
+          width={viewport.width}
+          height={viewport.height}
           fill="transparent"
           pointerEvents="none"
         />
@@ -1588,6 +2476,7 @@ export function GeometryCanvas() {
             highlighted={highlightedIds.has(circle.id)}
             highlightColor={highlightStyleMap.get(circle.id)}
             key={highlightedIds.has(circle.id) ? `${circle.id}-${replayAnimationKey}` : circle.id}
+            lengthColor={lengthColorMaps.circles.get(circle.id)}
             objects={displayObjects}
             replaying={(phase === "readingReplay" || phase === "logicReplay") && highlightedIds.has(circle.id)}
           />
@@ -1611,6 +2500,11 @@ export function GeometryCanvas() {
             highlighted={highlightedIds.has(segment.id)}
             highlightColor={highlightStyleMap.get(segment.id)}
             key={highlightedIds.has(segment.id) ? `${segment.id}-${replayAnimationKey}` : segment.id}
+            lengthColor={
+              isFiniteLengthSegment(segment)
+                ? lengthColorMaps.sides.get(canonicalLengthSide(segment.p1, segment.p2))
+                : undefined
+            }
             objects={displayObjects}
             segment={segment}
             selected={selectedSegmentIds.has(segment.id) || (selectedIds.has(segment.p1) && selectedIds.has(segment.p2))}
@@ -1629,24 +2523,20 @@ export function GeometryCanvas() {
             key={point.id}
             point={point}
             selected={selectedIds.has(point.id)}
+            zoom={viewportZoom}
           />
         ))}
 
         {pointLabels.map((label) => (
-          <PointLabelElement key={`label-${label.id}`} label={label} />
+          <PointLabelElement key={`label-${label.id}`} label={label} zoom={viewportZoom} />
         ))}
 
         {selectedTool === "intersection" && intersectionPreview && <IntersectionPreviewElement point={intersectionPreview} />}
-        {dragPreview && <DragPreviewElement preview={dragPreview} objects={objects} />}
+        {dragPreview && <DragPreviewElement preview={dragPreview} objects={objects} toleranceScale={toleranceScale} />}
       </svg>
       {showProp7ImpossibleClaim && (
         <button className="workspace-action-button prop7-impossible-button" type="button" onClick={() => markChallengeAction("prop7-no-such-d")}>
           No such D exists with AC = AD and BC = BD.
-        </button>
-      )}
-      {showProp15VerticalPairSelection && (
-        <button className="workspace-action-button" type="button" onClick={() => markChallengeAction("prop15-select-vertical-pair")}>
-          Select vertical angles CEA and BED.
         </button>
       )}
       {showProp28AngleConditionSelection && (

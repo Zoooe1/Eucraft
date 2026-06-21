@@ -24,9 +24,9 @@ const workspaceGuides: WorkspaceGuide[] = [
     diagram: "copy-length",
     steps: [
       { focus: "CD", text: "Click the highlighted segment CD to take the length you want to copy." },
-      { focus: "A", text: "Click A as the starting point for the copied length." },
-      { focus: "target", text: "Click the target line or ray where the copied length should land." },
-      { focus: "E", text: "The new point E is placed so AE matches CD." },
+      { focus: "A", text: "Click A as the compass center for the copied length." },
+      { focus: "target", text: "Use Intersection where the compass mark cuts the given line." },
+      { focus: "E", text: "The cut point E makes AE match CD." },
     ],
   },
   {

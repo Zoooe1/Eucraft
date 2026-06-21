@@ -232,8 +232,8 @@ export const propositionUnlocks: Unlock[] = [
     dependsOn: ["unlock-I.2-transfer-length", "primitive-compass"],
     source: "Euclid I.2",
     originalStatement: "To place a straight-line equal to a given straight-line at a given point.",
-    description: "Copy a known length from a chosen start point onto a target line or ray.",
-    whatItLetsYouDo: "Place a point on a chosen line or ray so the new segment equals the source length.",
+    description: "Copy a known length as a compass mark centered at a chosen point.",
+    whatItLetsYouDo: "Draw a compass mark whose radius equals the source length.",
     futureUses: ["I.3", "I.9", "I.10", "later circle and segment transfer constructions"],
   },
   {
@@ -246,8 +246,8 @@ export const propositionUnlocks: Unlock[] = [
     dependsOn: ["unlock-I.2-transfer-length"],
     source: "Euclid I.3",
     originalStatement: "For two given unequal straight-lines, to cut off from the greater a straight-line equal to the lesser.",
-    description: "Copy a length from a start point onto a chosen line or ray.",
-    whatItLetsYouDo: "Place or cut off an equal segment with the unified Copy Length tool.",
+    description: "Copy a length as a compass mark centered at a chosen point.",
+    whatItLetsYouDo: "Use the compass mark with intersections to cut off an equal segment.",
     futureUses: ["I.5", "I.6", "I.9"],
   },
   {

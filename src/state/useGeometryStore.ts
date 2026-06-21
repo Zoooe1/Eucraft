@@ -33,8 +33,11 @@ import {
   INTERSECTION_TOLERANCE,
   isPointOnRay,
   nextPointLabel,
+  OBJECT_SNAP_TOLERANCE,
+  POINT_TOLERANCE,
   segmentExistsBetween,
   snapToPointRay,
+  STRAIGHTEDGE_GUIDE_TOLERANCE,
   transferredCircleExists,
 } from "../geometry/operations";
 import { findNearbyIntersection, pointNearCoordinates } from "../geometry/intersections";
@@ -99,7 +102,7 @@ type GeometryStore = {
   resetCongruenceSelection: () => void;
   markChallengeAction: (actionId: string) => void;
   transformPoints: (positions: Record<string, { x: number; y: number }>) => void;
-  handleCanvasClick: (x: number, y: number) => void;
+  handleCanvasClick: (x: number, y: number, toleranceScale?: number) => void;
   handleCanvasDrag: (
     startPointId: string | null,
     startX: number,
@@ -107,6 +110,10 @@ type GeometryStore = {
     endX: number,
     endY: number,
     guidePointId?: string | null,
+    carrierKind?: "segment" | "extended-line",
+    carrierId?: string | null,
+    dragPath?: Array<{ x: number; y: number }>,
+    toleranceScale?: number,
   ) => void;
   checkConstruction: () => void;
   autoCompleteConstruction: (result: ValidationResult) => void;
@@ -145,6 +152,10 @@ function defaultToolFor(propositionId: string): GeometryTool {
   return getProposition(propositionId).allowedTools[0] ?? "point";
 }
 
+function scaledTolerance(base: number, toleranceScale = 1) {
+  return base * toleranceScale;
+}
+
 function addObjectsWithHistory(state: GeometryStore, newObjects: GeometryObject[], animatedObjectId?: string) {
   return {
     phase: "construction" as AppPhase,
@@ -171,6 +182,23 @@ function addObjectsAndSelect(
     ...addObjectsWithHistory(state, newObjects, animatedObjectId),
     selectedPointIds,
     compassTransferSource: null,
+  };
+}
+
+function addObjectsRelationAndSelect(
+  state: GeometryStore,
+  newObjects: GeometryObject[],
+  relation: ReasoningRelation,
+  selectedPointIds: string[] = [],
+  animatedObjectId?: string,
+) {
+  const reasoningRelations = state.reasoningRelations.some((candidate) => candidate.id === relation.id)
+    ? state.reasoningRelations
+    : [...state.reasoningRelations, relation];
+
+  return {
+    ...addObjectsAndSelect(state, newObjects, selectedPointIds, animatedObjectId),
+    reasoningRelations,
   };
 }
 
@@ -229,13 +257,14 @@ function resolvePointAt(
   x: number,
   y: number,
   objects: GeometryObject[] = state.objects,
+  toleranceScale = 1,
 ): { point: Point; newPoint?: Point } {
-  const existing = findNearbyPoint(objects, x, y);
+  const existing = findNearbyPoint(objects, x, y, scaledTolerance(POINT_TOLERANCE, toleranceScale));
   if (existing) {
     return { point: existing };
   }
 
-  const intersection = findNearbyIntersection(objects, x, y, 30);
+  const intersection = findNearbyIntersection(objects, x, y, scaledTolerance(30, toleranceScale));
   if (intersection) {
     const label = pointLabel(state, objects);
     const point = createPoint(label, intersection.x, intersection.y, "intersection", {
@@ -245,7 +274,7 @@ function resolvePointAt(
     return { point, newPoint: point };
   }
 
-  const objectSnap = findNearbyObjectSnap(objects, x, y);
+  const objectSnap = findNearbyObjectSnap(objects, x, y, scaledTolerance(OBJECT_SNAP_TOLERANCE, toleranceScale));
   if (objectSnap) {
     const label = pointLabel(state, objects);
     const point = createPoint(label, objectSnap.x, objectSnap.y, "snap", {
@@ -271,42 +300,70 @@ function equilateralApexCoordinates(p1: Point, p2: Point, sideSign = -1) {
   };
 }
 
+function equilateralRelationForTriangle(p1: Point, p2: Point, apex: Point): ReasoningRelation {
+  const triangle: [string, string, string] = [p1.id, p2.id, apex.id];
+  const base: [string, string] = [p1.id, p2.id];
+  const firstSide: [string, string] = [p1.id, apex.id];
+  const secondSide: [string, string] = [p2.id, apex.id];
+
+  return {
+    id: `equilateral-${triangle.join("").toLowerCase()}`,
+    type: "equilateral-triangle",
+    triangle,
+    derivedRelations: [
+      { type: "is-triangle", figure: triangle.join("") },
+      { type: "is-equilateral", figure: triangle.join("") },
+      { type: "equal-length", a: sideRefFromIds(base), b: sideRefFromIds(firstSide) },
+      { type: "equal-length", a: sideRefFromIds(base), b: sideRefFromIds(secondSide) },
+      { type: "equal-length", a: sideRefFromIds(firstSide), b: sideRefFromIds(secondSide) },
+    ],
+    createdBy: "theorem-action",
+    propositionSource: "I.1",
+  };
+}
+
 function buildEquilateralTriangleOnBase(
   state: GeometryStore,
   p1: Point,
   p2: Point,
   parentObjectId: string | undefined,
   sideSign = -1,
+  baseObjects: GeometryObject[] = [],
 ) {
   if (!p1 || !p2) {
     return undefined;
   }
 
+  const parentObjectIds = [...new Set([p1.id, p2.id, ...(parentObjectId ? [parentObjectId] : [])])];
   const { x: apexX, y: apexY } = equilateralApexCoordinates(p1, p2, sideSign);
-  const label = pointLabel(state, state.objects);
+  const label = pointLabel(state, [...state.objects, ...baseObjects]);
   const apex = createPoint(label, apexX, apexY, "theorem-action", {
     color: "gold",
-    parentObjectIds: parentObjectId ? [parentObjectId] : undefined,
+    parentObjectIds,
     source: "I.1",
   });
 
-  const newObjects: GeometryObject[] = [];
-  if (!circleExists(state.objects, p1.id, p2.id)) {
-    newObjects.push(createCircle(p1.id, p2.id, "red"));
+  const newObjects: GeometryObject[] = [...baseObjects];
+  if (!segmentExistsBetween([...state.objects, ...newObjects], p1.id, p2.id)) {
+    newObjects.push(createSegment(p1.id, p2.id, "ink", "I.1"));
   }
-  if (!circleExists(state.objects, p2.id, p1.id)) {
-    newObjects.push(createCircle(p2.id, p1.id, "blue"));
+
+  if (!circleExists([...state.objects, ...newObjects], p1.id, p2.id)) {
+    newObjects.push(createCircle(p1.id, p2.id, "red", "I.1"));
+  }
+  if (!circleExists([...state.objects, ...newObjects], p2.id, p1.id)) {
+    newObjects.push(createCircle(p2.id, p1.id, "blue", "I.1"));
   }
 
   newObjects.push(apex);
-  if (!segmentExistsBetween(state.objects, p1.id, apex.id)) {
+  if (!segmentExistsBetween([...state.objects, ...newObjects], p1.id, apex.id)) {
     newObjects.push(createSegment(p1.id, apex.id, "red", "I.1"));
   }
-  if (!segmentExistsBetween(state.objects, p2.id, apex.id)) {
+  if (!segmentExistsBetween([...state.objects, ...newObjects], p2.id, apex.id)) {
     newObjects.push(createSegment(p2.id, apex.id, "blue", "I.1"));
   }
 
-  return { objects: newObjects, animatedObjectId: apex.id };
+  return { objects: newObjects, animatedObjectId: apex.id, relation: equilateralRelationForTriangle(p1, p2, apex) };
 }
 
 function buildEquilateralTriangleOnSegment(state: GeometryStore, segment: Segment, sideSign = -1) {
@@ -1080,6 +1137,36 @@ function sidesAreEqualByCopiedLength(state: GeometryStore, side1: [string, strin
   );
 }
 
+function sideIsTransferredCircleRadius(state: GeometryStore, circle: Extract<GeometryObject, { type: "circle" }>, side: [string, string]) {
+  if (!circle.radiusSegment || !side.includes(circle.center)) {
+    return false;
+  }
+
+  const radiusPointId = side[0] === circle.center ? side[1] : side[0];
+  const center = getPoint(state.objects, circle.center);
+  const radiusPoint = getPoint(state.objects, radiusPointId);
+  return Boolean(
+    center &&
+      radiusPoint &&
+      areDistancesEqual(distance(center, radiusPoint), circleRadius(circle, state.objects), 8),
+  );
+}
+
+function sidesAreEqualByCopiedLengthCircle(state: GeometryStore, side1: [string, string], side2: [string, string]) {
+  return state.objects.some((object) => {
+    if (object.type !== "circle" || !object.radiusSegment) {
+      return false;
+    }
+
+    const sourceSide: [string, string] = [object.radiusSegment.p1, object.radiusSegment.p2];
+    return (
+      ((sideMatches(side1, sourceSide) && sideIsTransferredCircleRadius(state, object, side2)) ||
+        (sideMatches(side2, sourceSide) && sideIsTransferredCircleRadius(state, object, side1))) &&
+      lengthsMatchForKnownFact(state, side1, side2)
+    );
+  });
+}
+
 function sidesAreEqualBySameCircleRadii(state: GeometryStore, side1: [string, string], side2: [string, string]) {
   return state.objects.some((object) => {
     if (object.type !== "circle") {
@@ -1165,6 +1252,7 @@ function sidesAreEqualForSAS(state: GeometryStore, side1: [string, string], side
     sidesAreEqualByEquilateralGeometry(state, side1, side2) ||
     sidesAreEqualBySegmentBisector(state, side1, side2) ||
     sidesAreEqualByCopiedLength(state, side1, side2) ||
+    sidesAreEqualByCopiedLengthCircle(state, side1, side2) ||
     sidesAreEqualBySameCircleRadii(state, side1, side2) ||
     sidesAreEqualByCommonNotionRemainders(state, side1, side2) ||
     sidesAreEqualByProp24CopiedComparison(state, side1, side2) ||
@@ -1526,6 +1614,227 @@ function sideSupportSegment(objects: GeometryObject[], p1: Point, p2: Point) {
   return containingSegment ?? collinearPathSupportSegment(objects, p1, p2);
 }
 
+type EquilateralCarrierKind = "segment" | "extended-line";
+
+type EquilateralCarrier = {
+  id: string;
+  kind: EquilateralCarrierKind;
+  start: Point;
+  end: Point;
+  parentObjectId: string;
+  ray?: boolean;
+  bounded?: boolean;
+};
+
+const EQUILATERAL_CARRIER_TOLERANCE = 28;
+const EQUILATERAL_ENDPOINT_SNAP_TOLERANCE = 12;
+
+function carrierFromObject(objects: GeometryObject[], object: Segment | ExtendedLine): EquilateralCarrier | undefined {
+  if (object.type === "segment") {
+    const start = getPoint(objects, object.p1);
+    const end = getPoint(objects, object.p2);
+    if (!start || !end) {
+      return undefined;
+    }
+
+    return {
+      id: object.id,
+      kind: "segment",
+      start,
+      end,
+      parentObjectId: object.id,
+      ray: object.ray,
+      bounded: object.given,
+    };
+  }
+
+  const start = getPoint(objects, object.from);
+  const end = getPoint(objects, object.through);
+  if (!start || !end) {
+    return undefined;
+  }
+
+  return {
+    id: object.id,
+    kind: "extended-line",
+    start,
+    end,
+    parentObjectId: object.id,
+  };
+}
+
+function findEquilateralCarrierById(
+  objects: GeometryObject[],
+  carrierKind: EquilateralCarrierKind | undefined,
+  carrierId: string | undefined,
+) {
+  if (!carrierKind || !carrierId) {
+    return undefined;
+  }
+
+  const object = objects.find(
+    (candidate): candidate is Segment | ExtendedLine => candidate.type === carrierKind && candidate.id === carrierId,
+  );
+  return object ? carrierFromObject(objects, object) : undefined;
+}
+
+function projectionAllowedOnCarrier(carrier: EquilateralCarrier, t: number) {
+  if (carrier.ray && t < -0.03) {
+    return false;
+  }
+
+  if (carrier.bounded && (t < -0.03 || t > 1.03)) {
+    return false;
+  }
+
+  return true;
+}
+
+function findEquilateralCarrierAt(objects: GeometryObject[], x: number, y: number, tolerance = EQUILATERAL_CARRIER_TOLERANCE) {
+  return objects
+    .filter((object): object is Segment | ExtendedLine => object.type === "segment" || object.type === "extended-line")
+    .map((object) => {
+      const carrier = carrierFromObject(objects, object);
+      const projection = carrier ? pointProjection(carrier.start, carrier.end, x, y) : undefined;
+      if (!carrier || !projection || !projectionAllowedOnCarrier(carrier, projection.t)) {
+        return undefined;
+      }
+
+      return {
+        carrier,
+        distance: Math.hypot(x - projection.x, y - projection.y),
+        length: distance(carrier.start, carrier.end),
+      };
+    })
+    .filter((candidate): candidate is { carrier: EquilateralCarrier; distance: number; length: number } => Boolean(candidate))
+    .filter((candidate) => candidate.distance <= tolerance)
+    .sort((a, b) => a.distance - b.distance || b.length - a.length)[0]?.carrier;
+}
+
+function pointNearCarrierCursor(
+  objects: GeometryObject[],
+  carrier: EquilateralCarrier,
+  x: number,
+  y: number,
+  tolerance = EQUILATERAL_ENDPOINT_SNAP_TOLERANCE,
+) {
+  return objects
+    .filter((object): object is Point => object.type === "point" && !object.auxiliary)
+    .map((point) => {
+      const projection = pointProjection(carrier.start, carrier.end, point.x, point.y);
+      if (!projection || !projectionAllowedOnCarrier(carrier, projection.t) || !arePointsCollinear(carrier.start, carrier.end, point, 0.025)) {
+        return undefined;
+      }
+
+      return { point, distance: Math.hypot(point.x - x, point.y - y) };
+    })
+    .filter((candidate): candidate is { point: Point; distance: number } => Boolean(candidate))
+    .filter((candidate) => candidate.distance <= tolerance)
+    .sort((a, b) => a.distance - b.distance)[0]?.point;
+}
+
+function projectedPointForEquilateral(
+  state: GeometryStore,
+  objects: GeometryObject[],
+  carrier: EquilateralCarrier,
+  x: number,
+  y: number,
+  source = "I.1",
+  tolerance = EQUILATERAL_ENDPOINT_SNAP_TOLERANCE,
+) {
+  const snapped = pointNearCarrierCursor(objects, carrier, x, y, tolerance);
+  if (snapped) {
+    return { point: snapped };
+  }
+
+  const projection = pointProjection(carrier.start, carrier.end, x, y);
+  if (!projection || !projectionAllowedOnCarrier(carrier, projection.t)) {
+    return undefined;
+  }
+
+  const label = pointLabel(state, objects);
+  const point = createPoint(label, projection.x, projection.y, "snap", {
+    color: "gold",
+    parentObjectIds: [carrier.parentObjectId],
+    source,
+  });
+
+  return { point, newPoint: point };
+}
+
+function copyLengthSourceFromEndpointDrag(
+  state: GeometryStore,
+  startPointId: string | null,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  guidePointId?: string | null,
+  carrierKind?: EquilateralCarrierKind,
+  carrierId?: string | null,
+  toleranceScale = 1,
+) {
+  const carrier =
+    findEquilateralCarrierById(state.objects, carrierKind, carrierId ?? undefined) ??
+    findEquilateralCarrierAt(state.objects, startX, startY, scaledTolerance(EQUILATERAL_CARRIER_TOLERANCE, toleranceScale));
+  if (!carrier) {
+    return undefined;
+  }
+
+  const startPoint = startPointId ? getPoint(state.objects, startPointId) : undefined;
+  const start = startPointId
+    ? startPoint
+      ? { point: startPoint }
+      : undefined
+    : projectedPointForEquilateral(
+        state,
+        state.objects,
+        carrier,
+        startX,
+        startY,
+        "free-compass-transfer",
+        scaledTolerance(EQUILATERAL_ENDPOINT_SNAP_TOLERANCE, toleranceScale),
+      );
+  if (!start) {
+    return undefined;
+  }
+
+  const objectsWithStart = start.newPoint ? [...state.objects, start.newPoint] : state.objects;
+  const guidePoint = guidePointId ? getPoint(objectsWithStart, guidePointId) : undefined;
+  const end = guidePointId
+    ? guidePoint
+      ? { point: guidePoint }
+      : undefined
+    : projectedPointForEquilateral(
+        state,
+        objectsWithStart,
+        carrier,
+        endX,
+        endY,
+        "free-compass-transfer",
+        scaledTolerance(EQUILATERAL_ENDPOINT_SNAP_TOLERANCE, toleranceScale),
+      );
+  if (!end || start.point.id === end.point.id || distance(start.point, end.point) < 2) {
+    return undefined;
+  }
+
+  const sourceObjects = [start.newPoint, end.newPoint].filter((point): point is Point => Boolean(point));
+  const support = sideSupportSegment([...state.objects, ...sourceObjects], start.point, end.point);
+  if (!support) {
+    return undefined;
+  }
+
+  return {
+    source: {
+      p1: start.point.id,
+      p2: end.point.id,
+      segmentId: segmentExistsBetween([...state.objects, ...sourceObjects], start.point.id, end.point.id)?.id ?? support.id,
+    },
+    objects: sourceObjects,
+    animatedObjectId: end.newPoint?.id ?? start.newPoint?.id,
+  };
+}
+
 function equilateralBaseFromEndpointDrag(
   state: GeometryStore,
   startPointId: string | null,
@@ -1534,28 +1843,71 @@ function equilateralBaseFromEndpointDrag(
   endX: number,
   endY: number,
   guidePointId?: string | null,
+  carrierKind?: EquilateralCarrierKind,
+  carrierId?: string | null,
+  toleranceScale = 1,
 ) {
-  const start = startPointId ? getPoint(state.objects, startPointId) : findNearbyPoint(state.objects, startX, startY, 30);
-  const end = guidePointId ? getPoint(state.objects, guidePointId) : findNearbyPoint(state.objects, endX, endY, 30);
-  if (!start || !end || start.id === end.id) {
+  const carrier =
+    findEquilateralCarrierById(state.objects, carrierKind, carrierId ?? undefined) ??
+    findEquilateralCarrierAt(state.objects, startX, startY, scaledTolerance(EQUILATERAL_CARRIER_TOLERANCE, toleranceScale));
+  if (!carrier) {
     return undefined;
   }
 
-  const support = sideSupportSegment(state.objects, start, end);
+  const startPoint = startPointId ? getPoint(state.objects, startPointId) : undefined;
+  const start = startPointId
+    ? startPoint
+      ? { point: startPoint }
+      : undefined
+    : projectedPointForEquilateral(
+        state,
+        state.objects,
+        carrier,
+        startX,
+        startY,
+        "I.1",
+        scaledTolerance(EQUILATERAL_ENDPOINT_SNAP_TOLERANCE, toleranceScale),
+      );
+  if (!start) {
+    return undefined;
+  }
+
+  const objectsWithStart = start.newPoint ? [...state.objects, start.newPoint] : state.objects;
+  const guidePoint = guidePointId ? getPoint(objectsWithStart, guidePointId) : undefined;
+  const end = guidePointId
+    ? guidePoint
+      ? { point: guidePoint }
+      : undefined
+    : projectedPointForEquilateral(
+        state,
+        objectsWithStart,
+        carrier,
+        endX,
+        endY,
+        "I.1",
+        scaledTolerance(EQUILATERAL_ENDPOINT_SNAP_TOLERANCE, toleranceScale),
+      );
+  if (!end || start.point.id === end.point.id || distance(start.point, end.point) < 2) {
+    return undefined;
+  }
+
+  const baseObjects = [start.newPoint, end.newPoint].filter((point): point is Point => Boolean(point));
+  const support = sideSupportSegment([...state.objects, ...baseObjects], start.point, end.point);
   if (!support) {
     return undefined;
   }
 
-  const baseX = end.x - start.x;
-  const baseY = end.y - start.y;
-  const pullX = endX - start.x;
-  const pullY = endY - start.y;
+  const baseX = end.point.x - start.point.x;
+  const baseY = end.point.y - start.point.y;
+  const pullX = endX - start.point.x;
+  const pullY = endY - start.point.y;
   const cross = baseX * pullY - baseY * pullX;
 
   return {
-    start,
-    end,
+    start: start.point,
+    end: end.point,
     support,
+    baseObjects,
     sideSign: cross < 0 ? -1 : 1,
   };
 }
@@ -1578,6 +1930,7 @@ function congruenceSideNearPoints(
   secondId: string,
   x: number,
   y: number,
+  toleranceScale = 1,
 ): CongruenceSidePick | undefined {
   const first = getPoint(state.objects, firstId);
   const second = getPoint(state.objects, secondId);
@@ -1586,7 +1939,12 @@ function congruenceSideNearPoints(
   }
 
   const projection = pointProjection(first, second, x, y);
-  if (!projection || projection.t < -0.03 || projection.t > 1.03 || Math.hypot(x - projection.x, y - projection.y) > 24) {
+  if (
+    !projection ||
+    projection.t < -0.03 ||
+    projection.t > 1.03 ||
+    Math.hypot(x - projection.x, y - projection.y) > scaledTolerance(24, toleranceScale)
+  ) {
     return undefined;
   }
 
@@ -1615,7 +1973,7 @@ function prop35ExpectedSideForPick(selection: CongruenceSelection | null, pickCo
   return undefined;
 }
 
-function findProp35CongruenceSideAt(state: GeometryStore, x: number, y: number): CongruenceSidePick | undefined {
+function findProp35CongruenceSideAt(state: GeometryStore, x: number, y: number, toleranceScale = 1): CongruenceSidePick | undefined {
   if (state.currentPropositionId !== "I.35" || state.selectedTool !== "theorem-sas") {
     return undefined;
   }
@@ -1624,17 +1982,17 @@ function findProp35CongruenceSideAt(state: GeometryStore, x: number, y: number):
   const pickCount = selection?.picks.length ?? 0;
   const expectedSide = prop35ExpectedSideForPick(selection, pickCount);
   if (expectedSide) {
-    return congruenceSideNearPoints(state, expectedSide[0], expectedSide[1], x, y);
+    return congruenceSideNearPoints(state, expectedSide[0], expectedSide[1], x, y, toleranceScale);
   }
 
   return (
-    congruenceSideNearPoints(state, "A", "E", x, y) ??
-    congruenceSideNearPoints(state, "A", "B", x, y)
+    congruenceSideNearPoints(state, "A", "E", x, y, toleranceScale) ??
+    congruenceSideNearPoints(state, "A", "B", x, y, toleranceScale)
   );
 }
 
-function findCongruenceSideAt(state: GeometryStore, x: number, y: number): CongruenceSidePick | undefined {
-  const guidedSide = findProp35CongruenceSideAt(state, x, y);
+function findCongruenceSideAt(state: GeometryStore, x: number, y: number, toleranceScale = 1): CongruenceSidePick | undefined {
+  const guidedSide = findProp35CongruenceSideAt(state, x, y, toleranceScale);
   if (guidedSide) {
     return guidedSide;
   }
@@ -1664,7 +2022,7 @@ function findCongruenceSideAt(state: GeometryStore, x: number, y: number): Congr
       }
 
       const candidateDistance = Math.hypot(x - projection.x, y - projection.y);
-      if (candidateDistance > 24) {
+      if (candidateDistance > scaledTolerance(24, toleranceScale)) {
         continue;
       }
 
@@ -1688,9 +2046,10 @@ function findCongruenceSideByEndpointDrag(
   startY: number,
   endX: number,
   endY: number,
+  toleranceScale = 1,
 ): CongruenceSidePick | undefined {
-  const start = findNearbyPoint(state.objects, startX, startY, 30);
-  const end = findNearbyPoint(state.objects, endX, endY, 30);
+  const start = findNearbyPoint(state.objects, startX, startY, scaledTolerance(30, toleranceScale));
+  const end = findNearbyPoint(state.objects, endX, endY, scaledTolerance(30, toleranceScale));
   if (!start || !end || start.id === end.id) {
     return undefined;
   }
@@ -1741,14 +2100,103 @@ function angleRayCandidates(state: GeometryStore, vertex: Point) {
   );
 }
 
+function normalizedAngleDelta(from: number, to: number) {
+  let delta = to - from;
+  while (delta > Math.PI) {
+    delta -= Math.PI * 2;
+  }
+  while (delta < -Math.PI) {
+    delta += Math.PI * 2;
+  }
+  return delta;
+}
+
+function pointDistanceToGestureChord(
+  point: { x: number; y: number },
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared < 1) {
+    return 0;
+  }
+
+  const t = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
+  return Math.hypot(point.x - (start.x + t * dx), point.y - (start.y + t * dy));
+}
+
+function congruenceArcGestureScore(
+  vertex: Point,
+  firstRay: Point,
+  secondRay: Point,
+  path: Array<{ x: number; y: number }>,
+  toleranceScale = 1,
+) {
+  if (path.length < 4) {
+    return undefined;
+  }
+
+  const first = path[0];
+  const last = path[path.length - 1];
+  const chordLength = Math.hypot(last.x - first.x, last.y - first.y);
+  if (chordLength < scaledTolerance(16, toleranceScale)) {
+    return undefined;
+  }
+
+  const middlePoints = path.slice(1, -1);
+  const maxChordDistance = Math.max(...middlePoints.map((point) => pointDistanceToGestureChord(point, first, last)));
+  if (maxChordDistance < Math.max(scaledTolerance(7, toleranceScale), Math.min(scaledTolerance(16, toleranceScale), chordLength * 0.1))) {
+    return undefined;
+  }
+
+  const firstRayAngle = Math.atan2(firstRay.y - vertex.y, firstRay.x - vertex.x);
+  const secondRayAngle = Math.atan2(secondRay.y - vertex.y, secondRay.x - vertex.x);
+  const expectedDelta = normalizedAngleDelta(firstRayAngle, secondRayAngle);
+  const expectedDirection = Math.sign(expectedDelta);
+  if (expectedDirection === 0 || Math.abs(expectedDelta) < 0.08) {
+    return undefined;
+  }
+
+  const startAngle = Math.atan2(first.y - vertex.y, first.x - vertex.x);
+  const radii = path.map((point) => Math.hypot(point.x - vertex.x, point.y - vertex.y));
+  const averageRadius = radii.reduce((sum, radius) => sum + radius, 0) / radii.length;
+  if (averageRadius < scaledTolerance(14, toleranceScale)) {
+    return undefined;
+  }
+
+  const radiusSpread = Math.max(...radii) - Math.min(...radii);
+  if (radiusSpread > Math.max(scaledTolerance(28, toleranceScale), averageRadius * 0.38)) {
+    return undefined;
+  }
+
+  const progress = path.map((point) => normalizedAngleDelta(startAngle, Math.atan2(point.y - vertex.y, point.x - vertex.x)) * expectedDirection);
+  const maxProgress = Math.max(...progress);
+  const minProgress = Math.min(...progress);
+  if (minProgress < -0.35 || maxProgress < Math.min(Math.abs(expectedDelta) * 0.45, 0.18)) {
+    return undefined;
+  }
+
+  const backwardsSteps = progress.slice(1).filter((value, index) => value + 0.08 < progress[index]).length;
+  if (backwardsSteps > Math.max(1, Math.floor(path.length * 0.28))) {
+    return undefined;
+  }
+
+  return radiusSpread * 0.35 - maxChordDistance * 0.2 + Math.abs(maxProgress - Math.abs(expectedDelta)) * 6;
+}
+
 function inferCongruenceAngleArc(
   state: GeometryStore,
   startX: number,
   startY: number,
   endX: number,
   endY: number,
+  dragPath?: Array<{ x: number; y: number }>,
+  toleranceScale = 1,
 ): CongruenceVertexPick | undefined {
-  if (Math.hypot(endX - startX, endY - startY) < 16) {
+  const path = dragPath && dragPath.length > 0 ? dragPath : [{ x: startX, y: startY }, { x: endX, y: endY }];
+  if (path.length < 4 || Math.hypot(endX - startX, endY - startY) < scaledTolerance(16, toleranceScale)) {
     return undefined;
   }
 
@@ -1757,7 +2205,11 @@ function inferCongruenceAngleArc(
   for (const vertex of vertices) {
     const startRadius = Math.hypot(startX - vertex.x, startY - vertex.y);
     const endRadius = Math.hypot(endX - vertex.x, endY - vertex.y);
-    if (startRadius < 14 || endRadius < 14 || Math.abs(startRadius - endRadius) > Math.max(70, (startRadius + endRadius) * 0.45)) {
+    if (
+      startRadius < scaledTolerance(14, toleranceScale) ||
+      endRadius < scaledTolerance(14, toleranceScale) ||
+      Math.abs(startRadius - endRadius) > Math.max(scaledTolerance(70, toleranceScale), (startRadius + endRadius) * 0.45)
+    ) {
       continue;
     }
 
@@ -1775,7 +2227,12 @@ function inferCongruenceAngleArc(
 
         const startDistance = pointDistanceToRay(vertex, firstRay, startX, startY);
         const endDistance = pointDistanceToRay(vertex, secondRay, endX, endY);
-        if (startDistance > 42 || endDistance > 42) {
+        if (startDistance > scaledTolerance(42, toleranceScale) || endDistance > scaledTolerance(42, toleranceScale)) {
+          continue;
+        }
+
+        const gestureScore = congruenceArcGestureScore(vertex, firstRay, secondRay, path, toleranceScale);
+        if (gestureScore === undefined) {
           continue;
         }
 
@@ -1786,7 +2243,7 @@ function inferCongruenceAngleArc(
             ray1: firstRay.id,
             ray2: secondRay.id,
           },
-          score: startDistance + endDistance + Math.abs(startRadius - endRadius) * 0.12,
+          score: startDistance + endDistance + Math.abs(startRadius - endRadius) * 0.12 + gestureScore,
         });
       }
     }
@@ -2223,7 +2680,7 @@ function applyCongruencePick(state: GeometryStore, selection: CongruenceSelectio
   return completeCongruenceSelection(state, result, nextSelection);
 }
 
-function handleCongruenceToolClick(state: GeometryStore, x: number, y: number) {
+function handleCongruenceToolClick(state: GeometryStore, x: number, y: number, toleranceScale = 1) {
   const selection = preparedCongruenceSelection(state);
   if (!selection) {
     return undefined;
@@ -2232,9 +2689,9 @@ function handleCongruenceToolClick(state: GeometryStore, x: number, y: number) {
   const expectedKind = congruenceStepKind(selection.method, selection.picks.length);
   const nextPick =
     expectedKind === "side"
-      ? findCongruenceSideAt(state, x, y)
+      ? findCongruenceSideAt(state, x, y, toleranceScale)
       : (() => {
-          const point = findNearbyPoint(state.objects, x, y, 24);
+          const point = findNearbyPoint(state.objects, x, y, scaledTolerance(24, toleranceScale));
           return point ? ({ kind: "vertex", pointId: point.id } as CongruenceVertexPick) : undefined;
         })();
 
@@ -2255,7 +2712,15 @@ function handleCongruenceToolClick(state: GeometryStore, x: number, y: number) {
   return applyCongruencePick(state, selection, nextPick);
 }
 
-function handleCongruenceToolDrag(state: GeometryStore, startX: number, startY: number, endX: number, endY: number) {
+function handleCongruenceToolDrag(
+  state: GeometryStore,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  dragPath?: Array<{ x: number; y: number }>,
+  toleranceScale = 1,
+) {
   const selection = preparedCongruenceSelection(state);
   if (!selection) {
     return undefined;
@@ -2264,8 +2729,8 @@ function handleCongruenceToolDrag(state: GeometryStore, startX: number, startY: 
   const expectedKind = congruenceStepKind(selection.method, selection.picks.length);
   const nextPick =
     expectedKind === "side"
-      ? findCongruenceSideByEndpointDrag(state, startX, startY, endX, endY)
-      : inferCongruenceAngleArc(state, startX, startY, endX, endY);
+      ? findCongruenceSideByEndpointDrag(state, startX, startY, endX, endY, toleranceScale)
+      : inferCongruenceAngleArc(state, startX, startY, endX, endY, dragPath, toleranceScale);
 
   if (!nextPick) {
     const message =
@@ -2526,158 +2991,51 @@ function findSegmentForPointOnLine(objects: GeometryObject[], point: Point) {
     .sort((a, b) => a.distance - b.distance)[0]?.segment;
 }
 
-type CopyLengthTarget = {
-  object: Segment | ExtendedLine;
-  start: Point;
-  through: Point;
-  projected: { x: number; y: number; t: number };
-  distance: number;
-};
-
-function projectToObjectLine(start: Point, through: Point, x: number, y: number) {
-  const dx = through.x - start.x;
-  const dy = through.y - start.y;
-  const lengthSquared = dx * dx + dy * dy;
-  if (lengthSquared < 1) {
-    return undefined;
-  }
-
-  const t = ((x - start.x) * dx + (y - start.y) * dy) / lengthSquared;
-  return {
-    x: start.x + t * dx,
-    y: start.y + t * dy,
-    t,
-  };
-}
-
-function copyLengthTargetAt(objects: GeometryObject[], x: number, y: number, tolerance = 30): CopyLengthTarget | undefined {
-  const candidates = objects
-    .filter((object): object is Segment | ExtendedLine => object.type === "segment" || object.type === "extended-line")
-    .map((object) => {
-      const start = getPoint(objects, object.type === "segment" ? object.p1 : object.from);
-      const through = getPoint(objects, object.type === "segment" ? object.p2 : object.through);
-      const projected = start && through ? projectToObjectLine(start, through, x, y) : undefined;
-      if (!start || !through || !projected) {
-        return undefined;
-      }
-
-      if (object.type === "segment") {
-        if (object.ray && projected.t < -0.03) {
-          return undefined;
-        }
-
-        if (!object.ray && object.given && (projected.t < -0.03 || projected.t > 1.03)) {
-          return undefined;
-        }
-      }
-
-      const candidateDistance = Math.hypot(x - projected.x, y - projected.y);
-      return candidateDistance <= tolerance
-        ? {
-            object,
-            start,
-            through,
-            projected,
-            distance: candidateDistance,
-          }
-        : undefined;
-    })
-    .filter((candidate): candidate is CopyLengthTarget => Boolean(candidate));
-
-  return candidates.sort((a, b) => a.distance - b.distance)[0];
-}
-
-function directionForCopyTarget(target: CopyLengthTarget, startPoint: Point) {
-  let dx = target.projected.x - startPoint.x;
-  let dy = target.projected.y - startPoint.y;
-
-  if (Math.hypot(dx, dy) < 5) {
-    if (target.object.type === "segment" && target.object.ray && target.object.p1 === startPoint.id) {
-      dx = target.through.x - target.start.x;
-      dy = target.through.y - target.start.y;
-    } else if (target.start.id === startPoint.id) {
-      dx = target.through.x - target.start.x;
-      dy = target.through.y - target.start.y;
-    } else if (target.through.id === startPoint.id) {
-      dx = target.start.x - target.through.x;
-      dy = target.start.y - target.through.y;
-    } else {
-      dx = target.through.x - target.start.x;
-      dy = target.through.y - target.start.y;
-    }
-  }
-
-  const length = Math.hypot(dx, dy);
-  return length < 1 ? undefined : { x: dx / length, y: dy / length };
-}
-
-function constructCopiedLengthOnTarget(
+function copyLengthActionIdsForCompassMark(
   state: GeometryStore,
   source: { p1: string; p2: string; segmentId?: string },
-  startPointId: string,
-  targetX: number,
-  targetY: number,
+  centerPointId: string,
+) {
+  if (
+    state.currentPropositionId === "I.6" &&
+    canonicalSideRef(source.p1, source.p2) === "AC" &&
+    centerPointId === "B"
+  ) {
+    return ["prop6-assume-ab-greater", "prop6-use-cut-equal"];
+  }
+
+  return [];
+}
+
+function createCopiedLengthCompassMark(
+  state: GeometryStore,
+  source: { p1: string; p2: string; segmentId?: string },
+  centerPointId: string,
 ) {
   const sourceA = getPoint(state.objects, source.p1);
   const sourceB = getPoint(state.objects, source.p2);
-  const startPoint = getPoint(state.objects, startPointId);
-  const target = copyLengthTargetAt(state.objects, targetX, targetY);
-  if (!sourceA || !sourceB || !startPoint || !target) {
-    return {
-      validation: {
-        success: false,
-        message: "Choose a target line or ray for the copied length.",
-      },
-    };
-  }
-
-  const direction = directionForCopyTarget(target, startPoint);
-  if (!direction) {
+  const centerPoint = getPoint(state.objects, centerPointId);
+  if (!sourceA || !sourceB || !centerPoint) {
     return undefined;
   }
 
-  const copiedLength = distance(sourceA, sourceB);
-  const endpointCoordinates = {
-    x: startPoint.x + direction.x * copiedLength,
-    y: startPoint.y + direction.y * copiedLength,
-  };
-  const provenanceSource = state.currentPropositionId === "I.2" ? "I.2" : "I.3";
-  const sourceSegmentObjects = source.segmentId
-    ? []
-    : addFiniteSegmentIfMissing(state.objects, source.p1, source.p2, "gold", provenanceSource);
-  const objectsWithSource = [...state.objects, ...sourceSegmentObjects];
-  const existingEndpoint = pointNearCoordinates(
-    objectsWithSource.filter((object): object is Point => object.type === "point"),
-    endpointCoordinates.x,
-    endpointCoordinates.y,
-    5,
-  );
-  const endpoint =
-    existingEndpoint ??
-    createPoint(pointLabel(state, objectsWithSource), endpointCoordinates.x, endpointCoordinates.y, "theorem-action", {
-      color: "gold",
-      parentObjectIds: [
-        source.p1,
-        source.p2,
-        startPoint.id,
-        target.object.id,
-        ...(source.segmentId ? [source.segmentId] : []),
-      ],
-      source: provenanceSource,
-    });
-  const objectsWithEndpoint = existingEndpoint ? objectsWithSource : [...objectsWithSource, endpoint];
-  const copiedSegment = addFiniteSegmentIfMissing(objectsWithEndpoint, startPoint.id, endpoint.id, "gold", provenanceSource);
-  const actionIds =
-    state.currentPropositionId === "I.6" &&
-    canonicalSideRef(source.p1, source.p2) === "AC" &&
-    startPoint.id === "B"
-      ? ["prop6-assume-ab-greater", "prop6-use-cut-equal", "prop6-cut-db-ac"]
-      : [];
+  const existing = transferredCircleExists(state.objects, centerPoint.id, source.p1, source.p2);
+  if (existing) {
+    return {
+      objects: [],
+      animatedObjectId: existing.id,
+      actionIds: copyLengthActionIdsForCompassMark(state, source, centerPoint.id),
+    };
+  }
+
+  const createdBy = state.currentPropositionId === "I.2" ? "I.2" : "free-compass-transfer";
+  const circle = createCircleFromLength(centerPoint.id, source.p1, source.p2, "teal", createdBy);
+  circle.dependencies = [...new Set([...(circle.dependencies ?? []), ...(source.segmentId ? [source.segmentId] : [])])];
 
   return {
-    objects: [...sourceSegmentObjects, ...(existingEndpoint ? [] : [endpoint]), ...copiedSegment],
-    animatedObjectId: copiedSegment[0]?.id ?? endpoint.id,
-    actionIds,
+    objects: [circle],
+    animatedObjectId: circle.id,
+    actionIds: copyLengthActionIdsForCompassMark(state, source, centerPoint.id),
   };
 }
 
@@ -3730,12 +4088,16 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       validation: null,
     })),
   markChallengeAction: (actionId) =>
-    set((state) => ({
-      completedActionIds: state.completedActionIds.includes(actionId)
+    set((state) => {
+      const completedActionIds = state.completedActionIds.includes(actionId)
         ? state.completedActionIds
-        : [...state.completedActionIds, actionId],
-      validation: null,
-    })),
+        : [...state.completedActionIds, actionId];
+
+      return {
+        completedActionIds,
+        validation: null,
+      };
+    }),
   transformPoints: (positions) =>
     set((state) => {
       if (state.phase !== "construction" || !positionsChanged(state.objects, positions)) {
@@ -3767,14 +4129,14 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         compassTransferSource: null,
       };
     }),
-  handleCanvasClick: (x, y) => {
+  handleCanvasClick: (x, y, toleranceScale = 1) => {
     const state = get();
     if (state.phase !== "construction") {
       return;
     }
 
     if (state.selectedTool === "theorem-sas" || state.selectedTool === "theorem-sss") {
-      const result = handleCongruenceToolClick(state, x, y);
+      const result = handleCongruenceToolClick(state, x, y, toleranceScale);
       if (result) {
         set(result);
       }
@@ -3782,7 +4144,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "intersection") {
-      const intersection = findNearbyIntersection(state.objects, x, y, INTERSECTION_TOLERANCE);
+      const intersection = findNearbyIntersection(state.objects, x, y, scaledTolerance(INTERSECTION_TOLERANCE, toleranceScale));
       if (!intersection) {
         set({
           validation: {
@@ -3852,7 +4214,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "point") {
-      const resolved = resolvePointAt(state, x, y);
+      const resolved = resolvePointAt(state, x, y, state.objects, toleranceScale);
       if (resolved.newPoint) {
         set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
         return;
@@ -3867,7 +4229,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "theorem-equilateral") {
-      const segment = findNearbySegment(state.objects, x, y, 24);
+      const segment = findNearbySegment(state.objects, x, y, scaledTolerance(24, toleranceScale));
       if (!segment) {
         set({
           validation: {
@@ -3889,12 +4251,12 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      set(addObjectsRelationAndSelect(state, result.objects, result.relation, [], result.animatedObjectId));
       return;
     }
 
     if (state.selectedTool === "theorem-bisect-segment") {
-      const segment = findNearbySegment(state.objects, x, y, 24);
+      const segment = findNearbySegment(state.objects, x, y, scaledTolerance(24, toleranceScale));
       if (!segment) {
         set({
           validation: {
@@ -3929,7 +4291,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "theorem-bisect-angle") {
-      const resolved = resolvePointAt(state, x, y);
+      const resolved = resolvePointAt(state, x, y, state.objects, toleranceScale);
       if (state.selectedPointIds.length < 2) {
         if (resolved.newPoint) {
           set(addObjectsAndSelect(state, [resolved.newPoint], [...state.selectedPointIds, resolved.point.id], resolved.point.id));
@@ -3975,7 +4337,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "theorem-perpendicular-on-line") {
-      const segment = findNearbySegment(state.objects, x, y, 28);
+      const segment = findNearbySegment(state.objects, x, y, scaledTolerance(28, toleranceScale));
       if (!segment) {
         set({
           validation: {
@@ -4003,7 +4365,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     if (state.selectedTool === "theorem-drop-perpendicular") {
       if (state.selectedPointIds.length === 0) {
-        const resolved = resolvePointAt(state, x, y);
+        const resolved = resolvePointAt(state, x, y, state.objects, toleranceScale);
         if (resolved.newPoint) {
           set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
           return;
@@ -4017,7 +4379,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      const resolvedLinePoint = resolvePointAt(state, x, y);
+      const resolvedLinePoint = resolvePointAt(state, x, y, state.objects, toleranceScale);
       const objectsWithLinePoint = resolvedLinePoint.newPoint ? [...state.objects, resolvedLinePoint.newPoint] : state.objects;
       const segment = findSegmentForPointOnLine(objectsWithLinePoint, resolvedLinePoint.point);
       const externalPointId = state.selectedPointIds[0];
@@ -4136,7 +4498,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     if (state.selectedTool === "theorem-parallel") {
       if (state.selectedPointIds.length === 0) {
-        const resolved = resolvePointAt(state, x, y);
+        const resolved = resolvePointAt(state, x, y, state.objects, toleranceScale);
         if (resolved.newPoint) {
           set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
           return;
@@ -4150,7 +4512,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      const segment = findNearbySegment(state.objects, x, y, 28);
+      const segment = findNearbySegment(state.objects, x, y, scaledTolerance(28, toleranceScale));
       if (!segment) {
         set({
           validation: {
@@ -4178,7 +4540,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "theorem-copy-angle") {
-      const resolved = resolvePointAt(state, x, y);
+      const resolved = resolvePointAt(state, x, y, state.objects, toleranceScale);
       const actionState = resolved.newPoint ? { ...state, objects: [...state.objects, resolved.newPoint] } : state;
       const result = constructCopiedAnglePreview(actionState, resolved.point);
       if (!result || result.objects.length === 0) {
@@ -4209,7 +4571,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       state.selectedTool === "theorem-parallelogram-figure" ||
       state.selectedTool === "theorem-square"
     ) {
-      const segment = findNearbySegment(state.objects, x, y, 28);
+      const segment = findNearbySegment(state.objects, x, y, scaledTolerance(28, toleranceScale));
       if (!segment) {
         set({
           validation: {
@@ -4250,130 +4612,70 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     if (state.selectedTool === "compass-transfer") {
       if (state.compassTransferSource) {
-        if (state.selectedPointIds.length === 0) {
-          const targetStart = findNearbyPoint(state.objects, x, y);
-          if (!targetStart) {
-            set({
-              validation: {
-                success: false,
-                message: "Choose the point where the copied length should start.",
-              },
-            });
-            return;
-          }
-
-          set({
-            selectedPointIds: [targetStart.id],
-            theoremSelectionIds: [],
-            validation: {
-              success: false,
-              message: "Start point selected. Now click the target line or ray.",
-            },
-          });
-          return;
-        }
-
-        const result = constructCopiedLengthOnTarget(state, state.compassTransferSource, state.selectedPointIds[0], x, y);
-        if (!result || "validation" in result) {
+        const resolvedCenter = resolvePointAt(state, x, y, state.objects, toleranceScale);
+        const objectsWithCenter = resolvedCenter.newPoint ? [...state.objects, resolvedCenter.newPoint] : state.objects;
+        const actionState = { ...state, objects: objectsWithCenter };
+        const result = createCopiedLengthCompassMark(actionState, state.compassTransferSource, resolvedCenter.point.id);
+        if (!result) {
           set({
             selectedPointIds: [],
             compassTransferSource: null,
             theoremSelectionIds: [],
-            validation: result?.validation ?? {
+            validation: {
               success: false,
-              message: "That copied length could not be placed on the selected target.",
+              message: "That compass mark could not be placed from the selected source length.",
             },
           });
           return;
         }
 
         const nextCompletedActionIds = addCompletedActions(state, result.actionIds);
+        const newObjects = [...(resolvedCenter.newPoint ? [resolvedCenter.newPoint] : []), ...result.objects];
         set({
-          ...addObjectsAndSelect(state, result.objects, [], result.animatedObjectId),
+          ...addObjectsAndSelect(state, newObjects, [], result.animatedObjectId ?? resolvedCenter.newPoint?.id),
           theoremSelectionIds: [],
           completedActionIds: nextCompletedActionIds,
           validation: {
             success: false,
             message:
               state.currentPropositionId === "I.6"
-                ? "DB has been copied from AC onto AB. Join D to C."
-                : "Length copied. Continue the Euclidean construction.",
+                ? "Compass mark copied AC from B. Mark its intersection with AB, then join D to C."
+                : "Compass mark placed. Use Intersection where it cuts the needed line.",
           },
         });
         return;
       }
 
-      if (state.selectedPointIds.length === 0) {
-        const sourcePoint = findNearbyPoint(state.objects, x, y);
-        if (sourcePoint) {
-          set({
-            selectedPointIds: [sourcePoint.id],
-            compassTransferSource: null,
-            validation: null,
-          });
-          return;
-        }
-
-        const sourceSegment = findNearbySegment(state.objects, x, y, 20);
-        if (sourceSegment) {
-          set({
-            selectedPointIds: [],
-            compassTransferSource: {
-              p1: sourceSegment.p1,
-              p2: sourceSegment.p2,
-              segmentId: sourceSegment.id,
-            },
-            theoremSelectionIds: [],
-            validation: {
-              success: false,
-              message: "Source length selected. Now choose the target start point.",
-            },
-          });
-          return;
-        }
-
-        const resolved = resolvePointAt(state, x, y);
-        if (resolved.newPoint) {
-          set(addObjectsAndSelect(state, [resolved.newPoint], [resolved.point.id], resolved.point.id));
-          return;
-        }
-
-        set({
-          selectedPointIds: [resolved.point.id],
-          validation: null,
-        });
-        return;
-      }
-
-      const firstPointId = state.selectedPointIds[0];
-      const resolvedSecond = resolvePointAt(state, x, y);
-      const newObjects = resolvedSecond.newPoint ? [resolvedSecond.newPoint] : [];
-      if (firstPointId === resolvedSecond.point.id) {
+      const sourceSegment = findNearbySegment(state.objects, x, y, scaledTolerance(20, toleranceScale));
+      if (sourceSegment) {
         set({
           selectedPointIds: [],
+          compassTransferSource: {
+            p1: sourceSegment.p1,
+            p2: sourceSegment.p2,
+            segmentId: sourceSegment.id,
+          },
+          theoremSelectionIds: [sourceSegment.id],
           validation: {
             success: false,
-            message: "Choose two distinct points for the source length.",
+            message: "Source length selected. Now choose the compass center point.",
           },
         });
         return;
       }
 
       set({
-        ...addObjectsAndSelect(state, newObjects, [], resolvedSecond.newPoint?.id),
-        compassTransferSource: {
-          p1: firstPointId,
-          p2: resolvedSecond.point.id,
-        },
+        selectedPointIds: [],
+        theoremSelectionIds: [],
         validation: {
           success: false,
-          message: "Source length selected. Now choose the target start point.",
+          message: "Click an existing source segment, or drag along a line from one endpoint of the source length to the other.",
         },
       });
       return;
     }
 
-    const resolvedPoint = resolvePointAt(state, x, y);
+    const resolvedPoint = resolvePointAt(state, x, y, state.objects, toleranceScale);
     if (state.selectedPointIds.length === 0) {
       if (resolvedPoint.newPoint) {
         set(addObjectsAndSelect(state, [resolvedPoint.newPoint], [resolvedPoint.point.id], resolvedPoint.point.id));
@@ -4410,14 +4712,62 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
       ),
     );
   },
-  handleCanvasDrag: (startPointId, startX, startY, endX, endY, guidePointId) => {
+  handleCanvasDrag: (startPointId, startX, startY, endX, endY, guidePointId, carrierKind, carrierId, dragPath, toleranceScale = 1) => {
     const state = get();
     if (state.phase !== "construction") {
       return;
     }
 
+    if (state.selectedTool === "compass-transfer" && !state.compassTransferSource) {
+      const result = copyLengthSourceFromEndpointDrag(
+        state,
+        startPointId,
+        startX,
+        startY,
+        endX,
+        endY,
+        guidePointId,
+        carrierKind,
+        carrierId,
+        toleranceScale,
+      );
+      if (!result) {
+        set({
+          selectedPointIds: [],
+          theoremSelectionIds: [],
+          validation: {
+            success: false,
+            message: "Drag along the intended source line from one endpoint of the length to the other.",
+          },
+        });
+        return;
+      }
+
+      set({
+        ...addObjectsAndSelect(state, result.objects, [], result.animatedObjectId),
+        compassTransferSource: result.source,
+        theoremSelectionIds: result.source.segmentId ? [result.source.segmentId] : [],
+        validation: {
+          success: false,
+          message: "Source length selected. Now choose the compass center point.",
+        },
+      });
+      return;
+    }
+
     if (state.selectedTool === "theorem-equilateral") {
-      const base = equilateralBaseFromEndpointDrag(state, startPointId, startX, startY, endX, endY, guidePointId);
+      const base = equilateralBaseFromEndpointDrag(
+        state,
+        startPointId,
+        startX,
+        startY,
+        endX,
+        endY,
+        guidePointId,
+        carrierKind,
+        carrierId,
+        toleranceScale,
+      );
       if (!base) {
         set({
           selectedPointIds: [],
@@ -4430,7 +4780,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      const result = buildEquilateralTriangleOnBase(state, base.start, base.end, base.support.id, base.sideSign);
+      const result = buildEquilateralTriangleOnBase(state, base.start, base.end, base.support.id, base.sideSign, base.baseObjects);
       if (!result || result.objects.length === 0) {
         set({
           selectedPointIds: [],
@@ -4443,12 +4793,12 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      set(addObjectsAndSelect(state, result.objects, [], result.animatedObjectId));
+      set(addObjectsRelationAndSelect(state, result.objects, result.relation, [], result.animatedObjectId));
       return;
     }
 
     if (state.selectedTool === "theorem-sas" || state.selectedTool === "theorem-sss") {
-      const result = handleCongruenceToolDrag(state, startX, startY, endX, endY);
+      const result = handleCongruenceToolDrag(state, startX, startY, endX, endY, dragPath, toleranceScale);
       if (result) {
         set(result);
       }
@@ -4460,7 +4810,9 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
     }
 
     if (state.selectedTool === "extend") {
-      const start = startPointId ? getPoint(state.objects, startPointId) : findNearbyPoint(state.objects, startX, startY);
+      const start = startPointId
+        ? getPoint(state.objects, startPointId)
+        : findNearbyPoint(state.objects, startX, startY, scaledTolerance(POINT_TOLERANCE, toleranceScale));
       if (!start) {
         set({
           selectedPointIds: [],
@@ -4472,7 +4824,7 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return;
       }
 
-      const guidedEnd = snapToPointRay(state.objects, start, endX, endY);
+      const guidedEnd = snapToPointRay(state.objects, start, endX, endY, scaledTolerance(STRAIGHTEDGE_GUIDE_TOLERANCE, toleranceScale));
       if (!guidedEnd) {
         set({
           selectedPointIds: [],
@@ -4517,13 +4869,13 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
 
     const resolvedStart = startPointId
       ? { point: getPoint(state.objects, startPointId), newPoint: undefined }
-      : resolvePointAt(state, startX, startY);
+      : resolvePointAt(state, startX, startY, state.objects, toleranceScale);
     if (!resolvedStart.point) {
       return;
     }
 
     const objectsWithStart = resolvedStart.newPoint ? [...state.objects, resolvedStart.newPoint] : state.objects;
-    const resolvedEnd = resolvePointAt(state, endX, endY, objectsWithStart);
+    const resolvedEnd = resolvePointAt(state, endX, endY, objectsWithStart, toleranceScale);
 
     if (
       resolvedStart.point.id === resolvedEnd.point.id ||
@@ -4619,12 +4971,14 @@ export const useGeometryStore = create<GeometryStore>((set, get) => ({
         return state;
       }
 
+      const proposition = getProposition(state.currentPropositionId);
       const unlockStore = useUnlockStore.getState();
       unlockStore.completeProposition(state.currentPropositionId);
       const updatedUnlockStore = useUnlockStore.getState();
 
       return {
-        phase: "proofComplete",
+        phase: "completionAnimation",
+        currentReplayStep: proposition.replaySteps.length - 1,
         selectedPointIds: [],
         theoremSelectionIds: [],
         congruenceSelection: null,

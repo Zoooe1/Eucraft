@@ -71,6 +71,39 @@ function triangleGiven(): GeometryObject[] {
   ];
 }
 
+function scaleneReferenceTriangleGiven(): GeometryObject[] {
+  return [
+    point("A", 320, 300, "red"),
+    point("B", 430, 430, "blue"),
+    point("C", 660, 430, "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "blue"),
+    segment("BC", "B", "C", "black"),
+  ];
+}
+
+function triangleInequalityReferenceTriangleGiven(): GeometryObject[] {
+  return [
+    point("A", 350, 285, "red"),
+    point("B", 175, 430, "blue"),
+    point("C", 710, 430, "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "blue"),
+    segment("BC", "B", "C", "black"),
+  ];
+}
+
+function interiorBrokenLinesReferenceTriangleGiven(): GeometryObject[] {
+  return [
+    point("A", 365, 105, "red"),
+    point("B", 205, 455, "blue"),
+    point("C", 725, 455, "gold"),
+    segment("AB", "A", "B", "red"),
+    segment("AC", "A", "C", "blue"),
+    segment("BC", "B", "C", "black"),
+  ];
+}
+
 function doubleTriangleGiven(): GeometryObject[] {
   return [
     point("A", 250, 220, "red"),
@@ -127,15 +160,6 @@ function exteriorTriangleGiven(): GeometryObject[] {
     segment("AC", "A", "C", "blue"),
     segment("BC", "B", "C", "black"),
     segment("CD", "C", "D", "black"),
-  ];
-}
-
-function interiorBrokenLineGiven(): GeometryObject[] {
-  return [
-    ...triangleGiven(),
-    point("D", 440, 330, "gold"),
-    segment("BD", "B", "D", "gold"),
-    segment("DC", "D", "C", "gold"),
   ];
 }
 
@@ -230,12 +254,12 @@ function pointAndLineBCGiven(): GeometryObject[] {
 
 function threeSegmentsGiven(): GeometryObject[] {
   return [
-    point("A", 160, 260, "red"),
-    point("B", 380, 260, "blue"),
-    point("C", 160, 360, "red"),
-    point("D", 320, 360, "blue"),
-    point("E", 160, 460, "red"),
-    point("F", 440, 460, "blue"),
+    point("A", 20, 85, "red"),
+    point("B", 240, 85, "blue"),
+    point("C", 20, 145, "red"),
+    point("D", 180, 145, "blue"),
+    point("E", 20, 205, "red"),
+    point("F", 300, 205, "blue"),
     segment("AB", "A", "B", "red"),
     segment("CD", "C", "D", "blue"),
     segment("EF", "E", "F", "gold"),
@@ -526,19 +550,27 @@ function initialObjectsFor(number: number, type: Proposition["type"]): GeometryO
   }
 
   if (number === 15) {
-    return crossingLinesGiven();
+    return [];
   }
 
   if (number === 16) {
     return exteriorTriangleGiven();
   }
 
-  if ([17, 18, 19, 20, 32].includes(number)) {
-    return triangleGiven();
+  if ([17, 18].includes(number)) {
+    return scaleneReferenceTriangleGiven();
+  }
+
+  if (number === 20) {
+    return triangleInequalityReferenceTriangleGiven();
   }
 
   if (number === 21) {
-    return interiorBrokenLineGiven();
+    return interiorBrokenLinesReferenceTriangleGiven();
+  }
+
+  if ([19, 32].includes(number)) {
+    return triangleGiven();
   }
 
   if (number === 22) {
@@ -679,7 +711,7 @@ function pointLabelSequenceFor(number: number) {
   }
 
   if (number === 21) {
-    return ["E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+    return ["D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
   }
 
   if (number === 24) {
@@ -720,6 +752,10 @@ function pointLabelSequenceFor(number: number) {
 
   if (number === 14) {
     return ["C", "D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
+  }
+
+  if (number === 15) {
+    return ["A", "B", "C", "D", "E", "F", "G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];
   }
 
   return ["G", "H", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"];

@@ -86,12 +86,12 @@ export const book1Prop3: Proposition = {
     {
       id: "place-copy",
       highlight: ["segmentCD", "pointA"],
-      text: "Use Copy Length with CD as the source length and A as the target start point.",
+      text: "Use Copy Length with CD as the source length and A as the compass center.",
     },
     {
       id: "circle",
       highlight: ["segmentAB", "segmentCD", "pointA"],
-      text: "Choose AB as the target line for the copied length.",
+      text: "Let the copied compass mark cut AB at E.",
     },
     {
       id: "cut",
@@ -101,7 +101,7 @@ export const book1Prop3: Proposition = {
     {
       id: "radius",
       highlight: ["segmentAE", "segmentCD", "pointA", "pointE"],
-      text: "Copy Length places E so that AE = CD. [Prop. I.2-I.3]",
+      text: "The compass mark gives AE = CD. [Prop. I.2-I.3]",
     },
     {
       id: "common-notion",

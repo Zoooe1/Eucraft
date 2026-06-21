@@ -33,6 +33,7 @@ import {
   resolveBook1Prop18Context,
   resolveBook1Prop20Context,
   resolveBook1Prop21Context,
+  resolveBook1Prop22Context,
   resolveBook1Prop24Context,
   resolveBook1Prop28Context,
   resolveBook1Prop30Context,
@@ -134,7 +135,7 @@ function validateExtendedBook1Proposition(
   }
 
   if (propositionId === "I.15") {
-    return validateBook1Prop15Selection(objects, completedActionIds);
+    return validateBook1Prop15Construction(objects);
   }
 
   if (propositionId === "I.17") {
@@ -151,6 +152,10 @@ function validateExtendedBook1Proposition(
 
   if (propositionId === "I.21") {
     return validateBook1Prop21Construction(objects);
+  }
+
+  if (propositionId === "I.22") {
+    return validateBook1Prop22Construction(objects, reasoningRelations);
   }
 
   if (propositionId === "I.28") {
@@ -627,7 +632,7 @@ export function validateBook1Prop3(objects: GeometryObject[]): ValidationResult 
 
   return {
     success: false,
-    message: "Use Copy Length with source CD, start at A, and target AB to place E on AB.",
+    message: "Use Copy Length with source CD centered at A, then mark where that compass circle cuts AB.",
   };
 }
 
@@ -660,9 +665,13 @@ function contextPointIds(context: ProofContext, keys: string[]) {
 
 function relationMatchesCorrespondence(
   relation: ReasoningRelation,
-  method: ReasoningRelation["method"],
+  method: "SAS" | "SSS",
   pairs: CongruencePointPair[],
 ) {
+  if (relation.type !== "triangle-congruence") {
+    return false;
+  }
+
   if (relation.method !== method) {
     return false;
   }
@@ -674,7 +683,7 @@ function relationMatchesCorrespondence(
 
 function hasTriangleCongruence(
   relations: ReasoningRelation[],
-  method: ReasoningRelation["method"],
+  method: "SAS" | "SSS",
   pairs: CongruencePointPair[],
 ) {
   return relations.some((relation) => relationMatchesCorrespondence(relation, method, pairs));
@@ -732,7 +741,7 @@ function hasProp10RoleSASClaim(context: ProofContext, relations: ReasoningRelati
 }
 
 function prop10ContextFromSASRelation(objects: GeometryObject[], relation: ReasoningRelation): ProofContext | undefined {
-  if (relation.method !== "SAS") {
+  if (relation.type !== "triangle-congruence" || relation.method !== "SAS") {
     return undefined;
   }
 
@@ -805,18 +814,171 @@ function hasProp11RoleSSSClaim(context: ProofContext, relations: ReasoningRelati
   ]);
 }
 
-function hasProp12RoleSSSClaim(context: ProofContext, relations: ReasoningRelation[]) {
-  const ids = contextPointIds(context, ["pointE", "pointC", "pointG", "pointF"]);
+type Prop12GivenGeometry = {
+  lineStart: Point;
+  lineEnd: Point;
+  externalPoint: Point;
+};
+
+const PROP12_LINE_TOLERANCE = 0.035;
+const PROP12_OPPOSITE_SIDE_TOLERANCE = 0.01;
+
+function prop12GeometryFromContext(objects: GeometryObject[], context: ProofContext | undefined): Prop12GivenGeometry | undefined {
+  const ids = context ? contextPointIds(context, ["pointA", "pointB", "pointC"]) : undefined;
   if (!ids) {
+    return undefined;
+  }
+
+  const [lineStartId, lineEndId, externalPointId] = ids;
+  const lineStart = getPoint(objects, lineStartId);
+  const lineEnd = getPoint(objects, lineEndId);
+  const externalPoint = getPoint(objects, externalPointId);
+  if (!lineStart || !lineEnd || !externalPoint || arePointsCollinear(lineStart, lineEnd, externalPoint, PROP12_LINE_TOLERANCE)) {
+    return undefined;
+  }
+
+  return { lineStart, lineEnd, externalPoint };
+}
+
+function resolveProp12GivenGeometry(objects: GeometryObject[], context: ProofContext | undefined): Prop12GivenGeometry | undefined {
+  const contextGeometry = prop12GeometryFromContext(objects, context);
+  if (contextGeometry) {
+    return contextGeometry;
+  }
+
+  const givenPoints = allNamedPoints(objects).filter(
+    (point) => point.createdBy === "given" || point.source === "given" || point.fixed,
+  );
+  const lineCandidates = allSegments(objects).filter(
+    (segment) => segment.source === "given" || segment.createdBy === "given" || segment.given,
+  );
+
+  for (const line of lineCandidates) {
+    const lineStart = getPoint(objects, line.p1);
+    const lineEnd = getPoint(objects, line.p2);
+    if (!lineStart || !lineEnd) {
+      continue;
+    }
+
+    const externalPoint = givenPoints.find(
+      (point) =>
+        point.id !== lineStart.id &&
+        point.id !== lineEnd.id &&
+        !arePointsCollinear(lineStart, lineEnd, point, PROP12_LINE_TOLERANCE),
+    );
+    if (externalPoint) {
+      return { lineStart, lineEnd, externalPoint };
+    }
+  }
+
+  return undefined;
+}
+
+function lineParameter(lineStart: Point, lineEnd: Point, point: Point): number | undefined {
+  const lineX = lineEnd.x - lineStart.x;
+  const lineY = lineEnd.y - lineStart.y;
+  const lengthSquared = lineX * lineX + lineY * lineY;
+  if (lengthSquared === 0) {
+    return undefined;
+  }
+
+  return ((point.x - lineStart.x) * lineX + (point.y - lineStart.y) * lineY) / lengthSquared;
+}
+
+function pointsAreOnOppositeSidesOfFoot(lineStart: Point, lineEnd: Point, foot: Point, a: Point, b: Point) {
+  const footParameter = lineParameter(lineStart, lineEnd, foot);
+  const aParameter = lineParameter(lineStart, lineEnd, a);
+  const bParameter = lineParameter(lineStart, lineEnd, b);
+  if (footParameter === undefined || aParameter === undefined || bParameter === undefined) {
     return false;
   }
 
-  const [E, C, G, F] = ids;
-  return hasTriangleCongruence(relations, "SSS", [
-    [E, F],
-    [C, C],
-    [G, G],
-  ]);
+  return (
+    a.id !== b.id &&
+    distance(a, foot) > 1 &&
+    distance(b, foot) > 1 &&
+    (aParameter - footParameter) * (bParameter - footParameter) < -PROP12_OPPOSITE_SIDE_TOLERANCE
+  );
+}
+
+function remainingTriangleVertex(triangle: [string, string, string], sharedA: string, sharedB: string) {
+  return triangle.find((pointId) => pointId !== sharedA && pointId !== sharedB);
+}
+
+function prop12SSSCorrespondenceMatches(
+  relation: ReasoningRelation,
+  externalPointId: string,
+  footId: string,
+  linePointAId: string,
+  linePointBId: string,
+) {
+  if (relation.type !== "triangle-congruence") {
+    return false;
+  }
+
+  return (
+    relation.correspondence[externalPointId] === externalPointId &&
+    relation.correspondence[footId] === footId &&
+    relation.correspondence[linePointAId] === linePointBId
+  );
+}
+
+function hasProp12GeometricSSSClaim(objects: GeometryObject[], given: Prop12GivenGeometry, relations: ReasoningRelation[]) {
+  for (const relation of relations) {
+    if (relation.type !== "triangle-congruence" || relation.method !== "SSS") {
+      continue;
+    }
+
+    const triangle1HasExternalPoint = relation.triangle1.includes(given.externalPoint.id);
+    const triangle2HasExternalPoint = relation.triangle2.includes(given.externalPoint.id);
+    if (!triangle1HasExternalPoint || !triangle2HasExternalPoint) {
+      continue;
+    }
+
+    const sharedLineVertexIds = relation.triangle1.filter((pointId) => {
+      const point = getPoint(objects, pointId);
+      if (!point) {
+        return false;
+      }
+
+      return (
+        pointId !== given.externalPoint.id &&
+        relation.triangle2.includes(pointId) &&
+        arePointsCollinear(given.lineStart, given.lineEnd, point, PROP12_LINE_TOLERANCE)
+      );
+    });
+
+    for (const footId of sharedLineVertexIds) {
+      const linePointAId = remainingTriangleVertex(relation.triangle1, given.externalPoint.id, footId);
+      const linePointBId = remainingTriangleVertex(relation.triangle2, given.externalPoint.id, footId);
+      const foot = getPoint(objects, footId);
+      const linePointA = linePointAId ? getPoint(objects, linePointAId) : undefined;
+      const linePointB = linePointBId ? getPoint(objects, linePointBId) : undefined;
+      if (!foot || !linePointA || !linePointB) {
+        continue;
+      }
+
+      const linePointsAreCollinear =
+        arePointsCollinear(given.lineStart, given.lineEnd, linePointA, PROP12_LINE_TOLERANCE) &&
+        arePointsCollinear(given.lineStart, given.lineEnd, foot, PROP12_LINE_TOLERANCE) &&
+        arePointsCollinear(given.lineStart, given.lineEnd, linePointB, PROP12_LINE_TOLERANCE);
+      if (!linePointsAreCollinear) {
+        continue;
+      }
+
+      if (!pointsAreOnOppositeSidesOfFoot(given.lineStart, given.lineEnd, foot, linePointA, linePointB)) {
+        continue;
+      }
+
+      if (!prop12SSSCorrespondenceMatches(relation, given.externalPoint.id, footId, linePointA.id, linePointB.id)) {
+        continue;
+      }
+
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function hasProp16RoleSASClaim(context: ProofContext, relations: ReasoningRelation[]) {
@@ -901,11 +1063,12 @@ function validateExtendedCongruenceProposition(
 
   if (propositionId === "I.12") {
     const context = resolveBook1Prop12Context(objects);
-    if (context && hasProp12RoleSSSClaim(context, reasoningRelations)) {
+    const givenGeometry = resolveProp12GivenGeometry(objects, context);
+    if (givenGeometry && hasProp12GeometricSSSClaim(objects, givenGeometry, reasoningRelations)) {
       return {
         success: true,
-        message: "Construction complete. SSS proves the dropped line is perpendicular.",
-        context,
+        message: "Construction complete. SSS proves equal adjacent angles on the given line, so the dropped line is perpendicular.",
+        context: context ?? genericProofContext(objects),
       };
     }
 
@@ -997,23 +1160,20 @@ function validateExtendedCongruenceProposition(
   return undefined;
 }
 
-function validateBook1Prop15Selection(objects: GeometryObject[], completedActionIds: string[]): ValidationResult {
+function validateBook1Prop15Construction(objects: GeometryObject[]): ValidationResult {
   const context = resolveBook1Prop15Context(objects);
-  const selectedPair = completedActionIds.includes("prop15-select-vertical-pair");
-  if (context && selectedPair) {
+  if (context) {
     return {
       success: true,
-      message: "Vertical opposite angles selected. The proof can subtract the common adjacent angle.",
+      message: "Construction complete. The two straight lines cut each other at a marked point.",
       context,
     };
   }
 
   return {
     success: false,
-    message: context
-      ? "Select the vertical angle pair CEA and BED."
-      : "The crossing lines must meet at E, with A-E-B and C-E-D collinear.",
-    context: context ?? genericProofContext(objects),
+    message: "Construct two distinct straight lines crossing at a marked point, with endpoints on opposite sides of the intersection.",
+    context: genericProofContext(objects),
   };
 }
 
@@ -1072,7 +1232,22 @@ function validateBook1Prop21Construction(objects: GeometryObject[]): ValidationR
       }
     : {
         success: false,
-        message: "Extend BD through the interior point D until it meets AC, then mark the intersection E.",
+        message: "Create an interior point D, join B-D and D-C, then extend BD until it meets AC at E.",
+        context: genericProofContext(objects),
+      };
+}
+
+function validateBook1Prop22Construction(objects: GeometryObject[], reasoningRelations: ReasoningRelation[]): ValidationResult {
+  const context = resolveBook1Prop22Context(objects, reasoningRelations);
+  return context
+    ? {
+        success: true,
+        message: "Construction complete. The closed triangle has sides equal to AB, CD, and EF.",
+        context,
+      }
+    : {
+        success: false,
+        message: "Construct any closed non-collinear triangle whose sides are known equal to AB, CD, and EF in any order.",
         context: genericProofContext(objects),
       };
 }
@@ -1287,7 +1462,7 @@ export function validateBook1Prop5(
 
 export function validateBook1Prop6(objects: GeometryObject[], completedActionIds: string[] = []): ValidationResult {
   const context = resolveBook1Prop6Context(objects);
-  const missing = missingAction(completedActionIds, ["prop6-assume-ab-greater", "prop6-use-cut-equal", "prop6-cut-db-ac"]);
+  const missing = missingAction(completedActionIds, ["prop6-assume-ab-greater", "prop6-use-cut-equal"]);
   if (context && !missing) {
     return {
       success: true,

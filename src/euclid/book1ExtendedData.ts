@@ -107,9 +107,7 @@ export function getBook1PlayableProfile(number: number, type: EuclidProposition[
         requiredAction("prop14-connect-cd", "draw-segment", "Join C to D after constructing CB and BD."),
       ], 5);
     case 15:
-      return profile("select", "Select the target vertical angle pair CEA and BED.", [], [
-        requiredAction("prop15-select-vertical-pair", "select-angle", "Select angle CEA and angle BED as vertical opposite angles."),
-      ], "angle-equivalence");
+      return constructionProfile("Construct two straight lines that cut one another at a marked point.", [], [], 7);
     case 16:
       return constructionProfile(
         "Bisect AC, join BE, extend BE past E, copy BE onto the extension, join FC, then use SAS.",
@@ -124,9 +122,9 @@ export function getBook1PlayableProfile(number: number, type: EuclidProposition[
     case 20:
       return constructionProfile("Extend BA beyond A, copy AC onto that extension as AD, then join D to C.", ["D", "DC"], [], 0);
     case 21:
-      return constructionProfile("Extend BD through the interior point until it meets AC at E.", ["E", "extension"], [], 0);
+      return constructionProfile("Create an interior point D, join B-D and D-C, then extend BD to meet AC at E.", ["D", "BD", "DC", "E", "extension"], [], 0);
     case 22:
-      return constructionProfile("Build a triangle from the three given straight-lines.", ["triangle", "apex", "construction-circles"], [], 7);
+      return constructionProfile("Build a triangle from the three given straight-lines.", ["triangle", "apex", "construction-circles"], [], 0);
     case 23:
       return constructionProfile("Copy the given angle onto the target ray.", ["copied-ray", "target-triangle"], [], 3);
     case 24:
@@ -572,9 +570,13 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     type: "theorem",
     dependencies: deps(14),
     unlocks: ["unlock-I.15-vertical-angles"],
-    allowedTools: theoremOnly,
-    instruction: "Select the target vertical angle pair; the proof will use linear-pair sums and subtraction.",
-    constructionGuide: [guide("inspect", "Select the vertical opposite angles CEA and BED.", "logic-replay")],
+    allowedTools: ["point", "straightedge", "intersection"],
+    instruction: "Construct two straight lines that cut each other and mark their intersection.",
+    constructionGuide: [
+      guide("first-line", "Create two points and draw the first straight line through them.", "straightedge"),
+      guide("second-line", "Create two more points and draw a second straight line crossing the first.", "straightedge"),
+      guide("intersection", "Mark the crossing point.", "intersection"),
+    ],
     validationGoal: validationGoal("verticalAnglesEqual", "Infer equality of vertically opposite angles."),
     replaySteps: [
       {
@@ -717,7 +719,7 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     allowedTools: [...primitives],
     instruction: "Copy AB onto AC from A, then join the cut-off point to B.",
     constructionGuide: [
-      guide("copy", "Use Copy Length with source AB, start A, and target AC to place D.", "compass-transfer"),
+      guide("copy", "Use Copy Length with source AB centered at A, then mark where it cuts AC.", "compass-transfer"),
       guide("join", "Join B to D.", "straightedge"),
     ],
     validationGoal: validationGoal("greaterSideImpliesGreaterOppositeAngle", "Infer the greater opposite angle from the greater side."),
@@ -784,8 +786,12 @@ export const book1ExtendedSpecs: Book1ExtendedSpec[] = [
     dependencies: deps(20, ["I.16"]),
     unlocks: ["unlock-I.21-interior-broken-lines"],
     allowedTools: [...primitives, "extend"],
-    instruction: "Extend BD through the interior point D until it meets AC at E.",
-    constructionGuide: [guide("extend", "Extend BD through D and mark the intersection with AC as E.", "extend")],
+    instruction: "Create an interior point D, join B-D and D-C, then extend BD until it meets AC at E.",
+    constructionGuide: [
+      guide("interior-point", "Place D inside triangle ABC.", "point"),
+      guide("broken-lines", "Join B-D and D-C.", "straightedge"),
+      guide("extend", "Extend BD through D and mark the intersection with AC as E.", "extend"),
+    ],
     validationGoal: validationGoal("interiorBrokenLinesTriangleRule", "Infer interior broken-line and angle comparisons."),
     replaySteps: [
       step("extend", "Extend BD to meet AC at E.", ["segmentBD", "segmentBE", "segmentAC", "pointE"]),

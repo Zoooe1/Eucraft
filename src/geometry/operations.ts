@@ -254,7 +254,7 @@ export function createPoint(
     x,
     y,
     label,
-    color: options.color ?? (createdBy === "intersection" ? "gold" : "ink"),
+    color: "ink",
     fixed: options.fixed,
     source: options.source ?? createdBy,
     createdBy,
